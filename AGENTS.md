@@ -57,9 +57,9 @@ Async: use GPUI executors (foreground and background). Library code is written a
 
 ## 3. Licenses and third-party code
 
-- Dependencies must have permissive licenses only. Allowed: `MIT`, `Apache-2.0`, `Apache-2.0 WITH LLVM-exception`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `Zlib`, `Unlicense`, `CC0-1.0`, `MIT-0`, `BSL-1.0`, `Unicode-3.0`. For fonts and icons additionally `OFL-1.1`.
+- Dependencies must have permissive licenses only. Allowed: `MIT`, `Apache-2.0`, `Apache-2.0 WITH LLVM-exception`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `Zlib`, `Unlicense`, `CC0-1.0`, `MIT-0`, `0BSD`, `BSL-1.0`, `Unicode-3.0`. For fonts and icons additionally `OFL-1.1`.
 - Forbidden: `GPL`, `AGPL`, `LGPL`, `SSPL` and any copyleft license. `MPL-2.0` and anything not listed — only with the owner's approval.
-- The list is pinned in `deny.toml`; `cargo deny check` runs in CI.
+- The list is pinned in `deny.toml`; `cargo deny check` runs in CI. Licenses outside the list (e.g. `MPL-2.0`) are allowed only as per-crate exceptions approved by the owner, never globally.
 - **Do not copy code from other IDEs and editors** (Zed, Lapce, VS Code, Helix and others), even if their license allows it. Studying ideas is fine; we write our own code. Using libraries as dependencies is fine if the license is on the list above.
 - Ferrum is open source under the dual license **`MIT OR Apache-2.0`** (the Rust ecosystem standard). The root contains `LICENSE-MIT` and `LICENSE-APACHE`; `[workspace.package]` sets `license = "MIT OR Apache-2.0"` and all crates inherit it. `extension_api` and the SDK use the same license; plugin authors license their plugins however they like. Outside contributions are accepted under the same dual license; no CLA is required.
 

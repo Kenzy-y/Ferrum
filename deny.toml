@@ -7,6 +7,20 @@ all-features = false
 [advisories]
 version = 2
 yanked = "deny"
+# Unmaintained crates pulled in transitively by GPUI and gpui-component; they
+# cannot be replaced from this repository. Approved by the owner on
+# 2026-11-04. Review on every GPUI update and remove entries that no longer
+# apply. Vulnerabilities are never ignored here.
+ignore = [
+    { id = "RUSTSEC-2024-0384", reason = "instant: via gpui-base, gpui-component" },
+    { id = "RUSTSEC-2024-0436", reason = "paste: via gpui-component, pulp" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile: via gpui-pre-reqwest" },
+    { id = "RUSTSEC-2026-0206", reason = "rustybuzz: via usvg (GPUI SVG rendering)" },
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser: via gpui-pre, fontdb, rustybuzz" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names: via zbus (Linux accessibility, D-Bus)" },
+    { id = "RUSTSEC-2026-0370", reason = "zvariant: via zbus (Linux accessibility, D-Bus)" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: via zbus (Linux accessibility, D-Bus)" },
+]
 
 [licenses]
 version = 2
@@ -22,6 +36,7 @@ allow = [
     "Unlicense",
     "CC0-1.0",
     "MIT-0",
+    "0BSD",
     "BSL-1.0",
     "Unicode-3.0",
 ]
@@ -30,7 +45,15 @@ allow = [
 # one crate.
 # - `OFL-1.1` is allowed for font and icon crates only (AGENTS.md, section 3).
 # - Anything else (for example `MPL-2.0`) needs the owner's approval per crate.
-exceptions = []
+# MPL-2.0 crates below are transitive and approved by the owner on 2026-11-04.
+exceptions = [
+    # Build-time only, macOS/iOS: via gpui-pre-apple.
+    { crate = "cbindgen@0.28.0", allow = ["MPL-2.0"] },
+    # Windows DirectWrite bindings: via zed-font-kit.
+    { crate = "dwrote@0.11.5", allow = ["MPL-2.0"] },
+    # Via dirs-sys (used by `directories` and zed-font-kit).
+    { crate = "option-ext@0.2.0", allow = ["MPL-2.0"] },
+]
 
 [licenses.private]
 ignore = true
