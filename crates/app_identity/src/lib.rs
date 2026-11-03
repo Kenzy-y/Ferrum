@@ -14,15 +14,20 @@ pub const PRODUCT_NAME: &str = "Ferrum";
 /// `app_id`, the Windows `AppUserModelID`, the macOS bundle identifier.
 pub const APP_ID: &str = "dev.ferrum.Ferrum";
 
-/// Qualifier part of [`APP_ID`], as expected by platform directory lookups.
+/// Qualifier part of [`APP_ID`].
 pub const QUALIFIER: &str = "dev";
 
-/// Organization part of [`APP_ID`], as expected by platform directory lookups.
+/// Organization part of [`APP_ID`].
 pub const ORGANIZATION: &str = "Ferrum";
 
-/// Application part of [`APP_ID`]; becomes the name of the per-user
-/// configuration, data and cache directories.
+/// Application part of [`APP_ID`]; also the name of the per-user
+/// directories on Windows and macOS (`%APPDATA%\Ferrum`,
+/// `~/Library/Application Support/Ferrum`).
 pub const APPLICATION: &str = "Ferrum";
+
+/// Lowercase name for places where Unix conventions expect one: the
+/// executable and the per-user directories on Linux (`~/.config/ferrum`).
+pub const LOWERCASE_NAME: &str = "ferrum";
 
 /// Name of the per-workspace folder that holds project-local configuration
 /// (for example `.ferrum/settings.toml`).
@@ -49,6 +54,11 @@ mod tests {
             APP_ID,
             format!("{QUALIFIER}.{}.{APPLICATION}", ORGANIZATION.to_lowercase())
         );
+    }
+
+    #[test]
+    fn lowercase_name_matches_application() {
+        assert_eq!(LOWERCASE_NAME, APPLICATION.to_lowercase());
     }
 
     #[test]

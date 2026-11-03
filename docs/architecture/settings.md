@@ -19,8 +19,19 @@ configuration files.
   `SettingsChange` with affected namespaces and bump `revision()`.
 - `load::{load_layer, read_config_file}` — read files through `fs::Fs`;
   a missing file is `None`, not an error.
-- `paths::ConfigPaths` — per-user config directory (from `app_identity`
-  names via `directories`) and file names.
+- `paths::ConfigPaths` — per-user config directory and file names.
+
+**File locations.** Names come from `app_identity` (`APPLICATION`,
+`LOWERCASE_NAME`, `WORKSPACE_DIR_NAME`); base directories from `directories`.
+
+| Platform | User config directory |
+|---|---|
+| Windows | `%APPDATA%\Ferrum\config` (`C:\Users\<user>\AppData\Roaming\Ferrum\config`) |
+| macOS | `~/Library/Application Support/Ferrum` |
+| Linux | `$XDG_CONFIG_HOME/ferrum`, by default `~/.config/ferrum` |
+
+The directory holds `settings.toml` and `keymap.toml`. Workspace settings are
+`<workspace>/.ferrum/settings.toml` on every platform.
 
 **Extending.** New crate settings: define a struct, implement `Settings`,
 register it in the application's registry (`ferrum::config`). New layer:

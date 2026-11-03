@@ -16,17 +16,17 @@ pub struct ConfigPaths {
 }
 
 impl ConfigPaths {
-    /// The platform's per-user configuration directory for this product
-    /// (for example `%APPDATA%\<org>\<app>\config` on Windows,
-    /// `~/.config/<app>` on Linux, `~/Library/Application Support/<id>` on
-    /// macOS). `None` if the platform does not report a home directory.
+    /// The platform's per-user configuration directory for this product:
+    ///
+    /// - Windows: `%APPDATA%\<Application>\config`;
+    /// - macOS: `~/Library/Application Support/<Application>`;
+    /// - Linux: `$XDG_CONFIG_HOME/<lowercase name>` (default `~/.config`).
+    ///
+    /// Names come from `app_identity`. `None` if the platform does not report
+    /// a home directory.
     pub fn from_platform() -> Option<Self> {
-        directories::ProjectDirs::from(
-            app_identity::QUALIFIER,
-            app_identity::ORGANIZATION,
-            app_identity::APPLICATION,
-        )
-        .map(|dirs| Self::new(dirs.config_dir().to_path_buf()))
+        directories::ProjectDirs::from_path(PathBuf::from(product_dir_name()))
+            .map(|dirs| Self::new(dirs.config_dir().to_path_buf()))
     }
 
     /// Uses `config_dir` as the configuration directory.
@@ -50,6 +50,16 @@ impl ConfigPaths {
     }
 }
 
+/// Name of the per-user product directory: capitalized where the platform
+/// shows it to users (Windows, macOS), lowercase on Linux.
+fn product_dir_name() -> &'static str {
+    if cfg!(any(target_os = "windows", target_os = "macos")) {
+        app_identity::APPLICATION
+    } else {
+        app_identity::LOWERCASE_NAME
+    }
+}
+
 /// The workspace settings file for the workspace rooted at `root`.
 pub fn workspace_settings(root: &Path) -> PathBuf {
     root.join(app_identity::WORKSPACE_DIR_NAME)
@@ -59,6 +69,30 @@ pub fn workspace_settings(root: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn platform_config_dir_is_one_level_deep() {
+        let Some(paths) = ConfigPaths::from_platform() else {
+            return; // No home directory in this environment.
+        };
+        let components: Vec<_> = paths
+            .config_dir()
+            .components()
+            .rev()
+            .take(2)
+            .map(|component| component.as_os_str().to_string_lossy().into_owned())
+            .collect();
+        if cfg!(target_os = "windows") {
+            assert_eq!(components, ["config", app_identity::APPLICATION]);
+        } else if cfg!(target_os = "macos") {
+            assert_eq!(
+                components,
+                [app_identity::APPLICATION, "Application Support"]
+            );
+        } else {
+            assert_eq!(components[0], app_identity::LOWERCASE_NAME);
+        }
+    }
 
     #[test]
     fn file_locations() {

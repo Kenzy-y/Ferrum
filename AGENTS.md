@@ -245,6 +245,7 @@ Rules:
 - All dependency versions live in `[workspace.dependencies]` of the root `Cargo.toml`; crates use `dep.workspace = true`.
 - Lints live in `[workspace.lints]`: clippy `pedantic` as warnings (with explicitly listed exceptions), `unwrap_used` and `expect_used` as warnings (allowed in tests), `unsafe_code = "deny"`. `unsafe` only with the owner's permission and a `// SAFETY:` comment on every block. `missing_docs` warns everywhere and is an error in `extension_api`.
 - CI builds with `-D warnings`. Disabling lints, tests or checks to make CI pass is forbidden.
+- A targeted `#[allow(clippy::...)]` for a single `pedantic` lint on a specific item is acceptable with a justification comment next to it. Disabling lints globally, or allowing one to hide a real problem, is forbidden.
 - Errors: typed errors with `thiserror` in libraries; `anyhow` only in `ferrum` and glue code. No panics across the plugin boundary.
 - Minimal visibility: `pub(crate)` by default; a crate's public API is deliberate and documented.
 - One module — one responsibility. A file over ~500 lines is a reason to split it.
