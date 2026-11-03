@@ -1,0 +1,117 @@
+# Base dark theme. Values come from the Figma exports in
+# docs/design/mockups/*.svg; near-identical greys are merged into one token
+# per group. State tokens (`.hover`, `.pressed`, `.disabled`) are not in the
+# mockups: they are derived from the palette and approved by the owner.
+# Every key is required, so a theme cannot silently miss a token.
+
+name = "Dark"
+appearance = "dark"
+
+[fonts]
+ui = "Inter"
+mono = "JetBrains Mono"
+
+[colors]
+# Surfaces.
+"bg.app" = "#17191C"                  # title bar, activity bar, status bar, gaps between panels
+"bg.sidebar" = "#141619"              # sidebar panel
+"bg.editor" = "#111316"               # editor, terminal, main panels
+"bg.editor.tabs" = "#16181B"          # strip behind editor tabs
+"bg.card" = "#191D22"                 # cards, diff panes, hint bars
+"bg.overlay" = "#24272D"              # floating widgets (find, debug toolbar)
+"bg.minimap" = "#131518"
+"bg.tile" = "#252B34"                 # icon tile of a list entry
+"bg.tile.accent" = "#30251F"          # icon tile of the selected or featured entry
+
+# Inputs.
+"bg.input" = "#202226"                # title bar search, find field
+"bg.input.inset" = "#191D22"          # fields inside sidebars
+"bg.input.disabled" = "#17191C"
+
+# Buttons.
+"bg.button.primary" = "#D69272"
+"bg.button.primary.hover" = "#DE9E80"
+"bg.button.primary.pressed" = "#C98466"
+"bg.button.secondary" = "#24272D"
+"bg.button.secondary.hover" = "#2B2F36"
+"bg.button.secondary.pressed" = "#1F2226"
+"bg.ghost.hover" = "#202226"          # icon buttons, menu items
+"bg.ghost.pressed" = "#272A30"
+
+# Lists, tabs, activity bar.
+"bg.list.hover" = "#1C1E22"
+"bg.list.pressed" = "#222428"
+"bg.list.selected" = "#292522"
+"bg.tab.active" = "#282629"
+"bg.tab.hover" = "#1F1F22"
+"bg.activity.active" = "#28282A"
+"bg.activity.hover" = "#202123"
+
+# Badges.
+"bg.kbd" = "#1E2228"
+"bg.badge" = "#24282E"
+
+# Editor.
+"bg.line.active" = "#1B1E23"
+"bg.line.debug" = "#322C22"           # line where the debugger is paused
+"bg.notice" = "#2D2822"               # "Paused on breakpoint" banner
+"bg.diff.added" = "#21332B"
+"bg.diff.removed" = "#382427"
+"bg.scrollbar.thumb" = "#30353D"
+
+# Borders and lines.
+"border.panel" = "#2A2D33"
+"border.input" = "#303339"
+"border.overlay" = "#343A44"
+"border.divider" = "#292C31"
+"border.separator" = "#35383D"        # short vertical separators in the title bar
+"border.focus" = "#A57961"            # keyboard focus ring
+"guide.indent" = "#262B32"
+
+# Accent.
+"accent" = "#D69272"                  # primary buttons, active markers, logo
+
+# Text.
+"text.primary" = "#ECEDEE"            # headings, active tab, main text
+"text.secondary" = "#A1A5AD"          # menus, tree items, status bar
+"text.subtle" = "#8F959F"             # section headers, inactive tabs, placeholders
+"text.muted" = "#777E88"              # hints, empty states
+"text.ignored" = "#666E7A"            # ignored files
+"text.disabled" = "#5C626B"
+"text.on_accent" = "#201B19"          # text on primary buttons
+"text.accent" = "#D7A78E"             # links, active segmented tab
+"text.selected" = "#E5C0AB"           # selected list item
+"text.kbd" = "#9CA6B4"                # keyboard shortcut labels
+"text.line_number" = "#535C69"
+"text.line_number.active" = "#D5D8DF"
+"text.success" = "#A8BC9C"
+"text.warning" = "#C6A571"            # "M" modified marker
+"text.error" = "#D69B98"
+
+# Icons and markers.
+"icon" = "#7C828C"
+"icon.active" = "#E0B19B"             # selected activity bar item
+"icon.strong" = "#9BA2AD"             # window controls
+"icon.file.rust" = "#D49C7D"
+"marker.dirty" = "#D6AC7E"            # unsaved-changes dot on a tab
+"marker.breakpoint" = "#D28B7F"
+"marker.debug_line" = "#E0BD82"       # paused line number and arrow
+
+[syntax]
+plain = "#BCC5D2"
+punctuation = "#BCC5D2"
+keyword = "#D6A58E"
+type = "#B6AED3"
+function = "#D8C295"
+macro = "#D8C295"
+attribute = "#BBA77E"
+string = "#A8BC9C"
+number = "#8FB4C9"                    # not in the mockups; chosen to differ from keywords
+constant = "#8FB4C9"
+lifetime = "#B6AED3"
+comment = "#6E877D"
+doc_comment = "#667B73"
+inlay_hint = "#56616F"
+
+[opacity]
+disabled = 0.45

@@ -1,0 +1,59 @@
+# Sizes, spacing, radii and font sizes of the compact density, in logical
+# pixels. Derived from the comfortable density for dense layouts.
+
+[size]
+"titlebar.height" = 48
+"statusbar.height" = 26
+"activity_bar.width" = 52
+"activity_button.width" = 38
+"activity_button.height" = 36
+"sidebar.width" = 260
+"panel.gap" = 6                     # gap between panels and the window edge
+"tab_strip.height" = 40
+"tab.height" = 28
+"tab.marker.width" = 2               # accent bar on the active tab / selected row
+"tab.marker.height" = 16
+"panel_tab.underline" = 2
+"list_row.height" = 26
+"button.small.height" = 28
+"button.medium.height" = 32
+"input.height" = 28
+"input.inset.height" = 28
+"kbd.height" = 24
+"badge.size" = 19
+"dirty_dot.size" = 5
+"icon.small" = 16
+"icon.medium" = 20
+"code.line_height" = 19
+
+[space]
+"xxs" = 2
+"xs" = 4
+"sm" = 6
+"md" = 8
+"lg" = 12
+"xl" = 18
+"xxl" = 24
+
+[radius]
+"xs" = 4                             # count badges
+"sm" = 5                             # keyboard badges, current line
+"md" = 8                             # buttons, tabs, list rows, inputs
+"lg" = 10                            # cards
+"xl" = 12                            # panels, activity buttons
+"xxl" = 14                           # large icon tiles
+
+[font_size]
+"xs" = 10
+"sm" = 11
+"md" = 12
+"base" = 13
+"lg" = 14
+"xl" = 15
+"brand" = 19
+"h3" = 19
+"h2" = 24
+"h1" = 30
+"display" = 36
+"code" = 14
+"code.small" = 13

@@ -1,0 +1,59 @@
+# Sizes, spacing, radii and font sizes of the default density, in logical
+# pixels. Values come from docs/design/mockups/*.svg.
+
+[size]
+"titlebar.height" = 64
+"statusbar.height" = 34
+"activity_bar.width" = 66
+"activity_button.width" = 46
+"activity_button.height" = 44
+"sidebar.width" = 291
+"panel.gap" = 10                    # gap between panels and the window edge
+"tab_strip.height" = 52
+"tab.height" = 36
+"tab.marker.width" = 2               # accent bar on the active tab / selected row
+"tab.marker.height" = 16
+"panel_tab.underline" = 2
+"list_row.height" = 34
+"button.small.height" = 34
+"button.medium.height" = 40
+"input.height" = 35
+"input.inset.height" = 36
+"kbd.height" = 30
+"badge.size" = 19
+"dirty_dot.size" = 5
+"icon.small" = 16
+"icon.medium" = 20
+"code.line_height" = 21.5
+
+[space]
+"xxs" = 2
+"xs" = 4
+"sm" = 8
+"md" = 12
+"lg" = 16
+"xl" = 24
+"xxl" = 32
+
+[radius]
+"xs" = 4                             # count badges
+"sm" = 5                             # keyboard badges, current line
+"md" = 8                             # buttons, tabs, list rows, inputs
+"lg" = 10                            # cards
+"xl" = 12                            # panels, activity buttons
+"xxl" = 14                           # large icon tiles
+
+[font_size]
+"xs" = 10
+"sm" = 11
+"md" = 12
+"base" = 13
+"lg" = 14
+"xl" = 15
+"brand" = 19
+"h3" = 19
+"h2" = 24
+"h1" = 30
+"display" = 36
+"code" = 14
+"code.small" = 13
