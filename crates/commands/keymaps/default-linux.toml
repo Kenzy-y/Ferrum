@@ -1,0 +1,4 @@
+# Default keybindings on Linux. See default-windows.toml for the format.
+
+[global]
+"ctrl-q" = "app.quit"

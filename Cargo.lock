@@ -7,6 +7,16 @@ name = "app_identity"
 version = "0.0.0"
 
 [[package]]
+name = "commands"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "toml",
+ "tracing",
+]
+
+[[package]]
 name = "directories"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

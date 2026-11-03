@@ -1,0 +1,6 @@
+# Default keybindings on Windows. Tables are contexts; `global` applies
+# everywhere. Keys use `ctrl`, `alt`, `shift`, `cmd` (the Windows key) and
+# `mod` (Ctrl on Windows and Linux, Cmd on macOS).
+
+[global]
+"alt-f4" = "app.quit"

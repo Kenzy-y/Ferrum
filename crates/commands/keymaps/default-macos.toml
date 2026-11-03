@@ -1,0 +1,4 @@
+# Default keybindings on macOS. See default-windows.toml for the format.
+
+[global]
+"cmd-q" = "app.quit"
