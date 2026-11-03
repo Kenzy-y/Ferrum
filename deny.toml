@@ -24,12 +24,12 @@ allow = [
     "MIT-0",
     "BSL-1.0",
     "Unicode-3.0",
-    # Fonts and icons only; any other use needs the owner's approval.
-    "OFL-1.1",
 ]
 
-# Per-crate exceptions approved by the owner. Never allow a license globally
-# here: each entry names one crate.
+# Per-crate exceptions. Never allow a license globally here: each entry names
+# one crate.
+# - `OFL-1.1` is allowed for font and icon crates only (AGENTS.md, section 3).
+# - Anything else (for example `MPL-2.0`) needs the owner's approval per crate.
 exceptions = []
 
 [licenses.private]
