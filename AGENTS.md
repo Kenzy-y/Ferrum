@@ -31,7 +31,7 @@ Ferrum is a native IDE for Rust, written in Rust. The goal is to do what VS Code
 
 | Area | Choice |
 |---|---|
-| UI | GPUI (git dependency, pinned revision) + gpui-component |
+| UI | GPUI (the exact `gpui-pre` snapshot version on crates.io that gpui-component is built against, see ADR 0001) + gpui-component |
 | Text buffer | `ropey` |
 | Highlighting, outline | `tree-sitter` (incremental parsing); grammars from plugins — tree-sitter wasm grammars |
 | Language servers | `lsp-types` + own LSP client |
@@ -49,7 +49,7 @@ Ferrum is a native IDE for Rust, written in Rust. The goal is to do what VS Code
 | Benchmarks | `criterion` |
 | License checks | `cargo-deny` |
 
-GPUI and gpui-component revisions must be compatible: use the GPUI revision that the chosen gpui-component version builds against. Updating GPUI is a separate task with a separate commit, never done in passing.
+GPUI and gpui-component versions must be compatible: use the exact `gpui-pre` version that the chosen gpui-component version requires, both pinned with `=`. Updating GPUI is a separate task with a separate commit, never done in passing.
 
 Async: use GPUI executors (foreground and background). Library code is written against `futures` traits and is runtime-agnostic. Do not add `tokio` without the owner's approval; if some dependency requires it, it lives isolated in one crate behind a channel boundary.
 
