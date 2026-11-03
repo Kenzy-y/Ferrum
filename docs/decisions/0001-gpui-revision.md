@@ -10,6 +10,7 @@ AGENTS.md требовал подключать GPUI как git-зависимо
 
 - `gpui = { package = "gpui-pre", version = "=0.3.11" }`, `gpui_platform = { package = "gpui-pre-platform", version = "=0.3.11" }`, `gpui-component = "=0.9.0"`. Все версии точные, `Cargo.lock` в репозитории.
 - Версии GPUI и gpui-component обновляются только вместе, отдельной задачей и отдельным коммитом. Перед обновлением нужно взять из `Cargo.toml` новой версии gpui-component точную версию `gpui-pre`, которую она требует.
+- Toolchain в `rust-toolchain.toml` совпадает с версией Rust из `rust-toolchain.toml` Zed на коммите снимка (для `zed@f816e1f` это 1.98.1): платформенные крейты GPUI могут использовать только что стабилизированные API. На 1.97.0 не собирался `gpui-pre-macos`.
 - В AGENTS.md (раздел 2) строка про GPUI изменена соответственно.
 
 ## Последствия
