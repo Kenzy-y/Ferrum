@@ -1,0 +1,18 @@
+[package]
+name = "ui"
+description = "Design system: components built on gpui-component and theme tokens."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+theme.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

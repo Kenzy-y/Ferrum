@@ -8,9 +8,12 @@
 "activity_button.width" = 46
 "activity_button.height" = 44
 "sidebar.width" = 291
+"section_header.inset" = 21
+"tree.indent" = 20
 "panel.gap" = 10                    # gap between panels and the window edge
 "tab_strip.height" = 52
 "tab.height" = 36
+"tab.width" = 185
 "tab.marker.width" = 2               # accent bar on the active tab / selected row
 "tab.marker.height" = 16
 "panel_tab.underline" = 2
@@ -22,6 +25,7 @@
 "kbd.height" = 30
 "badge.size" = 19
 "dirty_dot.size" = 5
+"icon.tiny" = 12
 "icon.small" = 16
 "icon.medium" = 20
 "code.line_height" = 21.5

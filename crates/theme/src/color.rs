@@ -47,6 +47,12 @@ impl From<Color> for gpui::Hsla {
     }
 }
 
+impl From<Color> for gpui::Fill {
+    fn from(color: Color) -> Self {
+        gpui::Hsla::from(color).into()
+    }
+}
+
 impl fmt::Debug for Color {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, formatter)

@@ -62,6 +62,8 @@ token_struct! {
         border_separator = "border.separator",
         /// Keyboard focus ring.
         border_focus = "border.focus",
+        /// Focus ring on accent backgrounds (primary buttons).
+        border_focus_on_accent = "border.focus.on_accent",
         guide_indent = "guide.indent",
         /// Primary buttons, active markers, logo.
         accent = "accent",

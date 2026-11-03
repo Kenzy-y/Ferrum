@@ -11,10 +11,15 @@ token_struct! {
         activity_button_width = "activity_button.width",
         activity_button_height = "activity_button.height",
         sidebar_width = "sidebar.width",
+        /// Horizontal inset of section header text inside a panel.
+        section_header_inset = "section_header.inset",
+        /// Indentation of one tree level.
+        tree_indent = "tree.indent",
         /// Gap between panels and the window edge.
         panel_gap = "panel.gap",
         tab_strip_height = "tab_strip.height",
         tab_height = "tab.height",
+        tab_width = "tab.width",
         /// Accent bar on the active tab / selected row.
         tab_marker_width = "tab.marker.width",
         tab_marker_height = "tab.marker.height",
@@ -27,6 +32,7 @@ token_struct! {
         kbd_height = "kbd.height",
         badge_size = "badge.size",
         dirty_dot_size = "dirty_dot.size",
+        icon_tiny = "icon.tiny",
         icon_small = "icon.small",
         icon_medium = "icon.medium",
         code_line_height = "code.line_height",

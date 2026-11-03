@@ -66,6 +66,7 @@ mono = "JetBrains Mono"
 "border.divider" = "#292C31"
 "border.separator" = "#35383D"        # short vertical separators in the title bar
 "border.focus" = "#A57961"            # keyboard focus ring
+"border.focus.on_accent" = "#F3D2C2"  # focus ring on accent backgrounds (primary buttons)
 "guide.indent" = "#262B32"
 
 # Accent.
