@@ -1,0 +1,286 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_7_320)">
+<rect width="1920" height="1080" rx="18" fill="#17191C"/>
+<rect width="1920" height="64" fill="#17191C"/>
+<rect x="20" y="17" width="30" height="30" rx="7" fill="#D69272"/>
+<path d="M28.5833 26.5L34.0833 32L28.5833 37.5M36.8333 37.5H42.3333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#161719"/>
+<text fill="#ECEDEE" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="19" font-weight="600" letter-spacing="0em"><tspan x="62" y="38.4091">ferrum</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="177" y="37.7273">File</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="222" y="37.7273">Edit</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="271" y="37.7273">View</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="328" y="37.7273">Go</tspan></text>
+<rect x="654.5" y="14.5" width="599" height="35" rx="7.5" fill="#202226"/>
+<rect x="654.5" y="14.5" width="599" height="35" rx="7.5" stroke="#303339"/>
+<path d="M679.75 30.875C679.75 33.5674 677.567 35.75 674.875 35.75C672.183 35.75 670 33.5674 670 30.875C670 28.1826 672.183 26 674.875 26C677.567 26 679.75 28.1826 679.75 30.875Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M679 35L682.75 38.75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<text fill="#8F959F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="696" y="35.8636">Search files, symbols and commands</tspan></text>
+<text fill="#777E88" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1194" y="34.5">Ctrl K</tspan></text>
+<path d="M1460 25.75C1460 26.5784 1459.33 27.25 1458.5 27.25C1457.67 27.25 1457 26.5784 1457 25.75C1457 24.9216 1457.67 24.25 1458.5 24.25C1459.33 24.25 1460 24.9216 1460 25.75Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1460 36.25C1460 37.0784 1459.33 37.75 1458.5 37.75C1457.67 37.75 1457 37.0784 1457 36.25C1457 35.4216 1457.67 34.75 1458.5 34.75C1459.33 34.75 1460 35.4216 1460 36.25Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1469 26.5C1469 27.3284 1468.33 28 1467.5 28C1466.67 28 1466 27.3284 1466 26.5C1466 25.6716 1466.67 25 1467.5 25C1468.33 25 1469 25.6716 1469 26.5Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1458.5 27.25V31.75M1458.5 31.75V34.75M1458.5 31.75C1464.5 31.75 1467.5 31 1467.5 28" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="1482" y="35.8636">main</tspan></text>
+<rect width="1" height="18" transform="translate(1540 23)" fill="#35383D"/>
+<rect x="1560" y="15" width="134" height="34" rx="8" fill="#D69272"/>
+<path d="M1577.67 26.5417L1585.46 31.5L1577.67 36.4584V26.5417Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#201B19"/>
+<text fill="#201B19" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="1597" y="35.8636">Run project</tspan></text>
+<path d="M1724.17 25.3333H1735.83C1736.75 25.3333 1737.5 26.0795 1737.5 27V37C1737.5 37.9205 1736.75 38.6666 1735.83 38.6666H1724.17C1723.25 38.6666 1722.5 37.9205 1722.5 37V27C1722.5 26.0795 1723.25 25.3333 1724.17 25.3333Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1730 25.3333V38.6666" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1793.75 32H1804.25" stroke-width="1.05" stroke="#9BA2AD"/>
+<path d="M1840.5 26.75H1849.5C1849.91 26.75 1850.25 27.0858 1850.25 27.5V36.5C1850.25 36.9142 1849.91 37.25 1849.5 37.25H1840.5C1840.09 37.25 1839.75 36.9142 1839.75 36.5V27.5C1839.75 27.0858 1840.09 26.75 1840.5 26.75Z" stroke-width="1.05" stroke="#9BA2AD"/>
+<path d="M1886.5 27.5L1891 32M1891 32L1895.5 36.5M1891 32L1886.5 36.5M1891 32L1895.5 27.5" stroke-width="1.05" stroke="#9BA2AD"/>
+<rect width="66" height="964" transform="translate(0 72)" fill="#17191C"/>
+<rect x="9" y="156" width="46" height="44" rx="12" fill="#28282A"/>
+<path d="M30 106H39C40.1046 106 41 106.895 41 108V121C41 122.105 40.1046 123 39 123H30C28.8954 123 28 122.105 28 121V108C28 106.895 28.8954 106 30 106Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M25 110V124H37" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M38 177.5C38 181.09 35.0899 184 31.5 184C27.9101 184 25 181.09 25 177.5C25 173.91 27.9101 171 31.5 171C35.0899 171 38 173.91 38 177.5Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#E0B099"/>
+<path d="M37 183L42 188" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#E0B099"/>
+<path d="M29 236C29 237.105 28.1046 238 27 238C25.8954 238 25 237.105 25 236C25 234.895 25.8954 234 27 234C28.1046 234 29 234.895 29 236Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M29 250C29 251.105 28.1046 252 27 252C25.8954 252 25 251.105 25 250C25 248.895 25.8954 248 27 248C28.1046 248 29 248.895 29 250Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M41 237C41 238.105 40.1046 239 39 239C37.8954 239 37 238.105 37 237C37 235.895 37.8954 235 39 235C40.1046 235 41 235.895 41 237Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M27 238V244M27 244V248M27 244C35 244 39 243 39 239" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M29 300L40 307L29 314V300Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M33 362L42 367V376L33 381L24 376V367L33 362Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M24 367L33 372M33 372L42 367M33 372V381" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M30 1004L29 1007L26 1008L24 1012L26 1015V1019L30 1021L33 1020L36 1021L40 1019V1015L42 1012L40 1008L37 1007L36 1004H30Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M36 1013C36 1014.66 34.6569 1016 33 1016C31.3431 1016 30 1014.66 30 1013C30 1011.34 31.3431 1010 33 1010C34.6569 1010 36 1011.34 36 1013Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<rect x="76.5" y="72.5" width="291" height="963" rx="11.5" fill="#141619"/>
+<rect x="76.5" y="72.5" width="291" height="963" rx="11.5" stroke="#2A2D33"/>
+<text fill="#A3ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" font-weight="600" letter-spacing="0em"><tspan x="98" y="106.5">SEARCH</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="18" letter-spacing="0em"><tspan x="330" y="106.545">&#xb7;&#xb7;&#xb7;</tspan></text>
+<rect x="92.5" y="138.5" width="259" height="37" rx="7.5" fill="#202329"/>
+<rect x="92.5" y="138.5" width="259" height="37" rx="7.5" stroke="#A57961"/>
+<text fill="#E3D0C4" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="104" y="162.18">config</tspan></text>
+<text fill="#87929F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="251" y="160.5">Aa</tspan></text>
+<text fill="#87929F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="283" y="160.5">ab</tspan></text>
+<text fill="#87929F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="316" y="160.5">.*</tspan></text>
+<rect x="92" y="186" width="260" height="36" rx="8" fill="#191D22"/>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="104" y="208.864">Replace</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="17" letter-spacing="0em"><tspan x="328" y="210.682">&#x203a;</tspan></text>
+<text fill="#7E8998" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="96" y="259.5">Files to include</tspan></text>
+<rect x="92" y="271" width="260" height="32" rx="6" fill="#191D22"/>
+<text fill="#B9C2D0" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="104" y="291.46">src/**/*.rs</tspan></text>
+<text fill="#C4CBD5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="97" y="342.864">10 results in 2 files</tspan></text>
+<rect width="260" height="1" transform="translate(92 365)" fill="#2A2F36"/>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="96" y="401.591">&#x2304;</tspan></text>
+<text fill="#D69272" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="118" y="401.32">R</tspan></text>
+<text fill="#D4D9E1" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="141" y="400.727">main.rs</tspan></text>
+<text fill="#8793A2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="327" y="400.46">7</tspan></text>
+<rect x="86" y="418" width="272" height="33" rx="6" fill="#2A2523"/>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="436.1">4</tspan></text>
+<text fill="#E1B59D" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="437.46">mod config;</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="474.1">11</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="475.46">/// Path to the config&#x2026;</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="512.1">13</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="513.46">config: String,</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="550.1">21</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="551.46">let config = config::&#x2026;</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="588.1">23</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="589.46">commands::run(cli&#x2026;</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="96" y="657.591">&#x2304;</tspan></text>
+<text fill="#D69272" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="118" y="657.32">R</tspan></text>
+<text fill="#D4D9E1" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="141" y="656.727">config.rs</tspan></text>
+<text fill="#8793A2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="327" y="656.46">3</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="696.1">8</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="697.46">let config = read&#x2026;</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="734.1">12</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="735.46">config.validate()?;</tspan></text>
+<text fill="#758293" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="100" y="772.1">13</tspan></text>
+<text fill="#A7B0BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="134" y="773.46">Ok(config)</tspan></text>
+<text fill="#768292" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="97" y="998.5">Search in rust-workspace</tspan></text>
+<rect x="378.5" y="72.5" width="1531" height="687" rx="11.5" fill="#111316"/>
+<rect x="378.5" y="72.5" width="1531" height="687" rx="11.5" stroke="#2A2D33"/>
+<rect width="1532" height="52" transform="translate(378 72)" fill="#16181B"/>
+<rect x="386" y="80" width="185" height="36" rx="8" fill="#282629"/>
+<rect x="386" y="90" width="2" height="16" rx="1" fill="#D69272"/>
+<text fill="#D69272" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="402" y="103.18">R</tspan></text>
+<text fill="#E2E4E7" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="426" y="102.727">main.rs</tspan></text>
+<rect x="525" y="96" width="5" height="5" rx="2.5" fill="#D6AC7E"/>
+<path d="M548.083 95.0833L551 98M551 98L553.917 100.917M551 98L548.083 100.917M551 98L553.917 95.0833" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<text fill="#B38269" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="595" y="103.18">R</tspan></text>
+<text fill="#8B939F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="620" y="102.727">lib.rs</tspan></text>
+<path d="M716.083 95.0833L719 98M719 98L721.917 100.917M719 98L716.083 100.917M719 98L721.917 95.0833" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<rect width="1" height="24" transform="translate(748 86)" fill="#2C2F34"/>
+<text fill="#9E8E75" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="775" y="102.727">&#x25a3;</tspan></text>
+<text fill="#8B939F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="800" y="102.727">Cargo.toml</tspan></text>
+<path d="M911.083 95.0833L914 98M914 98L916.917 100.917M914 98L911.083 100.917M914 98L916.917 95.0833" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1832.96 92.1667H1844.04C1844.92 92.1667 1845.62 92.8755 1845.62 93.75V103.25C1845.62 104.124 1844.92 104.833 1844.04 104.833H1832.96C1832.08 104.833 1831.38 104.124 1831.38 103.25V93.75C1831.38 92.8755 1832.08 92.1667 1832.96 92.1667Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1838.5 92.1667V104.833" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1872.9 98.5C1872.9 98.79 1872.67 99.025 1872.38 99.025C1872.09 99.025 1871.85 98.79 1871.85 98.5C1871.85 98.2101 1872.09 97.975 1872.38 97.975C1872.67 97.975 1872.9 98.2101 1872.9 98.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1879.03 98.5C1879.03 98.79 1878.79 99.025 1878.5 99.025C1878.21 99.025 1877.98 98.79 1877.98 98.5C1877.98 98.2101 1878.21 97.975 1878.5 97.975C1878.79 97.975 1879.03 98.2101 1879.03 98.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1885.15 98.5C1885.15 98.79 1884.92 99.025 1884.63 99.025C1884.34 99.025 1884.1 98.79 1884.1 98.5C1884.1 98.2101 1884.34 97.975 1884.63 97.975C1884.92 97.975 1885.15 98.2101 1885.15 98.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<rect width="1500" height="1" transform="translate(394 165)" fill="#202329"/>
+<text fill="#7D8591" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="404" y="152.864">rust-workspace</tspan></text>
+<text fill="#535B66" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" letter-spacing="0em"><tspan x="523" y="153.455">&#x203a;</tspan></text>
+<text fill="#7D8591" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="544" y="152.864">src</tspan></text>
+<text fill="#535B66" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" letter-spacing="0em"><tspan x="574" y="153.455">&#x203a;</tspan></text>
+<text fill="#D69272" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="597" y="152.32">R</tspan></text>
+<text fill="#B3BBC6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="620" y="152.864">main.rs</tspan></text>
+<text fill="#535B66" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" letter-spacing="0em"><tspan x="687" y="153.455">&#x203a;</tspan></text>
+<text fill="#D7B887" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="712" y="153.18">&#x192;</tspan></text>
+<text fill="#B3BBC6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="734" y="152.864">main</tspan></text>
+<text fill="#68717E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="1674" y="152.46">Rust  /  2021 edition</tspan></text>
+<rect x="453" y="252.5" width="1301" height="23" rx="5" fill="#1B1E23"/>
+<rect width="1" height="129" transform="translate(517.72 405)" fill="#262B32"/>
+<rect width="1" height="107.5" transform="translate(517.72 598.5)" fill="#262B32"/>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="203.18">1</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="509.184" y="205.79"> clap::</tspan><tspan x="618.312" y="205.79">;</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="205.79">use</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="567.945" y="205.79">Parser</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="224.68">2</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="509.184" y="227.29"> anyhow::</tspan><tspan x="635.102" y="227.29">;</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="227.29">use</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="584.734" y="227.29">Result</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="246.18">3</tspan></text>
+<text fill="#D5D8DF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="267.68">4</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="509.184" y="270.29"> </tspan><tspan x="567.945" y="270.29">;</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="270.29">mod</tspan></text>
+<text fill="#E6B18B" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em" text-decoration="underline"><tspan x="517.578" y="270.29">config</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="289.18">5</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="509.184" y="291.79"> commands;</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="291.79">mod</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="310.68">6</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="332.18">7</tspan></text>
+<text fill="#667B73" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="334.79">/// A small tool for building great things.</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="353.68">8</tspan></text>
+<text fill="#BBA77E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="356.29">#[derive(Parser, Debug)]</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="427.205" y="375.18">9</tspan></text>
+<text fill="#BBA77E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="377.79">#[command(name = &#34;forge&#34;, version, about)]</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="396.68">10</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="534.367" y="399.29"> </tspan><tspan x="567.945" y="399.29"> {</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="399.29">struct</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="542.762" y="399.29">Cli</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="418.18">11</tspan></text>
+<text fill="#667B73" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="420.79">    /// Path to the </tspan><tspan x="702.258" y="420.79">uration file</tspan></text>
+<text fill="#E6B18B" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em" text-decoration="underline"><tspan x="651.891" y="420.79">config</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="439.68">12</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="442.29">    </tspan></text>
+<text fill="#BBA77E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="517.578" y="442.29">#[arg(short, long, default_value = &#34;forge.toml&#34;)]</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="461.18">13</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="463.79">    </tspan><tspan x="567.945" y="463.79">: </tspan><tspan x="635.102" y="463.79">,</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="584.734" y="463.79">String</tspan></text>
+<text fill="#E6B18B" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em" text-decoration="underline"><tspan x="517.578" y="463.79">config</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="482.68">14</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="504.18">15</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="506.79">    </tspan></text>
+<text fill="#BBA77E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="517.578" y="506.79">#[command(subcommand)]</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="525.68">16</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="528.29">    command: commands::</tspan><tspan x="735.836" y="528.29">,</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="677.074" y="528.29">Command</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="547.18">17</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="549.79">}</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="568.68">18</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="590.18">19</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="500.789" y="592.79"> </tspan><tspan x="542.762" y="592.79">() -&#62; </tspan><tspan x="643.496" y="592.79">&#60;()&#62; {</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="592.79">fn</tspan></text>
+<text fill="#D8C295" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="509.184" y="592.79">main</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="593.129" y="592.79">Result</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="611.68">20</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="614.29">    </tspan><tspan x="542.762" y="614.29"> cli = </tspan><tspan x="626.707" y="614.29">::</tspan><tspan x="685.469" y="614.29">();</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="517.578" y="614.29">let</tspan></text>
+<text fill="#B6AED3" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="601.523" y="614.29">Cli</tspan></text>
+<text fill="#D8C295" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="643.496" y="614.29">parse</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="633.18">21</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="635.79">    </tspan><tspan x="542.762" y="635.79"> </tspan><tspan x="601.523" y="635.79"> = </tspan><tspan x="677.074" y="635.79">::</tspan><tspan x="727.441" y="635.79">(&#38;cli.</tspan><tspan x="828.176" y="635.79">)?;</tspan></text>
+<text fill="#D6A58E" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="517.578" y="635.79">let</tspan></text>
+<text fill="#D8C295" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="693.863" y="635.79">load</tspan></text>
+<text fill="#E6B18B" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em" text-decoration="underline"><tspan x="551.156" y="635.79">config</tspan><tspan x="626.707" y="635.79">config</tspan><tspan x="777.809" y="635.79">config</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="654.68">22</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="676.18">23</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="678.79">    commands::</tspan><tspan x="626.707" y="678.79">(cli.command, </tspan><tspan x="794.598" y="678.79">)?;</tspan></text>
+<text fill="#D8C295" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="601.523" y="678.79">run</tspan></text>
+<text fill="#E6B18B" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em" text-decoration="underline"><tspan x="744.23" y="678.79">config</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="697.68">24</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="700.29">    </tspan><tspan x="534.367" y="700.29">(())</tspan></text>
+<text fill="#D8C295" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="517.578" y="700.29">Ok</tspan></text>
+<text fill="#535C69" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="419.41" y="719.18">25</tspan></text>
+<text fill="#BCC5D2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="14" letter-spacing="0em"><tspan x="484" y="721.79">}</tspan></text>
+<text fill="#56616F" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="754" y="591.1">1 implementation</tspan></text>
+<rect x="1784" y="183" width="100" height="545" rx="6" fill="#131518"/>
+<rect width="21.25" height="1.5" transform="translate(1788 192)" fill="#736354"/>
+<rect width="23.75" height="1.5" transform="translate(1788 196)" fill="#424A55"/>
+<rect width="13.75" height="1.5" transform="translate(1788 204)" fill="#424A55"/>
+<rect width="16.25" height="1.5" transform="translate(1788 208)" fill="#424A55"/>
+<rect width="53.75" height="1.5" transform="translate(1788 216)" fill="#424A55"/>
+<rect width="30" height="1.5" transform="translate(1788 220)" fill="#424A55"/>
+<rect width="52.5" height="1.5" transform="translate(1788 224)" fill="#424A55"/>
+<rect width="15" height="1.5" transform="translate(1788 228)" fill="#424A55"/>
+<rect width="47.5" height="1.5" transform="translate(1796 232)" fill="#736354"/>
+<rect width="66.25" height="1.5" transform="translate(1796 236)" fill="#424A55"/>
+<rect width="23.75" height="1.5" transform="translate(1796 240)" fill="#424A55"/>
+<rect width="32.5" height="1.5" transform="translate(1796 248)" fill="#424A55"/>
+<rect width="38.75" height="1.5" transform="translate(1796 252)" fill="#736354"/>
+<rect width="1.25" height="1.5" transform="translate(1788 256)" fill="#424A55"/>
+<rect width="31.25" height="1.5" transform="translate(1788 264)" fill="#424A55"/>
+<rect width="33.75" height="1.5" transform="translate(1796 268)" fill="#424A55"/>
+<rect width="55" height="1.5" transform="translate(1796 272)" fill="#736354"/>
+<rect width="50" height="1.5" transform="translate(1796 280)" fill="#424A55"/>
+<rect width="12.5" height="1.5" transform="translate(1796 284)" fill="#424A55"/>
+<rect width="1.25" height="1.5" transform="translate(1788 288)" fill="#424A55"/>
+<g opacity="0.035">
+<rect width="100" height="143" transform="translate(1784 183)" fill="white"/>
+</g>
+<rect x="1901" y="184" width="4" height="385" rx="2" fill="#30353D"/>
+<rect x="1369.5" y="181.5" width="392" height="42" rx="7.5" fill="#24272D"/>
+<rect x="1369.5" y="181.5" width="392" height="42" rx="7.5" stroke="#343A44"/>
+<text fill="#DDD3CA" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="1383" y="207.32">config</tspan></text>
+<text fill="#8E9AAB" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1539" y="206.5">1 of 7</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="18" letter-spacing="0em"><tspan x="1628" y="208.545">&#x2191;</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="18" letter-spacing="0em"><tspan x="1666" y="208.545">&#x2193;</tspan></text>
+<text fill="#A4ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="18" letter-spacing="0em"><tspan x="1721" y="209.545">&#xd7;</tspan></text>
+<rect x="378.5" y="770.5" width="1531" height="265" rx="11.5" fill="#111316"/>
+<rect x="378.5" y="770.5" width="1531" height="265" rx="11.5" stroke="#2A2D33"/>
+<text fill="#DEDDE0" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="404" y="800.5">TERMINAL</tspan></text>
+<rect x="403" y="816" width="64" height="2" rx="1" fill="#D69272"/>
+<text fill="#79828F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="500" y="800.5">PROBLEMS</tspan></text>
+<rect x="572" y="786" width="19" height="19" rx="4" fill="#24282E"/>
+<text fill="#9099A5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="578" y="798.636">0</tspan></text>
+<text fill="#79828F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="623" y="800.5">OUTPUT</tspan></text>
+<text fill="#79828F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="714" y="800.5">DEBUG CONSOLE</tspan></text>
+<text fill="#A9B0BA" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="1568" y="801.32">PowerShell</tspan></text>
+<path d="M1694.75 794.625L1698.5 798.375L1702.25 794.625" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1737 790.75V796M1737 796V801.25M1737 796H1731.75M1737 796H1742.25" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1768.75 790H1779.25C1780.08 790 1780.75 790.672 1780.75 791.5V800.5C1780.75 801.328 1780.08 802 1779.25 802H1768.75C1767.92 802 1767.25 801.328 1767.25 800.5V791.5C1767.25 790.672 1767.92 790 1768.75 790Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1774 790V802" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1805 791.5H1806.5M1806.5 791.5H1815.5M1806.5 791.5L1807.25 802.75H1814.75L1815.5 791.5M1815.5 791.5H1817M1808.75 789.25H1813.25M1809.5 794.5V799.75M1812.5 794.5V799.75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1843.5 798.25L1848 793.75L1852.5 798.25" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<path d="M1880.25 792.25L1884 796M1884 796L1887.75 799.75M1884 796L1880.25 799.75M1884 796L1887.75 792.25" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#818995"/>
+<text fill="#B0B7C2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="851.18">C:\projects\forge  on  main*</tspan></text>
+<text fill="#DADCE2" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="877.18">&#x276f; cargo run -- --help</tspan></text>
+<text fill="#A8BC9C" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="910.18">   Compiling forge v0.1.0 (C:\projects\forge)</tspan></text>
+<text fill="#A8BC9C" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="934.18">    Finished `dev` profile [unoptimized + debuginfo] in 0.84s</tspan></text>
+<text fill="#A8BC9C" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="958.18">     Running `target\debug\forge.exe --help`</tspan></text>
+<text fill="#9FA8B6" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="990.18">A small tool for building great things.</tspan></text>
+<text fill="#D69272" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="404" y="1027.18">&#x276f;</tspan></text>
+<rect width="8" height="17" transform="translate(424 1015)" fill="#B3B7BF"/>
+<rect x="1486" y="1000" width="397" height="32" rx="8" fill="#191C20"/>
+<text fill="#707A87" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="1499" y="1019.64">Toggle terminal</tspan></text>
+<text fill="#B1B9C5" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="1607" y="1020.46">Ctrl `</tspan></text>
+<text fill="#707A87" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="1677" y="1019.64">Command palette</tspan></text>
+<text fill="#B1B9C5" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="10" letter-spacing="0em"><tspan x="1780" y="1019.1">Ctrl Shift P</tspan></text>
+<rect width="1920" height="34" transform="translate(0 1046)" fill="#17191C"/>
+<path d="M25 1058.12C25 1058.82 24.4404 1059.38 23.75 1059.38C23.0596 1059.38 22.5 1058.82 22.5 1058.12C22.5 1057.43 23.0596 1056.88 23.75 1056.88C24.4404 1056.88 25 1057.43 25 1058.12Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#A1A7B1"/>
+<path d="M25 1066.88C25 1067.57 24.4404 1068.12 23.75 1068.12C23.0596 1068.12 22.5 1067.57 22.5 1066.88C22.5 1066.18 23.0596 1065.62 23.75 1065.62C24.4404 1065.62 25 1066.18 25 1066.88Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#A1A7B1"/>
+<path d="M32.5 1058.75C32.5 1059.44 31.9404 1060 31.25 1060C30.5596 1060 30 1059.44 30 1058.75C30 1058.06 30.5596 1057.5 31.25 1057.5C31.9404 1057.5 32.5 1058.06 32.5 1058.75Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#A1A7B1"/>
+<path d="M23.75 1059.38V1063.12M23.75 1063.12V1065.62M23.75 1063.12C28.75 1063.12 31.25 1062.5 31.25 1060" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#A1A7B1"/>
+<text fill="#B1B6BF" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="11" letter-spacing="0em"><tspan x="43" y="1066.46">main*</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="116" y="1068.32">&#x21bb;</tspan></text>
+<path d="M160.125 1062.5L162.625 1065L168.875 1058.75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#9DADA1"/>
+<text fill="#959DA7" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="180" y="1066.5">0 errors</tspan></text>
+<text fill="#959DA7" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="253" y="1066.5">0 warnings</tspan></text>
+<path d="M390.125 1062.5L392.625 1065L398.875 1058.75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#9DADA1"/>
+<text fill="#A2ABA7" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="410" y="1065.5">rust-analyzer</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1340" y="1066.5">Ln 4, Col 5</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1465" y="1066.5">Spaces: 4</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1568" y="1066.5">UTF-8</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1646" y="1066.5">LF</tspan></text>
+<text fill="#DDB095" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1695" y="1066.5">Rust</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1741" y="1066.5">1.82.0</tspan></text>
+<path d="M1887.08 1068.17H1889.92M1883.54 1066.04H1893.46L1892.04 1063.92V1060.37C1892.04 1059.44 1891.67 1058.53 1891 1057.87C1890.34 1057.21 1889.44 1056.83 1888.5 1056.83C1887.56 1056.83 1886.66 1057.21 1886 1057.87C1885.33 1058.53 1884.96 1059.44 1884.96 1060.37V1063.92L1883.54 1066.04Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+</g>
+<defs>
+<clipPath id="clip0_7_320">
+<rect width="1920" height="1080" rx="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,0 +1,163 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_7_1256)">
+<rect width="1920" height="1080" rx="18" fill="#17191C"/>
+<rect width="1920" height="64" fill="#17191C"/>
+<rect x="20" y="17" width="30" height="30" rx="7" fill="#D69272"/>
+<path d="M28.583 26.5L34.083 32L28.583 37.5M36.833 37.5H42.333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#161719"/>
+<text fill="#ECEDEE" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="19" font-weight="600" letter-spacing="0em"><tspan x="62" y="38.4091">ferrum</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="177" y="37.7273">File</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="222" y="37.7273">Edit</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="271" y="37.7273">View</tspan></text>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="328" y="37.7273">Go</tspan></text>
+<rect x="654.5" y="14.5" width="599" height="35" rx="7.5" fill="#202226"/>
+<rect x="654.5" y="14.5" width="599" height="35" rx="7.5" stroke="#303339"/>
+<path d="M679.75 30.875C679.75 33.5674 677.567 35.75 674.875 35.75C672.183 35.75 670 33.5674 670 30.875C670 28.1826 672.183 26 674.875 26C677.567 26 679.75 28.1826 679.75 30.875Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M679 35L682.75 38.75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<text fill="#8F959F" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="696" y="35.8636">Search files, symbols and commands</tspan></text>
+<text fill="#777E88" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1194" y="34.5">Ctrl K</tspan></text>
+<path d="M1460 25.75C1460 26.5784 1459.33 27.25 1458.5 27.25C1457.67 27.25 1457 26.5784 1457 25.75C1457 24.9216 1457.67 24.25 1458.5 24.25C1459.33 24.25 1460 24.9216 1460 25.75Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1460 36.25C1460 37.0784 1459.33 37.75 1458.5 37.75C1457.67 37.75 1457 37.0784 1457 36.25C1457 35.4216 1457.67 34.75 1458.5 34.75C1459.33 34.75 1460 35.4216 1460 36.25Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1469 26.5C1469 27.3284 1468.33 28 1467.5 28C1466.67 28 1466 27.3284 1466 26.5C1466 25.6716 1466.67 25 1467.5 25C1468.33 25 1469 25.6716 1469 26.5Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1458.5 27.25V31.75M1458.5 31.75V34.75M1458.5 31.75C1464.5 31.75 1467.5 31 1467.5 28" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<text fill="#A1A5AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="1482" y="35.8636">main</tspan></text>
+<rect width="1" height="18" transform="translate(1540 23)" fill="#35383D"/>
+<rect x="1560" y="15" width="134" height="34" rx="8" fill="#D69272"/>
+<path d="M1577.67 26.5417L1585.46 31.5L1577.67 36.4584V26.5417Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#201B19"/>
+<text fill="#201B19" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="1597" y="35.8636">Run project</tspan></text>
+<path d="M1724.17 25.3333H1735.83C1736.75 25.3333 1737.5 26.0795 1737.5 27V37C1737.5 37.9205 1736.75 38.6666 1735.83 38.6666H1724.17C1723.25 38.6666 1722.5 37.9205 1722.5 37V27C1722.5 26.0795 1723.25 25.3333 1724.17 25.3333Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1730 25.3333V38.6666" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#7C828C"/>
+<path d="M1793.75 32H1804.25" stroke-width="1.05" stroke="#9BA2AD"/>
+<path d="M1840.5 26.75H1849.5C1849.91 26.75 1850.25 27.0858 1850.25 27.5V36.5C1850.25 36.9142 1849.91 37.25 1849.5 37.25H1840.5C1840.09 37.25 1839.75 36.9142 1839.75 36.5V27.5C1839.75 27.0858 1840.09 26.75 1840.5 26.75Z" stroke-width="1.05" stroke="#9BA2AD"/>
+<path d="M1886.5 27.5L1891 32M1891 32L1895.5 36.5M1891 32L1886.5 36.5M1891 32L1895.5 27.5" stroke-width="1.05" stroke="#9BA2AD"/>
+<rect width="66" height="964" transform="translate(0 72)" fill="#17191C"/>
+<rect x="9" y="348" width="46" height="44" rx="12" fill="#28282A"/>
+<path d="M30 106H39C40.1046 106 41 106.895 41 108V121C41 122.105 40.1046 123 39 123H30C28.8954 123 28 122.105 28 121V108C28 106.895 28.8954 106 30 106Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M25 110V124H37" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M38 177.5C38 181.09 35.0899 184 31.5 184C27.9101 184 25 181.09 25 177.5C25 173.91 27.9101 171 31.5 171C35.0899 171 38 173.91 38 177.5Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M37 183L42 188" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M29 236C29 237.105 28.1046 238 27 238C25.8954 238 25 237.105 25 236C25 234.895 25.8954 234 27 234C28.1046 234 29 234.895 29 236Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M29 250C29 251.105 28.1046 252 27 252C25.8954 252 25 251.105 25 250C25 248.895 25.8954 248 27 248C28.1046 248 29 248.895 29 250Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M41 237C41 238.105 40.1046 239 39 239C37.8954 239 37 238.105 37 237C37 235.895 37.8954 235 39 235C40.1046 235 41 235.895 41 237Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M27 238V244M27 244V248M27 244C35 244 39 243 39 239" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M29 300L40 307L29 314V300Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M33 362L42 367V376L33 381L24 376V367L33 362Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#E0B099"/>
+<path d="M24 367L33 372M33 372L42 367M33 372V381" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#E0B099"/>
+<path d="M30 1004L29 1007L26 1008L24 1012L26 1015V1019L30 1021L33 1020L36 1021L40 1019V1015L42 1012L40 1008L37 1007L36 1004H30Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<path d="M36 1013C36 1014.66 34.6569 1016 33 1016C31.3431 1016 30 1014.66 30 1013C30 1011.34 31.3431 1010 33 1010C34.6569 1010 36 1011.34 36 1013Z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke="#78808C"/>
+<rect x="76.5" y="72.5" width="291" height="963" rx="11.5" fill="#141619"/>
+<rect x="76.5" y="72.5" width="291" height="963" rx="11.5" stroke="#2A2D33"/>
+<text fill="#A3ADBA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" font-weight="600" letter-spacing="0em"><tspan x="98" y="106.5">EXTENSIONS</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="18" letter-spacing="0em"><tspan x="330" y="106.545">&#xb7;&#xb7;&#xb7;</tspan></text>
+<rect x="92" y="137" width="260" height="38" rx="8" fill="#20242B"/>
+<path d="M114 154.5C114 156.985 111.985 159 109.5 159C107.015 159 105 156.985 105 154.5C105 152.015 107.015 150 109.5 150C111.985 150 114 152.015 114 154.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#7E8B9D"/>
+<path d="M113.25 158.25L117.75 162.75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#7E8B9D"/>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="129" y="160.864">Search extensions</tspan></text>
+<text fill="#E0C0AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="98" y="216.864">Installed</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="161" y="216.5">4</tspan></text>
+<text fill="#8A97AA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="211" y="216.864">Marketplace</tspan></text>
+<rect x="97" y="230" width="72" height="2" rx="1" fill="#D69272"/>
+<rect x="86" y="250" width="272" height="92" rx="9" fill="#292523"/>
+<rect x="99" y="265" width="36" height="36" rx="8" fill="#3A2D27"/>
+<path d="M114.5 275.5H112.833V280.5L110.333 283L112.833 285.5V290.5H114.5M119.5 275.5H121.166V280.5L123.666 283L121.166 285.5V290.5H119.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#D8A58A"/>
+<text fill="#E0C1AE" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="147" y="277.727">rust-analyzer</tspan></text>
+<text fill="#8D9AAC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="147" y="300.636">Rust language support</tspan></text>
+<text fill="#A7BD9E" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="148" y="324.636">Enabled</tspan></text>
+<rect x="99" y="370" width="36" height="36" rx="8" fill="#252B34"/>
+<path d="M115.333 381.333H113.666V384.667M115.333 381.333H118.666M115.333 381.333V378.833M118.666 381.333H120.333V384.667M118.666 381.333V378.833M120.333 384.667V388M120.333 384.667H123.666M120.333 388V391.333M120.333 388H123.666M120.333 391.333V394.667H113.666V391.333M120.333 391.333H123.666M113.666 391.333V388M113.666 391.333H110.333M113.666 388V384.667M113.666 388H110.333M113.666 384.667H110.333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#98ABC3"/>
+<text fill="#CDD6E3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="147" y="382.727">CodeLLDB</tspan></text>
+<text fill="#8D9AAC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="147" y="405.636">Native debugging</tspan></text>
+<text fill="#A7BD9E" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="148" y="429.636">Enabled</tspan></text>
+<rect x="99" y="475" width="36" height="36" rx="8" fill="#252B34"/>
+<path d="M114.5 492.167H119.5M114.5 495.5H119.5M111.167 485.5H119.5L122.834 488.833V500.5H111.167V485.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#98ABC3"/>
+<text fill="#CDD6E3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="147" y="486.864">Even Better TOML</tspan></text>
+<text fill="#8D9AAC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="147" y="510.636">TOML language support</tspan></text>
+<text fill="#A7BD9E" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="148" y="534.636">Enabled</tspan></text>
+<rect x="99" y="580" width="36" height="36" rx="8" fill="#252B34"/>
+<path d="M109.5 594.667V602.167L117 606.333L124.5 602.167V594.667L117 590.5L109.5 594.667ZM124.5 594.667L117 598.833M117 606.333V598.833M109.5 594.667L117 598.833" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#98ABC3"/>
+<text fill="#CDD6E3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="147" y="592.727">crates</tspan></text>
+<text fill="#8D9AAC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="147" y="615.636">Cargo dependency tools</tspan></text>
+<text fill="#A7BD9E" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" letter-spacing="0em"><tspan x="148" y="639.636">Enabled</tspan></text>
+<rect width="260" height="1" transform="translate(92 862)" fill="#292F39"/>
+<text fill="#8B98AB" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="98" y="898.636">WORKSPACE</tspan></text>
+<text fill="#B6C2D2" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="98" y="938.864">4 extensions enabled</tspan></text>
+<text fill="#7F8DA1" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="98" y="969.5">All extensions are up to date</tspan></text>
+<rect x="378.5" y="72.5" width="1531" height="963" rx="11.5" fill="#111316"/>
+<rect x="378.5" y="72.5" width="1531" height="963" rx="11.5" stroke="#2A2D33"/>
+<text fill="#D4DBE5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="404" y="107.727">Extensions / rust-analyzer</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" letter-spacing="0em"><tspan x="1871" y="109.273">&#xd7;</tspan></text>
+<rect width="1500" height="1" transform="translate(394 127)" fill="#282E37"/>
+<rect x="425" y="168" width="88" height="88" rx="18" fill="#30251F"/>
+<path d="M463.5 195.5H459.833V206.5L454.333 212L459.833 217.5V228.5H463.5M474.5 195.5H478.166V206.5L483.666 212L478.166 217.5V228.5H474.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#DDA98C"/>
+<text fill="#ECEEF3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="30" font-weight="600" letter-spacing="0em"><tspan x="536" y="199.909">rust-analyzer</tspan></text>
+<text fill="#A4B2C6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="538" y="229.727">rust-lang</tspan></text>
+<text fill="#A6B2C2" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="538" y="262.591">Rust language support for a focused development workflow.</tspan></text>
+<rect x="538" y="293" width="99" height="36" rx="7" fill="#272C34"/>
+<text fill="#C3CCDA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="552" y="315.864">Disable</tspan></text>
+<rect x="649" y="293" width="103" height="36" rx="7" fill="#272C34"/>
+<text fill="#C3CCDA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="663" y="315.864">Uninstall</tspan></text>
+<path d="M1568.96 198.5L1572.12 201.667L1580.04 193.75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8BE9E"/>
+<text fill="#A8BE9E" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="1597" y="204.727">Installed and enabled</tspan></text>
+<text fill="#8291A5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1597" y="233.5">Enabled in this workspace</tspan></text>
+<text fill="#E4C2AE" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="427" y="380.727">Overview</tspan></text>
+<text fill="#8B99AD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" letter-spacing="0em"><tspan x="539" y="380.727">Feature contributions</tspan></text>
+<rect x="425" y="398" width="65" height="2" rx="1" fill="#D69272"/>
+<rect width="1438" height="1" transform="translate(425 403)" fill="#282E37"/>
+<text fill="#DCE2EC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="24" font-weight="600" letter-spacing="0em"><tspan x="426" y="460.227">Language intelligence for Rust</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="427" y="493.591">Stay in flow with fast feedback and a deeper understanding of your project.</tspan></text>
+<path d="M430.75 542L433.75 545L441.25 537.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A6BD9E"/>
+<text fill="#CCD6E5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="456" y="543.727">Smart completions</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="663" y="544.864">Context-aware suggestions as you type.</tspan></text>
+<path d="M430.75 591L433.75 594L441.25 586.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A6BD9E"/>
+<text fill="#CCD6E5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="456" y="592.727">Inline diagnostics</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="663" y="593.864">Catch issues before running your build.</tspan></text>
+<path d="M430.75 640L433.75 643L441.25 635.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A6BD9E"/>
+<text fill="#CCD6E5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="456" y="641.727">Go to definition</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="663" y="642.864">Move through your workspace with ease.</tspan></text>
+<rect x="426" y="706" width="926" height="112" rx="10" fill="#191D23"/>
+<text fill="#6E877D" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="12" letter-spacing="0em"><tspan x="445" y="735.32">// Type information, right where you need it.</tspan></text>
+<text fill="#B8C5D8" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="445" y="768.18">let config: Config = config::load(&#38;cli.config)?;</tspan></text>
+<text fill="#B8C5D8" style="white-space: pre" xml:space="preserve" font-family="JetBrains Mono" font-size="13" letter-spacing="0em"><tspan x="445" y="797.18">let command: Command = cli.command;</tspan></text>
+<rect x="1420" y="442" width="443" height="376" rx="10" fill="#191D22"/>
+<text fill="#A0ADBF" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" font-weight="600" letter-spacing="0em"><tspan x="1442" y="475.5">YOUR RUST TOOLKIT</tspan></text>
+<path d="M1445.75 532L1448.75 535L1456.25 527.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8BE9E"/>
+<text fill="#CBD6E6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="1474" y="532.727">Rust toolchain</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="1474" y="559.864">1.82.0 &#xb7; stable</tspan></text>
+<path d="M1445.75 614L1448.75 617L1456.25 609.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8BE9E"/>
+<text fill="#CBD6E6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="1474" y="614.727">Cargo</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="1474" y="641.864">Connected to workspace</tspan></text>
+<path d="M1445.75 696L1448.75 699L1456.25 691.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8BE9E"/>
+<text fill="#CBD6E6" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="1474" y="696.727">CodeLLDB</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" letter-spacing="0em"><tspan x="1474" y="723.864">Ready to debug</tspan></text>
+<text fill="#D3DEED" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="19" font-weight="600" letter-spacing="0em"><tspan x="427" y="884.409">Make your workspace yours</tspan></text>
+<rect x="426" y="910" width="464" height="91" rx="10" fill="#1A1E24"/>
+<path d="M446.167 946C446.167 946 450.5 938.417 457 938.417C463.5 938.417 467.834 946 467.834 946C467.834 946 463.5 953.583 457 953.583C450.5 953.583 446.167 946 446.167 946Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<path d="M460.25 946C460.25 947.795 458.795 949.25 457 949.25C455.205 949.25 453.75 947.795 453.75 946C453.75 944.205 455.205 942.75 457 942.75C458.795 942.75 460.25 944.205 460.25 946Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<text fill="#CFD9E9" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" font-weight="600" letter-spacing="0em"><tspan x="488" y="942.591">Error Lens</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="488" y="970.5">Diagnostics at a glance</tspan></text>
+<rect x="786" y="938" width="84" height="36" rx="7" fill="#272C34"/>
+<text fill="#C3CCDA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="800" y="960.864">Install</tspan></text>
+<rect x="913" y="910" width="464" height="91" rx="10" fill="#1A1E24"/>
+<path d="M939.666 938.417C939.666 939.613 938.696 940.583 937.5 940.583C936.303 940.583 935.333 939.613 935.333 938.417C935.333 937.22 936.303 936.25 937.5 936.25C938.696 936.25 939.666 937.22 939.666 938.417Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<path d="M939.666 953.583C939.666 954.78 938.696 955.75 937.5 955.75C936.303 955.75 935.333 954.78 935.333 953.583C935.333 952.387 936.303 951.417 937.5 951.417C938.696 951.417 939.666 952.387 939.666 953.583Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<path d="M952.666 939.5C952.666 940.697 951.696 941.667 950.5 941.667C949.303 941.667 948.333 940.697 948.333 939.5C948.333 938.303 949.303 937.333 950.5 937.333C951.696 937.333 952.666 938.303 952.666 939.5Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<path d="M937.5 940.583V947.083M937.5 947.083V951.417M937.5 947.083C946.167 947.083 950.5 946 950.5 941.667" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<text fill="#CFD9E9" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" font-weight="600" letter-spacing="0em"><tspan x="975" y="942.591">GitLens</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="975" y="970.5">Understand your Git history</tspan></text>
+<rect x="1273" y="938" width="84" height="36" rx="7" fill="#272C34"/>
+<text fill="#C3CCDA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="1287" y="960.864">Install</tspan></text>
+<rect x="1400" y="910" width="464" height="91" rx="10" fill="#1A1E24"/>
+<path d="M1427.75 944.917H1434.25M1427.75 949.25H1434.25M1423.42 936.25H1434.25L1438.58 940.583V955.75H1423.42V936.25Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#A8B6CB"/>
+<text fill="#CFD9E9" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" font-weight="600" letter-spacing="0em"><tspan x="1462" y="942.591">Material Icon Theme</tspan></text>
+<text fill="#A2ADBD" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1462" y="970.5">A clearer view of your files</tspan></text>
+<rect x="1760" y="938" width="84" height="36" rx="7" fill="#272C34"/>
+<text fill="#C3CCDA" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="12" font-weight="600" letter-spacing="0em"><tspan x="1774" y="960.864">Install</tspan></text>
+<rect width="1920" height="34" transform="translate(0 1046)" fill="#17191C"/>
+<text fill="#ADB8C9" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="24" y="1066.5">Extensions</tspan></text>
+<text fill="#91A0B5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" letter-spacing="0em"><tspan x="1490" y="1066.5">4 installed &#xb7; all up to date</tspan></text>
+</g>
+<defs>
+<clipPath id="clip0_7_1256">
+<rect width="1920" height="1080" rx="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>

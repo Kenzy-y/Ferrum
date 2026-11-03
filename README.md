@@ -25,6 +25,17 @@ and fonts; see `.github/workflows/ci.yml` for the exact list.
 Logging is controlled by the `RUST_LOG` environment variable, for example
 `RUST_LOG=debug cargo run`.
 
+## Third-party assets
+
+The binary embeds these assets; their license files are next to them:
+
+- [Inter](https://github.com/rsms/inter) 4.1 — SIL Open Font License 1.1,
+  `crates/theme/fonts/inter/OFL.txt`.
+- [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) 2.304 — SIL Open
+  Font License 1.1, `crates/theme/fonts/jetbrains-mono/OFL.txt`.
+- [Lucide](https://lucide.dev) icons 1.60.0 — ISC (some icons MIT, from
+  Feather), `crates/ui/icons/lucide/LICENSE`.
+
 ## License
 
 Licensed under either of

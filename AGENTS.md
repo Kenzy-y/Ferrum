@@ -189,30 +189,35 @@ Goal: very detailed settings in the future without rewriting the system.
 
 - **Source of truth** — the mockups in `docs/design/mockups/`. Implement as close to them as possible. Design changes only with the owner's approval.
 - **Tokens.** Colors, spacing, radii, font sizes come only from tokens in the `theme` crate. A hardcoded color or spacing value in a component is a bug. Tokens are structured so that light and high-contrast themes and a compact density mode (spacing via density tokens) can be added later.
-- **Base dark theme** (values eyedropped from the mockups, approximate, refine against the mockups):
+- **Base dark theme.** Exact values from the Figma SVG exports in `docs/design/mockups/` (near-identical greys merged into one token per group). The complete token set, including derived state tokens (hover, pressed, disabled, focus), lives in `crates/theme/themes/dark.toml`; that file is the source of truth for values. Main tokens:
 
 | Token | Color | Where |
 |---|---|---|
-| `bg.app` | `#18191D` | title bar, status bar, background between panels |
-| `bg.sidebar` | `#15161A` | sidebar |
-| `bg.editor` | `#121317` | editor, terminal |
-| `bg.input` | `#212226` | search bar, input fields |
-| `bg.button.secondary` | `#242730` | secondary buttons |
-| `bg.kbd` | `#202028` | keyboard shortcut badges |
-| `bg.line.active` | `#1D1E22` | current line |
-| `bg.list.selected` | `#2A2722` | selected file, selected result |
+| `bg.app` | `#17191C` | title bar, activity bar, status bar, gaps between panels |
+| `bg.sidebar` | `#141619` | sidebar |
+| `bg.editor` | `#111316` | editor, terminal |
+| `bg.input` | `#202226` | title bar search, find field |
+| `bg.input.inset` | `#191D22` | fields inside sidebars |
+| `bg.card` | `#191D22` | cards, diff panes |
+| `bg.button.secondary` | `#24272D` | secondary buttons |
+| `bg.kbd` | `#1E2228` | keyboard shortcut badges |
+| `bg.line.active` | `#1B1E23` | current line |
+| `bg.list.selected` | `#292522` | selected file, selected result |
 | `bg.tab.active` | `#282629` | active tab |
-| `accent` | `#D79273` | primary buttons, accents, breakpoint dots |
-| `text.primary` | `#F7F8FC` | headings, main text |
-| `text.secondary` | `#848589` | subtitles |
-| `text.muted` | `#666972` | hints, empty states |
-| `text.line_number` | `#4C4D51` | line numbers |
-| `text.line_number.active` | `#B9BABE` | current line number |
-| `diff.added.bg` | `#20352E` | added lines in diffs |
+| `bg.diff.added` / `bg.diff.removed` | `#21332B` / `#382427` | changed lines in diffs |
+| `border.panel` / `border.input` | `#2A2D33` / `#303339` | panel and input borders |
+| `border.focus` | `#A57961` | keyboard focus ring |
+| `accent` | `#D69272` | primary buttons, active markers |
+| `text.on_accent` | `#201B19` | text on primary buttons |
+| `text.primary` | `#ECEDEE` | headings, main text |
+| `text.secondary` | `#A1A5AD` | menus, tree items, status bar |
+| `text.subtle` | `#8F959F` | section headers, inactive tabs, placeholders |
+| `text.muted` | `#777E88` | hints, empty states |
+| `text.line_number` / `.active` | `#535C69` / `#D5D8DF` | line numbers |
 
-  Take syntax colors from the editor mockups and define them as `syntax.*` tokens.
+  Syntax (`syntax.*`): keyword `#D6A58E`, type `#B6AED3`, function `#D8C295`, attribute `#BBA77E`, string `#A8BC9C`, number `#8FB4C9`, comment `#6E877D`, doc comment `#667B73`, plain `#BCC5D2`, inlay hint `#56616F`.
 - **Components.** The `ui` crate is the design system on top of gpui-component (buttons, badges, tabs, panels, lists, inputs). Panels are composed only from `ui` components.
-- **Fonts and icons** are embedded in the binary. UI font — Inter, code font — JetBrains Mono (verify against mockups), icons — Lucide or our own SVGs. Licenses: OFL-1.1 and ISC.
+- **Fonts and icons** are embedded in the binary. UI font — Inter (400, 500, 600), code font — JetBrains Mono (400, 500), as specified in the mockups; icons — Lucide or our own SVGs. Licenses: OFL-1.1 and ISC; license files live next to the assets.
 - **Localization.** All user-visible strings go through the `i18n` crate (Fluent `.ftl` files); default locales: `en` and `ru`. User-facing string literals directly in UI code are forbidden.
 - **Keyboard.** Every action is keyboard-accessible; focus is always visible.
 
