@@ -7,6 +7,7 @@
 use std::path::Path;
 
 use fs::Fs;
+use tracing::Instrument as _;
 
 use crate::{SettingsError, SettingsLayer};
 
@@ -30,11 +31,15 @@ pub async fn read_config_file(fs: &dyn Fs, path: &Path) -> Result<Option<String>
 ///
 /// Fails if the file cannot be read or is not a valid settings file.
 pub async fn load_layer(fs: &dyn Fs, path: &Path) -> Result<Option<SettingsLayer>, SettingsError> {
-    let _span = tracing::debug_span!("settings.load_layer", path = %path.display()).entered();
-    read_config_file(fs, path)
-        .await?
-        .map(|text| SettingsLayer::parse(&text, Some(path)))
-        .transpose()
+    let span = tracing::debug_span!("settings.load_layer", path = %path.display());
+    async {
+        read_config_file(fs, path)
+            .await?
+            .map(|text| SettingsLayer::parse(&text, Some(path)))
+            .transpose()
+    }
+    .instrument(span)
+    .await
 }
 
 #[cfg(test)]
