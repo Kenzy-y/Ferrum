@@ -2,7 +2,7 @@
 
 Агенты берут первую невыполненную задачу текущего этапа, отмечают выполненное и пишут короткую запись в журнал (см. AGENTS.md, раздел 11). Следующий этап начинается, когда текущий закрыт и работает на всех трёх платформах.
 
-**Текущий этап: 0**
+**Текущий этап: 1**
 
 ---
 
@@ -11,7 +11,7 @@
 - [x] Cargo workspace, `rust-toolchain.toml`, `[workspace.dependencies]`, `[workspace.lints]`
 - [x] `LICENSE-MIT`, `LICENSE-APACHE`, `license = "MIT OR Apache-2.0"` в `[workspace.package]`, README с разделом о лицензии
 - [x] `deny.toml` со списком разрешённых лицензий
-- [ ] CI: Windows, macOS, Linux — fmt, clippy, test, deny (workflow написан, ждёт первого запуска на GitHub)
+- [x] CI: Windows, macOS, Linux — fmt, clippy, test, deny
 - [x] Крейт `ferrum` с пустым окном GPUI, закреплённые ревизии GPUI и gpui-component
 - [x] Крейт `app_identity`: название продукта и идентификаторы в одном месте
 - [x] Логирование через `tracing`
@@ -92,6 +92,8 @@
 ## Журнал
 
 Новые записи сверху. Формат: дата — что сделано; что осталось; известные проблемы.
+
+2026-11-04 — Этап 0 закрыт: CI зелёный на Windows, macOS, Linux. Toolchain поднят до 1.98.1 (как у снимка Zed, на 1.97.0 не собирался gpui-pre-macos), каталог конфигурации в один уровень (%APPDATA%\Ferrum\config, ~/Library/Application Support/Ferrum, ~/.config/ferrum), правило о точечных #[allow] в AGENTS.md. Осталось: этап 1. Проблем нет.
 
 2026-11-04 — Этап 0: workspace (toolchain 1.97.0, линты, лицензии), deny.toml, CI, крейты app_identity, fs, settings, i18n, commands, ferrum; пустое окно GPUI (gpui-pre =0.3.11 + gpui-component =0.9.0, ADR 0001). Локально на Windows проходят fmt, clippy, test и deny, окно открывается. Осталось: первый прогон CI на macOS и Linux (нужен push на GitHub). Проблемы: в debug-сборке GPUI на Windows пишет в лог безвредную ошибку о DXGI debug interface; в deny.toml игнорируются 8 предупреждений RustSec о неподдерживаемых транзитивных пакетах GPUI.
 
