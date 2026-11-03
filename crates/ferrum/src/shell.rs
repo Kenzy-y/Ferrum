@@ -1,17 +1,19 @@
-//! Root view of the main window. For now it is empty and only routes
-//! keystrokes to commands; the workbench layout replaces its content later.
+//! Root view of the main window. It routes keystrokes to commands and, for
+//! stage 1, shows the component gallery; the workbench layout replaces it.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use commands::{CommandId, Keymap, KeymapMatcher, MatchResult};
 use gpui::{
-    Context, FocusHandle, InteractiveElement as _, IntoElement, KeyDownEvent, Render, Styled as _,
-    Window, div,
+    AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
+    KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Window, div, px,
 };
-use gpui_component::ActiveTheme as _;
+use i18n::I18n;
+use theme::ActiveTheme as _;
 
 use crate::app_commands::Handler;
+use crate::gallery::Gallery;
 
 /// Keybinding context active everywhere in the main window.
 const WORKBENCH_CONTEXT: &str = "workbench";
@@ -21,22 +23,26 @@ pub(crate) struct Shell {
     keymap: Arc<Keymap>,
     handlers: Arc<HashMap<CommandId, Handler>>,
     matcher: KeymapMatcher,
+    gallery: Entity<Gallery>,
 }
 
 impl Shell {
     pub(crate) fn new(
         keymap: Arc<Keymap>,
         handlers: Arc<HashMap<CommandId, Handler>>,
+        i18n: Arc<I18n>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
+        let gallery = cx.new(|cx| Gallery::new(i18n, window, cx));
         Self {
             focus_handle,
             keymap,
             handlers,
             matcher: KeymapMatcher::new(),
+            gallery,
         }
     }
 
@@ -66,11 +72,16 @@ impl Shell {
 
 impl Render for Shell {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.theme();
         div()
             .track_focus(&self.focus_handle)
             .on_key_down(cx.listener(Self::on_key_down))
             .size_full()
-            .bg(cx.theme().background)
+            .font_family(SharedString::from(theme.fonts.ui.clone()))
+            .text_size(px(theme.metrics.font_size.base))
+            .text_color(theme.colors.text_primary)
+            .bg(theme.colors.bg_app)
+            .child(self.gallery.clone())
     }
 }
 

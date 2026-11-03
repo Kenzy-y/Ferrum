@@ -1579,8 +1579,10 @@ dependencies = [
  "gpui-pre-platform",
  "i18n",
  "settings",
+ "theme",
  "tracing",
  "tracing-subscriber",
+ "ui",
 ]
 
 [[package]]

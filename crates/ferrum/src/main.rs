@@ -6,6 +6,7 @@
 
 mod app_commands;
 mod config;
+mod gallery;
 mod logging;
 mod shell;
 
@@ -36,35 +37,49 @@ fn main() -> anyhow::Result<()> {
         tracing::warn!("no home directory: user settings and keymap are not loaded");
     }
 
-    gpui_platform::application().run(move |cx: &mut App| {
-        gpui_component::init(cx);
-        cx.on_window_closed(|cx, _window| {
-            if cx.windows().is_empty() {
-                cx.quit();
+    gpui_platform::application()
+        .with_assets(ui::Assets)
+        .run(move |cx: &mut App| {
+            gpui_component::init(cx);
+            if let Err(error) = theme::register_fonts(cx) {
+                tracing::error!("{error}");
             }
-        })
-        .detach();
-
-        // Configuration files are read in the background; the window opens
-        // as soon as they are loaded, so it starts with the right language
-        // and keymap without blocking the UI thread.
-        let loading = cx.background_executor().spawn(config::load(
-            fs,
-            config_paths,
-            settings_registry,
-            command_registry,
-        ));
-        cx.spawn(async move |cx| {
-            let loaded = loading.await;
-            cx.update(|cx| {
-                if let Err(error) = open_main_window(loaded, cx) {
-                    tracing::error!("{error:#}");
+            match theme::Theme::built_in(theme::DEFAULT_THEME, theme::Density::default()) {
+                Ok(active) => theme::set_theme(active, cx),
+                Err(error) => {
+                    tracing::error!("{error}");
+                    cx.quit();
+                    return;
+                }
+            }
+            ui::sync_component_theme(cx);
+            cx.on_window_closed(|cx, _window| {
+                if cx.windows().is_empty() {
                     cx.quit();
                 }
-            });
-        })
-        .detach();
-    });
+            })
+            .detach();
+
+            // Configuration files are read in the background; the window opens
+            // as soon as they are loaded, so it starts with the right language
+            // and keymap without blocking the UI thread.
+            let loading = cx.background_executor().spawn(config::load(
+                fs,
+                config_paths,
+                settings_registry,
+                command_registry,
+            ));
+            cx.spawn(async move |cx| {
+                let loaded = loading.await;
+                cx.update(|cx| {
+                    if let Err(error) = open_main_window(loaded, cx) {
+                        tracing::error!("{error:#}");
+                        cx.quit();
+                    }
+                });
+            })
+            .detach();
+        });
     Ok(())
 }
 
@@ -88,8 +103,9 @@ fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
 
     let keymap = Arc::new(loaded.keymap);
     let handlers = Arc::new(app_commands::handlers());
+    let i18n = Arc::new(i18n);
     cx.open_window(options, |window, cx| {
-        let shell = cx.new(|cx| Shell::new(keymap, handlers, window, cx));
+        let shell = cx.new(|cx| Shell::new(keymap, handlers, i18n, window, cx));
         cx.new(|cx| gpui_component::Root::new(shell, window, cx))
     })
     .context("cannot open the main window")?;
