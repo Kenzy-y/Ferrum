@@ -1,0 +1,67 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+# Internal crates.
+app_identity = { path = "crates/app_identity" }
+commands = { path = "crates/commands" }
+fs = { path = "crates/fs" }
+i18n = { path = "crates/i18n" }
+settings = { path = "crates/settings" }
+
+# UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built
+# against; both are pinned to exact versions and updated together in a
+# separate commit. See docs/decisions/0001-gpui-revision.md.
+gpui = { package = "gpui-pre", version = "=0.3.11" }
+gpui_platform = { package = "gpui-pre-platform", version = "=0.3.11", features = [
+    "font-kit",
+    "x11",
+    "wayland",
+    "runtime_shaders",
+] }
+gpui-component = { version = "=0.9.0", default-features = false }
+
+# Core.
+anyhow = "1.0.104"
+directories = "6.0.0"
+fluent-bundle = "0.16.0"
+schemars = "1.2.3"
+serde = { version = "1.0.229", features = ["derive"] }
+sys-locale = "0.3.2"
+thiserror = "2.0.21"
+toml = "1.1.8"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+unic-langid = "0.9.6"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+# Exceptions from `pedantic`:
+# - `must_use_candidate` flags nearly every getter; `#[must_use]` is added
+#   deliberately where ignoring a result is a real mistake.
+must_use_candidate = "allow"
+
+[profile.dev]
+debug = "limited"
+
+# GPUI is slow to render unoptimized; optimize it even in dev builds.
+[profile.dev.package.gpui-pre]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
