@@ -20,7 +20,7 @@ pub use error::FsError;
 pub use fake::FakeFs;
 pub use real::RealFs;
 pub use types::{DirEntry, EntryKind, Metadata};
-pub use watch::{FsEvent, FsEventKind, WATCH_DEBOUNCE, WatchFilter, Watcher};
+pub use watch::{FsEvent, FsEventKind, WATCH_DEBOUNCE, WatchFilter, WatchMode, Watcher};
 
 /// A boxed, sendable future, used so that [`Fs`] stays object-safe.
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -66,13 +66,19 @@ pub trait Fs: Send + Sync {
         path: &'a Path,
     ) -> BoxFuture<'a, Result<std::path::PathBuf, FsError>>;
 
-    /// Watches `root` recursively. Paths rejected by `filter` are dropped
-    /// before they leave the watcher thread, so busy ignored directories
-    /// (build output) cost almost nothing. Events arrive in batches; dropping
-    /// the [`Watcher`] stops watching.
+    /// Watches `root`, recursively or only its direct entries (`mode`).
+    /// Paths rejected by `filter` are dropped before they leave the watcher
+    /// thread, so busy ignored directories (build output) cost almost
+    /// nothing. Events arrive in batches; dropping the [`Watcher`] stops
+    /// watching.
     ///
     /// # Errors
     ///
     /// Fails if the platform cannot watch `root`.
-    fn watch(&self, root: &Path, filter: Arc<dyn WatchFilter>) -> Result<Watcher, FsError>;
+    fn watch(
+        &self,
+        root: &Path,
+        mode: WatchMode,
+        filter: Arc<dyn WatchFilter>,
+    ) -> Result<Watcher, FsError>;
 }

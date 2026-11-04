@@ -6,7 +6,7 @@ use std::time::SystemTime;
 
 use gpui::{AppContext as _, Context, PathPromptOptions, SharedString, Window};
 use i18n::FluentArgs;
-use project::{ProjectError, RecentProjects, Workspace};
+use project::{FilesSettings, ProjectError, RecentProjects, Workspace};
 use settings::LayerKind;
 use workbench::{
     FileTreeTexts, FileTreeView, RecentEntry, WorkspaceInfo, WorkspaceSettingsChanged,
@@ -145,7 +145,11 @@ impl Shell {
         let root = workspace.root().to_path_buf();
         let settings_file = workspace.settings_file();
         let icons = self.file_icons.clone();
-        let tree = cx.new(|cx| FileTreeView::new(fs, root, settings_file, icons, texts, cx));
+        let hidden = self.settings.get::<FilesSettings>(None).hidden;
+        let tree =
+            cx.new(|cx| FileTreeView::new(fs, root, settings_file, &hidden, icons, texts, cx));
+        self.hidden = hidden;
+        self.file_tree = Some(tree.clone());
         self.workspace_watch = Some(cx.subscribe_in(
             &tree,
             window,

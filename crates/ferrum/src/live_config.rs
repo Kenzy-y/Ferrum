@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use commands::{CommandRegistry, Keymap};
-use fs::{Fs, FsEvent, FsEventKind, WatchFilter};
+use fs::{Fs, FsEvent, FsEventKind, WatchFilter, WatchMode};
 use futures::StreamExt as _;
 use gpui::{Context, Task, Window};
 use settings::SettingsLayer;
@@ -88,7 +88,7 @@ pub(crate) fn start(
             .background_executor()
             .spawn(async move {
                 watch_fs.create_dir_all(&directory).await?;
-                watch_fs.watch(&directory, filter)
+                watch_fs.watch(&directory, WatchMode::NonRecursive, filter)
             })
             .await;
         let mut watcher = match watcher {

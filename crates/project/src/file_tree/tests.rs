@@ -187,3 +187,30 @@ fn changing_gitignore_changes_dimming() {
     assert_eq!(visibility("target"), Some(Visibility::Visible));
     assert_eq!(visibility("README.md"), Some(Visibility::Ignored));
 }
+
+#[test]
+fn open_ignored_folders_are_listed_while_visible() {
+    let fs = project();
+    fs.insert_dir("/work/forge/target/debug/deps");
+    let mut tree = FileTree::new(PathBuf::from(ROOT));
+    load(&fs, &mut tree, ROOT);
+    assert!(tree.open_ignored_dirs().is_empty());
+
+    tree.expand(Path::new("/work/forge/target"));
+    load(&fs, &mut tree, "/work/forge/target");
+    tree.expand(Path::new("/work/forge/target/debug"));
+    load(&fs, &mut tree, "/work/forge/target/debug");
+    assert_eq!(
+        tree.open_ignored_dirs(),
+        [
+            PathBuf::from("/work/forge/target"),
+            PathBuf::from("/work/forge/target/debug")
+        ]
+    );
+
+    tree.collapse(Path::new("/work/forge/target"));
+    assert!(
+        tree.open_ignored_dirs().is_empty(),
+        "hidden by the collapsed parent"
+    );
+}

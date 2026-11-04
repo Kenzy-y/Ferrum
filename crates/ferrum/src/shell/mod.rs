@@ -42,6 +42,10 @@ pub(crate) struct Shell {
     recent: project::RecentProjects,
     /// Icons of the file tree, registered by contributors at startup.
     file_icons: Arc<workbench::FileIcons>,
+    /// The file tree of the open folder.
+    file_tree: Option<Entity<workbench::FileTreeView>>,
+    /// `[files] hidden` the tree was last given.
+    hidden: Vec<String>,
     /// Reacts to changes of the workspace settings file.
     workspace_watch: Option<gpui::Subscription>,
     /// Where `recent` is saved; `None` without a home directory.
@@ -111,6 +115,8 @@ impl Shell {
             recent,
             file_icons: Arc::new(workbench::FileIcons::new()),
             workspace_watch: None,
+            file_tree: None,
+            hidden: Vec::new(),
             recent_file,
             _config_watch: config_watch,
             workbench,
@@ -153,6 +159,13 @@ impl Shell {
         config::report_settings(&self.settings);
         self.chord_timeout = config::chord_timeout(&self.settings);
         self.apply_language(window, cx);
+        let hidden = self.settings.get::<project::FilesSettings>(None).hidden;
+        if hidden != self.hidden
+            && let Some(tree) = &self.file_tree
+        {
+            tree.update(cx, |tree, cx| tree.set_hidden(&hidden, cx));
+            self.hidden = hidden;
+        }
     }
 
     fn apply_language(&mut self, window: &mut Window, cx: &mut Context<Self>) {

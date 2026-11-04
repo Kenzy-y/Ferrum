@@ -6,14 +6,16 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::Arc;
 
-use fs::{Fs, WatchFilter};
+use fs::{Fs, WatchFilter, WatchMode};
 use futures::StreamExt as _;
 use gpui::{
     App, Context, EventEmitter, FocusHandle, InteractiveElement as _, IntoElement, KeyDownEvent,
     ParentElement as _, Render, ScrollStrategy, SharedString, Styled as _, Task,
     UniformListScrollHandle, Window, div, px, uniform_list,
 };
-use project::{FileTree, RowState, TreeRow, Visibility, load_dir};
+use project::{
+    FileTree, GitEnvironment, RowState, TreeRow, Visibility, load_dir, read_repository_excludes,
+};
 use theme::ActiveTheme as _;
 use ui::{Icon, IconName, ListRow};
 
@@ -44,26 +46,43 @@ pub struct FileTreeView {
     texts: FileTreeTexts,
     focus_handle: FocusHandle,
     scroll: UniformListScrollHandle,
+    /// Watch of the whole workspace (ignored paths dropped).
     _watch: Task<()>,
+    /// One non-recursive watch per open ignored folder.
+    ignored_watches: HashMap<PathBuf, Task<()>>,
 }
 
 impl EventEmitter<WorkspaceSettingsChanged> for FileTreeView {}
 
 impl FileTreeView {
     /// Shows the tree of `root` and watches it. `settings_file` is the
-    /// workspace settings file, reported with [`WorkspaceSettingsChanged`].
+    /// workspace settings file, reported with [`WorkspaceSettingsChanged`];
+    /// `hidden` are the `[files] hidden` patterns.
     pub fn new(
         fs: Arc<dyn Fs>,
         root: PathBuf,
         settings_file: PathBuf,
+        hidden: &[String],
         icons: Arc<FileIcons>,
         texts: FileTreeTexts,
         cx: &mut Context<Self>,
     ) -> Self {
         let tree = FileTree::new(root.clone());
-        let watch = Self::watch(fs.clone(), root.clone(), settings_file, &tree, cx);
-        let mut view = Self {
-            fs,
+        let rules = tree.rules();
+        rules.set_hidden(hidden);
+        let workspace_rules = rules.clone();
+        let filter: Arc<dyn WatchFilter> =
+            Arc::new(move |path: &Path| workspace_rules.is_ignored_for_watch(path));
+        let watch = Self::watch(
+            fs.clone(),
+            root.clone(),
+            WatchMode::Recursive,
+            filter,
+            Some(settings_file),
+            cx,
+        );
+        let view = Self {
+            fs: fs.clone(),
             tree,
             rows: Rc::new(Vec::new()),
             selected: None,
@@ -74,27 +93,54 @@ impl FileTreeView {
             focus_handle: cx.focus_handle(),
             scroll: UniformListScrollHandle::new(),
             _watch: watch,
+            ignored_watches: HashMap::new(),
         };
-        view.load(root, cx);
+        // The repository-wide exclude files apply from the first listing on.
+        cx.spawn(async move |view, cx| {
+            let excludes_root = root.clone();
+            let excludes = cx
+                .background_executor()
+                .spawn(async move {
+                    read_repository_excludes(
+                        fs.as_ref(),
+                        &excludes_root,
+                        &GitEnvironment::from_platform(),
+                    )
+                    .await
+                })
+                .await;
+            rules.set_repository_excludes(
+                excludes.info_exclude.as_deref(),
+                excludes.global.as_deref(),
+            );
+            let _ = view.update(cx, |view, cx| view.load(root, cx));
+        })
+        .detach();
         view
     }
 
-    /// Watches the workspace; events under ignored folders are dropped on
-    /// the watcher thread.
+    /// Replaces the hidden patterns and lists every loaded folder again.
+    pub fn set_hidden(&mut self, patterns: &[String], cx: &mut Context<Self>) {
+        self.tree.rules().set_hidden(patterns);
+        for directory in self.tree.loaded_dirs() {
+            self.load(directory, cx);
+        }
+    }
+
+    /// Watches `path` and reloads the folders events touch. With
+    /// `settings_file`, changes of that file are reported too.
     fn watch(
         fs: Arc<dyn Fs>,
-        root: PathBuf,
-        settings_file: PathBuf,
-        tree: &FileTree,
+        path: PathBuf,
+        mode: WatchMode,
+        filter: Arc<dyn WatchFilter>,
+        settings_file: Option<PathBuf>,
         cx: &mut Context<Self>,
     ) -> Task<()> {
-        let rules = tree.rules();
-        let filter: Arc<dyn WatchFilter> =
-            Arc::new(move |path: &Path| rules.is_ignored_for_watch(path));
         cx.spawn(async move |view, cx| {
             let watcher = cx
                 .background_executor()
-                .spawn(async move { fs.watch(&root, filter) })
+                .spawn(async move { fs.watch(&path, mode, filter) })
                 .await;
             let mut watcher = match watcher {
                 Ok(watcher) => watcher,
@@ -104,7 +150,9 @@ impl FileTreeView {
                 }
             };
             while let Some(batch) = watcher.events().next().await {
-                let settings_changed = batch.iter().any(|event| event.path == settings_file);
+                let settings_changed = settings_file
+                    .as_ref()
+                    .is_some_and(|file| batch.iter().any(|event| &event.path == file));
                 let updated = view.update(cx, |view, cx| {
                     if settings_changed {
                         cx.emit(WorkspaceSettingsChanged);
@@ -118,6 +166,32 @@ impl FileTreeView {
                 }
             }
         })
+    }
+
+    /// Keeps one non-recursive watch per open ignored folder: the workspace
+    /// watch drops their events, so without it an expanded `target` would go
+    /// stale. Dropping a task stops its watch.
+    fn sync_ignored_watches(&mut self, cx: &mut Context<Self>) {
+        let open: std::collections::HashSet<PathBuf> =
+            self.tree.open_ignored_dirs().into_iter().collect();
+        self.ignored_watches.retain(|path, _| open.contains(path));
+        for directory in open {
+            if self.ignored_watches.contains_key(&directory) {
+                continue;
+            }
+            let rules = self.tree.rules();
+            // Ignored entries are wanted here; hidden ones still are not.
+            let filter: Arc<dyn WatchFilter> = Arc::new(move |path: &Path| rules.is_hidden(path));
+            let watch = Self::watch(
+                self.fs.clone(),
+                directory.clone(),
+                WatchMode::NonRecursive,
+                filter,
+                None,
+                cx,
+            );
+            self.ignored_watches.insert(directory, watch);
+        }
     }
 
     /// Reads `directory` in the background and applies the result.
@@ -153,6 +227,7 @@ impl FileTreeView {
 
     fn refresh_rows(&mut self, cx: &mut Context<Self>) {
         self.rows = Rc::new(self.tree.rows());
+        self.sync_ignored_watches(cx);
         if let Some(selected) = &self.selected
             && !self.rows.iter().any(|row| &row.entry.path == selected)
         {

@@ -306,6 +306,17 @@ impl FileTree {
         reload
     }
 
+    /// Ignored folders that are expanded and visible. The workspace watch
+    /// skips ignored paths, so each of these gets its own non-recursive
+    /// watch while it stays open.
+    pub fn open_ignored_dirs(&self) -> Vec<PathBuf> {
+        self.rows()
+            .into_iter()
+            .filter(|row| row.expanded == Some(true) && row.entry.visibility == Visibility::Ignored)
+            .map(|row| row.entry.path)
+            .collect()
+    }
+
     /// The visible rows: children of expanded folders, depth first.
     pub fn rows(&self) -> Vec<TreeRow> {
         let mut rows = Vec::new();

@@ -7,7 +7,7 @@ use std::time::Duration;
 use commands::{CommandRegistry, KeyboardSettings, Keymap, KeymapDiagnostic, Platform};
 use fs::Fs;
 use i18n::{I18n, LocalizationSettings};
-use project::{ProjectSettings, RECENT_PROJECTS_FILE_NAME, RecentProjects};
+use project::{FilesSettings, ProjectSettings, RECENT_PROJECTS_FILE_NAME, RecentProjects};
 use settings::paths::ConfigPaths;
 use settings::{LayerKind, SettingsLayer, SettingsRegistry, SettingsStore, load};
 
@@ -28,6 +28,7 @@ pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
         .register::<LocalizationSettings>()?
         .register::<KeyboardSettings>()?
         .register::<ProjectSettings>()?
+        .register::<FilesSettings>()?
         .build())
 }
 
@@ -128,6 +129,7 @@ pub(crate) fn report_settings(settings: &SettingsStore) {
         .chain(settings.check::<LocalizationSettings>())
         .chain(settings.check::<KeyboardSettings>())
         .chain(settings.check::<ProjectSettings>())
+        .chain(settings.check::<FilesSettings>())
     {
         tracing::warn!(?diagnostic, "settings problem");
     }

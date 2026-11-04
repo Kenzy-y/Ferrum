@@ -4921,6 +4921,7 @@ dependencies = [
 name = "project"
 version = "0.0.0"
 dependencies = [
+ "directories",
  "fs",
  "ignore",
  "schemars",

@@ -8,6 +8,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+directories.workspace = true
 ignore.workspace = true
 fs.workspace = true
 schemars.workspace = true

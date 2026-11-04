@@ -23,3 +23,27 @@ impl Default for ProjectSettings {
 impl settings::Settings for ProjectSettings {
     const NAMESPACE: &'static str = "project";
 }
+
+/// Settings of the `[files]` namespace.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct FilesSettings {
+    /// Paths never shown in the file tree nor watched, in `.gitignore`
+    /// syntax: `.git` hides every `.git`, `/dist` only the one at the root.
+    pub hidden: Vec<String>,
+}
+
+impl Default for FilesSettings {
+    fn default() -> Self {
+        Self {
+            hidden: crate::ignore_rules::DEFAULT_HIDDEN
+                .iter()
+                .map(|pattern| (*pattern).to_owned())
+                .collect(),
+        }
+    }
+}
+
+impl settings::Settings for FilesSettings {
+    const NAMESPACE: &'static str = "files";
+}

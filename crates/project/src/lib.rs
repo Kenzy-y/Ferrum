@@ -5,14 +5,16 @@
 //! `fs::FakeFs` and works unchanged with a remote file system later.
 
 mod file_tree;
+mod git_excludes;
 mod ignore_rules;
 mod project_settings;
 mod recent;
 mod workspace;
 
 pub use file_tree::{DirListing, FileTree, RowState, TreeEntry, TreeRow, load_dir};
-pub use ignore_rules::{HIDDEN_NAMES, IGNORE_FILE_NAME, IgnoreRules, Visibility};
-pub use project_settings::ProjectSettings;
+pub use git_excludes::{GitEnvironment, RepositoryExcludes, read_repository_excludes};
+pub use ignore_rules::{DEFAULT_HIDDEN, IGNORE_FILE_NAME, IgnoreRules, Visibility};
+pub use project_settings::{FilesSettings, ProjectSettings};
 pub use recent::{RECENT_PROJECTS_FILE_NAME, RecentProject, RecentProjects};
 pub use workspace::Workspace;
 

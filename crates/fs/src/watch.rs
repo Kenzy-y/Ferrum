@@ -30,6 +30,15 @@ impl<F: Fn(&Path) -> bool + Send + Sync> WatchFilter for F {
     }
 }
 
+/// How deep a watch reaches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum WatchMode {
+    /// The folder and everything below it.
+    Recursive,
+    /// Only the folder's direct entries.
+    NonRecursive,
+}
+
 /// What happened to a path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FsEventKind {
@@ -79,7 +88,11 @@ impl Watcher {
 }
 
 /// Starts a platform watcher on `root`.
-pub(crate) fn watch_real(root: &Path, filter: Arc<dyn WatchFilter>) -> Result<Watcher, FsError> {
+pub(crate) fn watch_real(
+    root: &Path,
+    mode: WatchMode,
+    filter: Arc<dyn WatchFilter>,
+) -> Result<Watcher, FsError> {
     let watch_error = |error: &dyn std::fmt::Display| FsError::Watch {
         path: root.to_path_buf(),
         message: error.to_string(),
@@ -105,7 +118,13 @@ pub(crate) fn watch_real(root: &Path, filter: Arc<dyn WatchFilter>) -> Result<Wa
     })
     .map_err(|error| watch_error(&error))?;
     watcher
-        .watch(root, RecursiveMode::Recursive)
+        .watch(
+            root,
+            match mode {
+                WatchMode::Recursive => RecursiveMode::Recursive,
+                WatchMode::NonRecursive => RecursiveMode::NonRecursive,
+            },
+        )
         .map_err(|error| watch_error(&error))?;
 
     let (sender, receiver) = unbounded();

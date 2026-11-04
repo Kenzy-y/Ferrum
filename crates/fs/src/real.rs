@@ -6,7 +6,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::watch::watch_real;
-use crate::{BoxFuture, DirEntry, EntryKind, Fs, FsError, Metadata, WatchFilter, Watcher};
+use crate::{
+    BoxFuture, DirEntry, EntryKind, Fs, FsError, Metadata, WatchFilter, WatchMode, Watcher,
+};
 
 /// The local file system.
 ///
@@ -82,8 +84,13 @@ impl Fs for RealFs {
         })
     }
 
-    fn watch(&self, root: &Path, filter: Arc<dyn WatchFilter>) -> Result<Watcher, FsError> {
-        watch_real(root, filter)
+    fn watch(
+        &self,
+        root: &Path,
+        mode: WatchMode,
+        filter: Arc<dyn WatchFilter>,
+    ) -> Result<Watcher, FsError> {
+        watch_real(root, mode, filter)
     }
 }
 

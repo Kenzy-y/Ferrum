@@ -9,7 +9,7 @@ use futures::channel::mpsc::{UnboundedSender, unbounded};
 
 use crate::{
     BoxFuture, DirEntry, EntryKind, Fs, FsError, FsEvent, FsEventKind, Metadata, WatchFilter,
-    Watcher,
+    WatchMode, Watcher,
 };
 
 /// Maximum number of symbolic links followed while resolving a path.
@@ -28,6 +28,7 @@ enum Node {
 
 struct FakeWatch {
     root: PathBuf,
+    mode: WatchMode,
     filter: Arc<dyn WatchFilter>,
     sender: UnboundedSender<Vec<FsEvent>>,
 }
@@ -153,7 +154,13 @@ fn insert_parents(state: &mut State, path: &Path) {
 fn notify(state: &mut State, path: &Path, kind: FsEventKind) {
     state.watches.retain(|watch| !watch.sender.is_closed());
     for watch in &state.watches {
-        if path.starts_with(&watch.root) && !watch.filter.is_ignored(path) {
+        let in_scope = match watch.mode {
+            WatchMode::Recursive => path.starts_with(&watch.root),
+            WatchMode::NonRecursive => {
+                path == watch.root || path.parent() == Some(watch.root.as_path())
+            }
+        };
+        if in_scope && !watch.filter.is_ignored(path) {
             let _ = watch.sender.unbounded_send(vec![FsEvent {
                 path: path.to_path_buf(),
                 kind,
@@ -419,10 +426,16 @@ impl Fs for FakeFs {
         Box::pin(async move { result })
     }
 
-    fn watch(&self, root: &Path, filter: Arc<dyn WatchFilter>) -> Result<Watcher, FsError> {
+    fn watch(
+        &self,
+        root: &Path,
+        mode: WatchMode,
+        filter: Arc<dyn WatchFilter>,
+    ) -> Result<Watcher, FsError> {
         let (sender, receiver) = unbounded();
         self.state().watches.push(FakeWatch {
             root: root.to_path_buf(),
+            mode,
             filter,
             sender,
         });
@@ -520,11 +533,33 @@ mod tests {
     }
 
     #[test]
+    fn non_recursive_watches_see_direct_entries_only() {
+        let fs = sample();
+        let filter: Arc<dyn WatchFilter> = Arc::new(|_: &Path| false);
+        let mut watcher = fs
+            .watch(
+                Path::new("/project/target"),
+                WatchMode::NonRecursive,
+                filter,
+            )
+            .unwrap();
+        fs.insert_file("/project/target/debug/deep.o", "x");
+        fs.insert_file("/project/target/.rustc_info.json", "{}");
+        let batch = ready(watcher.events().next()).unwrap();
+        assert_eq!(
+            batch[0].path,
+            PathBuf::from("/project/target/.rustc_info.json")
+        );
+    }
+
+    #[test]
     fn watchers_skip_ignored_paths() {
         let fs = sample();
         let filter: Arc<dyn WatchFilter> =
             Arc::new(|path: &Path| path.starts_with("/project/target"));
-        let mut watcher = fs.watch(Path::new("/project"), filter).unwrap();
+        let mut watcher = fs
+            .watch(Path::new("/project"), WatchMode::Recursive, filter)
+            .unwrap();
 
         fs.insert_file("/project/target/debug/app.exe", "binary");
         fs.insert_file("/project/src/main.rs", "fn main() { }");
