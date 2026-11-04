@@ -29,6 +29,6 @@ a token to `theme` first. Interactive components embed `Interactivity` and
 call `interactive_builders!`. A new icon: copy the SVG into `icons/lucide`
 and add a line to `icon_names!`.
 
-**Gallery.** `src/app/ferrum/src/gallery` shows every component in every
+**Gallery.** `src/app/shell/src/gallery` shows every component in every
 state. It is a development aid compiled only into debug builds: command
 `workbench.toggleComponentGallery`, `Ctrl K, Ctrl G`.

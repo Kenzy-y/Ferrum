@@ -16,6 +16,7 @@ members = [
     "src/design/ui",
     "src/editor",
     "src/workbench",
+    "src/app/shell",
     "src/app/ferrum",
 ]
 default-members = ["src/app/ferrum"]
@@ -44,6 +45,7 @@ project = { path = "src/platform/project" }
 settings = { path = "src/platform/settings" }
 syntax = { path = "src/platform/syntax" }
 text = { path = "src/base/text" }
+shell = { path = "src/app/shell" }
 
 # UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built
 # against; both are pinned to exact versions and updated together in a

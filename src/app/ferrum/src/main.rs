@@ -1,30 +1,10 @@
-//! The IDE application: `main()` and wiring of the crates. Logic belongs in
-//! the library crates; this crate only connects them.
+//! The IDE application binary: sets up logging and runs the shell. All
+//! logic lives in the library crates, starting with `shell`.
 
 // Release builds on Windows are GUI applications without a console window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod app_commands;
-mod config;
-// Development aid: the component gallery exists only in debug builds.
-#[cfg(debug_assertions)]
-mod gallery;
-mod languages;
-mod live_config;
 mod logging;
-mod shell;
-
-use std::sync::Arc;
-
-use anyhow::Context as _;
-use gpui::{App, AppContext as _, Bounds, WindowBounds, px, size};
-
-use crate::config::LoadedConfig;
-use crate::shell::Shell;
-use workbench::Workbench;
-
-/// Initial size of the main window, in logical pixels.
-const INITIAL_WINDOW_SIZE: (f32, f32) = (1280.0, 800.0);
 
 fn main() -> anyhow::Result<()> {
     logging::init();
@@ -33,85 +13,5 @@ fn main() -> anyhow::Result<()> {
         version = env!("CARGO_PKG_VERSION"),
         "starting"
     );
-
-    let settings_registry = Arc::new(config::settings_registry()?);
-    let command_registry = Arc::new(app_commands::registry()?);
-    let fs: Arc<dyn fs::Fs> = Arc::new(fs::RealFs);
-    let config_paths = settings::paths::ConfigPaths::from_platform();
-    if config_paths.is_none() {
-        tracing::warn!("no home directory: user settings and keymap are not loaded");
-    }
-
-    gpui_platform::application()
-        .with_assets(ui::Assets)
-        .run(move |cx: &mut App| {
-            gpui_component::init(cx);
-            editor::init(cx);
-            if let Err(error) = theme::register_fonts(cx) {
-                tracing::error!("{error}");
-            }
-            match theme::Theme::built_in(theme::DEFAULT_THEME, theme::Density::default()) {
-                Ok(active) => theme::set_theme(active, cx),
-                Err(error) => {
-                    tracing::error!("{error}");
-                    cx.quit();
-                    return;
-                }
-            }
-            ui::sync_component_theme(cx);
-            cx.on_window_closed(|cx, _window| {
-                if cx.windows().is_empty() {
-                    cx.quit();
-                }
-            })
-            .detach();
-
-            // Configuration files are read in the background; the window opens
-            // as soon as they are loaded, so it starts with the right language
-            // and keymap without blocking the UI thread.
-            let loading = cx.background_executor().spawn(config::load(
-                fs,
-                config_paths,
-                settings_registry,
-                command_registry,
-            ));
-            cx.spawn(async move |cx| {
-                let loaded = loading.await;
-                cx.update(|cx| {
-                    if let Err(error) = open_main_window(loaded, cx) {
-                        tracing::error!("{error:#}");
-                        cx.quit();
-                    }
-                });
-            })
-            .detach();
-        });
-    Ok(())
-}
-
-fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
-    let _span = tracing::info_span!("open_main_window").entered();
-    let i18n = config::localization(&loaded.settings)?;
-    let (width, height) = INITIAL_WINDOW_SIZE;
-    let mut options = Workbench::window_options();
-    // The workbench draws its own title bar; the platform still shows the
-    // title in the taskbar and window switcher.
-    if let Some(titlebar) = options.titlebar.as_mut() {
-        titlebar.title = Some(i18n.text("app-title").into());
-    }
-    options.window_bounds = Some(WindowBounds::Windowed(Bounds::centered(
-        None,
-        size(px(width), px(height)),
-        cx,
-    )));
-    options.app_id = Some(app_identity::APP_ID.to_owned());
-
-    let i18n = Arc::new(i18n);
-    cx.open_window(options, |window, cx| {
-        let shell = cx.new(|cx| Shell::new(loaded, i18n, window, cx));
-        cx.new(|cx| gpui_component::Root::new(shell, window, cx))
-    })
-    .context("cannot open the main window")?;
-    cx.activate(true);
-    Ok(())
+    shell::run()
 }

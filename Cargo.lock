@@ -1774,25 +1774,9 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "app_identity",
- "commands",
- "editor",
- "fs",
- "futures",
- "gpui-component",
- "gpui-pre",
- "gpui-pre-platform",
- "i18n",
- "lang_rust",
- "lang_toml",
- "project",
- "settings",
- "syntax",
- "text",
- "theme",
+ "shell",
  "tracing",
  "tracing-subscriber",
- "ui",
- "workbench",
 ]
 
 [[package]]
@@ -6389,6 +6373,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "shell"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "app_identity",
+ "commands",
+ "editor",
+ "fs",
+ "futures",
+ "gpui-component",
+ "gpui-pre",
+ "gpui-pre-platform",
+ "i18n",
+ "lang_rust",
+ "lang_toml",
+ "project",
+ "settings",
+ "syntax",
+ "text",
+ "theme",
+ "tracing",
+ "ui",
+ "workbench",
 ]
 
 [[package]]
