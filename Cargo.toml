@@ -20,6 +20,7 @@ commands = { path = "crates/commands" }
 fs = { path = "crates/fs" }
 i18n = { path = "crates/i18n" }
 process = { path = "crates/process" }
+project = { path = "crates/project" }
 settings = { path = "crates/settings" }
 
 # UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built

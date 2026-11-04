@@ -9,10 +9,12 @@ pub const SETTINGS_FILE_NAME: &str = "settings.toml";
 /// File name of the user keymap in the configuration directory.
 pub const KEYMAP_FILE_NAME: &str = "keymap.toml";
 
-/// Per-user configuration locations.
+/// Per-user locations: configuration (edited by the user) and data
+/// (state the IDE keeps, such as recent projects).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConfigPaths {
     config_dir: PathBuf,
+    data_dir: PathBuf,
 }
 
 impl ConfigPaths {
@@ -25,13 +27,27 @@ impl ConfigPaths {
     /// Names come from `app_identity`. `None` if the platform does not report
     /// a home directory.
     pub fn from_platform() -> Option<Self> {
-        directories::ProjectDirs::from_path(PathBuf::from(product_dir_name()))
-            .map(|dirs| Self::new(dirs.config_dir().to_path_buf()))
+        directories::ProjectDirs::from_path(PathBuf::from(product_dir_name())).map(|dirs| {
+            Self::new(
+                dirs.config_dir().to_path_buf(),
+                dirs.data_dir().to_path_buf(),
+            )
+        })
     }
 
-    /// Uses `config_dir` as the configuration directory.
-    pub fn new(config_dir: PathBuf) -> Self {
-        Self { config_dir }
+    /// Uses the given configuration and data directories.
+    pub fn new(config_dir: PathBuf, data_dir: PathBuf) -> Self {
+        Self {
+            config_dir,
+            data_dir,
+        }
+    }
+
+    /// The data directory: `%APPDATA%\<Application>\data` on Windows,
+    /// `~/Library/Application Support/<Application>` on macOS,
+    /// `$XDG_DATA_HOME/<lowercase name>` (default `~/.local/share`) on Linux.
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir
     }
 
     /// The configuration directory.
@@ -96,7 +112,7 @@ mod tests {
 
     #[test]
     fn file_locations() {
-        let paths = ConfigPaths::new(PathBuf::from("config"));
+        let paths = ConfigPaths::new(PathBuf::from("config"), PathBuf::from("data"));
         assert_eq!(
             paths.user_settings(),
             Path::new("config").join("settings.toml")
