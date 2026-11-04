@@ -189,5 +189,14 @@ pub(crate) fn render(
         .child(leading)
         .child(search)
         .child(actions)
-        .child(div().ml(px(theme.metrics.space.lg)).child(controls))
+        // The window controls have their own platform areas (minimize,
+        // maximize, close); covering the drag area under them keeps the hit
+        // test from answering "drag" first, see `clickable`.
+        .child(
+            div()
+                .ml(px(theme.metrics.space.lg))
+                .h_full()
+                .occlude()
+                .child(controls),
+        )
 }
