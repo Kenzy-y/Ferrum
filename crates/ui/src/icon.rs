@@ -55,6 +55,7 @@ icon_names! {
     FileText => "file-text",
     Files => "files",
     Folder => "folder",
+    FolderOpen => "folder-open",
     GitBranch => "git-branch",
     Minus => "minus",
     Package => "package",

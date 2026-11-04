@@ -55,6 +55,8 @@ open-folder-failed = Не удалось открыть { $path }: { $error }
 explorer-empty-title = Папка не открыта
 explorer-empty-text = Откройте папку, чтобы увидеть файлы проекта.
 explorer-files = Файлы
+file-tree-cycle = Ссылка на одну из родительских папок; не раскрывается
+file-tree-failed = Не удалось прочитать папку
 
 ## Экран приветствия
 

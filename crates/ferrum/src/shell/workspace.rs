@@ -4,11 +4,13 @@
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use gpui::{Context, PathPromptOptions, SharedString, Window};
+use gpui::{AppContext as _, Context, PathPromptOptions, SharedString, Window};
 use i18n::FluentArgs;
 use project::{ProjectError, RecentProjects, Workspace};
 use settings::LayerKind;
-use workbench::{RecentEntry, WorkspaceInfo};
+use workbench::{
+    FileTreeTexts, FileTreeView, RecentEntry, WorkspaceInfo, WorkspaceSettingsChanged,
+};
 
 use super::Shell;
 
@@ -128,6 +130,44 @@ impl Shell {
         cx: &mut Context<Self>,
     ) {
         tracing::info!(root = %workspace.display_root(), "opened folder");
+        self.apply_workspace_layer(layer, window, cx);
+
+        window.set_window_title(&super::window_title(&self.i18n, Some(&workspace)));
+        let info = WorkspaceInfo {
+            name: workspace.name().to_owned().into(),
+            path: workspace.display_root().into(),
+        };
+        let texts = FileTreeTexts {
+            cycle: self.i18n.text("file-tree-cycle").into(),
+            failed: self.i18n.text("file-tree-failed").into(),
+        };
+        let fs = self.fs.clone();
+        let root = workspace.root().to_path_buf();
+        let settings_file = workspace.settings_file();
+        let icons = self.file_icons.clone();
+        let tree = cx.new(|cx| FileTreeView::new(fs, root, settings_file, icons, texts, cx));
+        self.workspace_watch = Some(cx.subscribe_in(
+            &tree,
+            window,
+            |shell, _, _: &WorkspaceSettingsChanged, window, cx| {
+                shell.reload_workspace_settings(window, cx);
+            },
+        ));
+        self.workbench.update(cx, |workbench, cx| {
+            workbench.set_workspace(Some((info, tree)), cx);
+        });
+
+        self.recent.record(workspace.root(), SystemTime::now());
+        self.recent_changed(cx);
+        self.workspace = Some(workspace);
+    }
+
+    fn apply_workspace_layer(
+        &mut self,
+        layer: Option<settings::SettingsLayer>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let change = match layer {
             Some(layer) => self.settings.set_layer(LayerKind::Workspace, layer),
             None => self.settings.remove_layer(LayerKind::Workspace),
@@ -135,18 +175,25 @@ impl Shell {
         if !change.is_empty() {
             self.settings_changed(window, cx);
         }
+    }
 
-        window.set_window_title(&super::window_title(&self.i18n, Some(&workspace)));
-        let info = WorkspaceInfo {
-            name: workspace.name().to_owned().into(),
-            path: workspace.display_root().into(),
+    /// `.ferrum/settings.toml` changed on disk: read it again.
+    fn reload_workspace_settings(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(workspace) = self.workspace.clone() else {
+            return;
         };
-        self.workbench
-            .update(cx, |workbench, cx| workbench.set_workspace(Some(info), cx));
-
-        self.recent.record(workspace.root(), SystemTime::now());
-        self.recent_changed(cx);
-        self.workspace = Some(workspace);
+        let fs = self.fs.clone();
+        cx.spawn_in(window, async move |shell, cx| {
+            let layer = cx
+                .background_executor()
+                .spawn(async move { workspace.load_settings(fs.as_ref()).await })
+                .await;
+            let _ = shell.update_in(cx, |shell, window, cx| {
+                tracing::info!("applied workspace settings changes");
+                shell.apply_workspace_layer(layer, window, cx);
+            });
+        })
+        .detach();
     }
 
     /// Shows the recent list and saves it in the background.

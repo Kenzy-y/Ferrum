@@ -40,6 +40,10 @@ pub(crate) struct Shell {
     /// Folder open in this window.
     workspace: Option<project::Workspace>,
     recent: project::RecentProjects,
+    /// Icons of the file tree, registered by contributors at startup.
+    file_icons: Arc<workbench::FileIcons>,
+    /// Reacts to changes of the workspace settings file.
+    workspace_watch: Option<gpui::Subscription>,
     /// Where `recent` is saved; `None` without a home directory.
     recent_file: Option<PathBuf>,
     /// Re-reads the configuration files when they change.
@@ -105,6 +109,8 @@ impl Shell {
             fs,
             workspace: None,
             recent,
+            file_icons: Arc::new(workbench::FileIcons::new()),
+            workspace_watch: None,
             recent_file,
             _config_watch: config_watch,
             workbench,

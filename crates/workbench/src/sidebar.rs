@@ -29,6 +29,7 @@ pub(crate) fn render(
     Panel::new(PanelSurface::Sidebar)
         .w(px(size.sidebar_width))
         .flex_none()
+        .pb(px(theme.metrics.space.sm))
         .pt(px(header_top))
         .gap(px(theme.metrics.space.lg))
         .child(

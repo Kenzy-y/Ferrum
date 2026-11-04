@@ -84,6 +84,9 @@ pub(crate) struct Interactivity {
     pub(crate) focus_ring: Option<Hsla>,
     /// Text shown on hover, also when disabled (it can explain why).
     pub(crate) tooltip: Option<SharedString>,
+    /// Whether Tab stops on the component (rows of a list navigated with
+    /// arrows are not tab stops; the list is).
+    pub(crate) tab_stop: bool,
 }
 
 impl Interactivity {
@@ -96,6 +99,7 @@ impl Interactivity {
             hover_text: None,
             focus_ring: None,
             tooltip: None,
+            tab_stop: true,
         }
     }
 
@@ -134,7 +138,7 @@ impl Interactivity {
             .use_keyed_state(self.id.clone(), cx, |_, cx| cx.focus_handle())
             .read(cx)
             .clone()
-            .tab_stop(!self.disabled && self.forced.is_none());
+            .tab_stop(self.tab_stop && !self.disabled && self.forced.is_none());
         let theme = cx.theme();
         let ring: Hsla = self
             .focus_ring
@@ -220,6 +224,13 @@ macro_rules! interactive_builders {
             #[must_use]
             pub fn force_state(mut self, state: $crate::InteractionState) -> Self {
                 self.interactivity.forced = Some(state);
+                self
+            }
+
+            /// Whether Tab stops on the component (default `true`).
+            #[must_use]
+            pub fn tab_stop(mut self, tab_stop: bool) -> Self {
+                self.interactivity.tab_stop = tab_stop;
                 self
             }
 

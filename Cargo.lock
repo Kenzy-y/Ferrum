@@ -8180,9 +8180,12 @@ version = "0.0.0"
 dependencies = [
  "app_identity",
  "commands",
+ "fs",
+ "futures",
  "gpui-component",
  "gpui-pre",
  "i18n",
+ "project",
  "theme",
  "tracing",
  "ui",

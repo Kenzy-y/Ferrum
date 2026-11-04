@@ -11,6 +11,8 @@ mod bottom_panel;
 pub mod command_ids;
 mod editor_area;
 mod explorer;
+mod file_icons;
+mod file_tree_view;
 mod path_prompt;
 mod quick_open;
 mod sidebar;
@@ -32,6 +34,8 @@ use gpui::{
 use i18n::I18n;
 use theme::ActiveTheme as _;
 
+pub use crate::file_icons::{FileIcon, FileIcons};
+pub use crate::file_tree_view::{FileTreeTexts, FileTreeView, WorkspaceSettingsChanged};
 use crate::path_prompt::{PathPrompt, PathPromptEvent, PathPromptTexts};
 use crate::quick_open::{Dismiss, QuickOpen, QuickOpenContext, QuickOpenMode};
 
@@ -130,6 +134,7 @@ pub struct Workbench {
     open_path: OpenPath,
     path_prompt: Option<OpenPathPrompt>,
     workspace: Option<WorkspaceInfo>,
+    file_tree: Option<Entity<FileTreeView>>,
     recent: Vec<RecentEntry>,
     view: SidebarView,
     sidebar_visible: bool,
@@ -163,6 +168,7 @@ impl Workbench {
             open_path,
             path_prompt: None,
             workspace: None,
+            file_tree: None,
             recent: Vec::new(),
             view: SidebarView::Explorer,
             sidebar_visible: true,
@@ -251,9 +257,16 @@ impl Workbench {
         cx.notify();
     }
 
-    /// Shows `workspace` as the open folder (`None`: no folder).
-    pub fn set_workspace(&mut self, workspace: Option<WorkspaceInfo>, cx: &mut Context<Self>) {
+    /// Shows `workspace` as the open folder with its file tree (`None`:
+    /// no folder).
+    pub fn set_workspace(
+        &mut self,
+        workspace: Option<(WorkspaceInfo, Entity<FileTreeView>)>,
+        cx: &mut Context<Self>,
+    ) {
+        let (workspace, file_tree) = workspace.unzip();
         self.workspace = workspace;
+        self.file_tree = file_tree;
         cx.notify();
     }
 

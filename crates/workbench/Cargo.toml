@@ -10,9 +10,12 @@ publish.workspace = true
 [dependencies]
 app_identity.workspace = true
 commands.workspace = true
+fs.workspace = true
+futures.workspace = true
 gpui.workspace = true
 gpui-component.workspace = true
 i18n.workspace = true
+project.workspace = true
 theme.workspace = true
 tracing.workspace = true
 ui.workspace = true

@@ -55,6 +55,8 @@ open-folder-failed = Cannot open { $path }: { $error }
 explorer-empty-title = No folder opened
 explorer-empty-text = Open a folder to explore your project files.
 explorer-files = Files
+file-tree-cycle = Links to one of its parent folders; not expanded
+file-tree-failed = Cannot read this folder
 
 ## Welcome
 

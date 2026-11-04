@@ -114,6 +114,8 @@ pub(crate) fn render(
     div()
         .flex()
         .flex_col()
+        .flex_1()
+        .min_h_0()
         .gap(px(gap))
         .child(card)
         .child(
@@ -125,5 +127,6 @@ pub(crate) fn render(
                 )
                 .action(IconButton::new("explorer-files-more", IconName::Ellipsis)),
         )
+        .children(workbench.file_tree.clone())
         .into_any_element()
 }
