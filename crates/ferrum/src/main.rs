@@ -6,6 +6,8 @@
 
 mod app_commands;
 mod config;
+// Development aid: the component gallery exists only in debug builds.
+#[cfg(debug_assertions)]
 mod gallery;
 mod logging;
 mod shell;

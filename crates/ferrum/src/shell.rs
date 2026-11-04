@@ -12,9 +12,10 @@ use gpui::{
 };
 use i18n::I18n;
 use theme::ActiveTheme as _;
-use workbench::{Dispatch, EditorContent, Workbench};
+use workbench::{Dispatch, Workbench};
 
 use crate::app_commands;
+#[cfg(debug_assertions)]
 use crate::gallery::Gallery;
 
 /// Keybinding context active everywhere in the main window.
@@ -27,8 +28,11 @@ pub(crate) struct Shell {
     /// Runs the pending sequence's own command if no further key arrives.
     chord_timer: Option<Task<()>>,
     chord_timeout: Duration,
+    /// Strings for the gallery tab title.
+    #[cfg(debug_assertions)]
     i18n: Arc<I18n>,
     workbench: Entity<Workbench>,
+    #[cfg(debug_assertions)]
     gallery: Option<Entity<Gallery>>,
 }
 
@@ -48,18 +52,20 @@ impl Shell {
             let id = id.clone();
             let _ = shell.update(cx, |shell, cx| shell.run_command(&id, window, cx));
         });
-        let workbench_i18n = i18n.clone();
+        #[cfg(debug_assertions)]
+        let gallery_i18n = i18n.clone();
         let workbench_keymap = keymap.clone();
-        let workbench =
-            cx.new(|_| Workbench::new(workbench_i18n, dispatch, registry, workbench_keymap));
+        let workbench = cx.new(|_| Workbench::new(i18n, dispatch, registry, workbench_keymap));
         Self {
             focus_handle,
             keymap,
             matcher: KeymapMatcher::new(),
             chord_timer: None,
             chord_timeout,
-            i18n,
+            #[cfg(debug_assertions)]
+            i18n: gallery_i18n,
             workbench,
+            #[cfg(debug_assertions)]
             gallery: None,
         }
     }
@@ -69,6 +75,7 @@ impl Shell {
         tracing::debug!(command = %id, "running command");
         match id.as_str() {
             app_commands::QUIT => cx.quit(),
+            #[cfg(debug_assertions)]
             app_commands::TOGGLE_COMPONENT_GALLERY => self.toggle_gallery(window, cx),
             _ => {
                 let handled = self
@@ -81,6 +88,7 @@ impl Shell {
         }
     }
 
+    #[cfg(debug_assertions)]
     fn toggle_gallery(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let showing = self.workbench.read(cx).has_editor_content();
         let content = if showing {
@@ -91,7 +99,7 @@ impl Shell {
                 .gallery
                 .get_or_insert_with(|| cx.new(|cx| Gallery::new(i18n, window, cx)))
                 .clone();
-            Some(EditorContent {
+            Some(workbench::EditorContent {
                 title: self.i18n.text("gallery-title").into(),
                 view: gallery.into(),
             })

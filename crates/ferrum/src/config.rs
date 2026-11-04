@@ -36,6 +36,10 @@ pub(crate) async fn load(
     let platform = Platform::current();
     let mut settings = SettingsStore::new(settings_registry);
     let mut keymap = Keymap::defaults(platform);
+    #[cfg(debug_assertions)]
+    if let Err(error) = keymap.apply(crate::app_commands::DEBUG_KEYMAP, platform) {
+        tracing::error!(%error, "debug keymap is invalid");
+    }
 
     if let Some(paths) = paths {
         let settings_path = paths.user_settings();

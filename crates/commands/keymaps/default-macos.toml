@@ -16,6 +16,3 @@
 "ctrl-shift-g" = "workbench.showSourceControl"
 "mod-shift-d" = "workbench.showRunAndDebug"
 "mod-shift-x" = "workbench.showExtensions"
-
-# Temporary component gallery (stage 1).
-"mod-k mod-g" = "workbench.toggleComponentGallery"

@@ -28,4 +28,5 @@ call `interactive_builders!`. A new icon: copy the SVG into `icons/lucide`
 and add a line to `icon_names!`.
 
 **Gallery.** `crates/ferrum/src/gallery` shows every component in every
-state; it is temporary (stage 1).
+state. It is a development aid compiled only into debug builds: command
+`workbench.toggleComponentGallery`, `Ctrl K, Ctrl G`.

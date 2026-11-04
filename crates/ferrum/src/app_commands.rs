@@ -6,13 +6,22 @@ use commands::{CommandDescriptor, CommandId, CommandRegistry};
 /// Quits the application.
 pub(crate) const QUIT: &str = "app.quit";
 
-/// Shows or hides the temporary component gallery in the editor area
-/// (stage 1; see ROADMAP).
+/// Shows or hides the component gallery in the editor area. Debug builds
+/// only: the gallery is a development aid, not part of the product.
+#[cfg(debug_assertions)]
 pub(crate) const TOGGLE_COMPONENT_GALLERY: &str = "workbench.toggleComponentGallery";
+
+/// Keybindings of the debug-only commands, applied on top of the defaults.
+#[cfg(debug_assertions)]
+pub(crate) const DEBUG_KEYMAP: &str = r#"
+[global]
+"mod-k mod-g" = "workbench.toggleComponentGallery"
+"#;
 
 /// Commands of the shell with the ids of their localized titles.
 const SHELL_COMMANDS: &[(&str, &str)] = &[
     (QUIT, "command-app-quit"),
+    #[cfg(debug_assertions)]
     (
         TOGGLE_COMPONENT_GALLERY,
         "command-workbench-toggle-component-gallery",
@@ -56,7 +65,8 @@ mod tests {
             commands::Platform::MacOs,
             commands::Platform::Linux,
         ] {
-            let keymap = commands::Keymap::defaults(platform);
+            let mut keymap = commands::Keymap::defaults(platform);
+            keymap.apply(DEBUG_KEYMAP, platform).unwrap();
             assert!(keymap.diagnostics(&registry).is_empty(), "{platform:?}");
         }
     }
