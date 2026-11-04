@@ -5,7 +5,8 @@
 # moving the real mouse: it posts WM_MOUSEMOVE to the window, then sends
 # WM_NCHITTEST. Expected: close 20 (HTCLOSE), maximize 9 (HTMAXBUTTON),
 # minimize 8 (HTMINBUTTON), empty spots 2 (HTCAPTION), search field 1
-# (HTCLIENT). Coordinates assume the default 1280x800 window at 100% scale.
+# (HTCLIENT). Coordinates assume 100% scale; they are relative to the
+# window width, so a smaller screen (CI runners have 1024x768) works too.
 #
 # Usage:
 #   -ProcessId <pid>   probe a running IDE and print the answers;
@@ -66,8 +67,10 @@ function Probe([string]$name, [int]$x, [int]$y, [int]$expected) {
 Probe "close" ($w - 23) 32 20
 Probe "maximize" ($w - 69) 32 9
 Probe "minimize" ($w - 115) 32 8
-Probe "gap-left" 435 32 2
-Probe "gap-right" 925 32 2
+# Empty title bar below the search field and the buttons (which are
+# centered on y=32 and end above y=50): positions hold at any width.
+Probe "gap-left" ([int]($w * 0.3)) 56 2
+Probe "gap-right" ([int]($w / 2)) 56 2
 Probe "wordmark" 100 32 2
 Probe "search" ([int]($w / 2)) 32 1
 
