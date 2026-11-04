@@ -13,10 +13,11 @@ mod shell;
 use std::sync::Arc;
 
 use anyhow::Context as _;
-use gpui::{App, AppContext as _, Bounds, TitlebarOptions, WindowBounds, WindowOptions, px, size};
+use gpui::{App, AppContext as _, Bounds, WindowBounds, px, size};
 
 use crate::config::LoadedConfig;
 use crate::shell::Shell;
+use workbench::Workbench;
 
 /// Initial size of the main window, in logical pixels.
 const INITIAL_WINDOW_SIZE: (f32, f32) = (1280.0, 800.0);
@@ -87,25 +88,23 @@ fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
     let _span = tracing::info_span!("open_main_window").entered();
     let i18n = config::localization(&loaded.settings)?;
     let (width, height) = INITIAL_WINDOW_SIZE;
-    let options = WindowOptions {
-        window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
-            None,
-            size(px(width), px(height)),
-            cx,
-        ))),
-        titlebar: Some(TitlebarOptions {
-            title: Some(i18n.text("app-title").into()),
-            ..TitlebarOptions::default()
-        }),
-        app_id: Some(app_identity::APP_ID.to_owned()),
-        ..WindowOptions::default()
-    };
+    let mut options = Workbench::window_options();
+    // The workbench draws its own title bar; the platform still shows the
+    // title in the taskbar and window switcher.
+    if let Some(titlebar) = options.titlebar.as_mut() {
+        titlebar.title = Some(i18n.text("app-title").into());
+    }
+    options.window_bounds = Some(WindowBounds::Windowed(Bounds::centered(
+        None,
+        size(px(width), px(height)),
+        cx,
+    )));
+    options.app_id = Some(app_identity::APP_ID.to_owned());
 
     let keymap = Arc::new(loaded.keymap);
-    let handlers = Arc::new(app_commands::handlers());
     let i18n = Arc::new(i18n);
     cx.open_window(options, |window, cx| {
-        let shell = cx.new(|cx| Shell::new(keymap, handlers, i18n, window, cx));
+        let shell = cx.new(|cx| Shell::new(keymap, i18n, window, cx));
         cx.new(|cx| gpui_component::Root::new(shell, window, cx))
     })
     .context("cannot open the main window")?;

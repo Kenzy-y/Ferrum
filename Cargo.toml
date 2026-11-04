@@ -15,6 +15,7 @@ publish = false
 app_identity = { path = "crates/app_identity" }
 theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
+workbench = { path = "crates/workbench" }
 commands = { path = "crates/commands" }
 fs = { path = "crates/fs" }
 i18n = { path = "crates/i18n" }

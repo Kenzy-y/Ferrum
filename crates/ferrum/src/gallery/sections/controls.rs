@@ -54,6 +54,7 @@ pub(in crate::gallery) fn buttons(gallery: &Gallery, cx: &mut Context<Gallery>) 
             ButtonVariant::Primary => "gallery-sample-run-project",
             ButtonVariant::Secondary => "gallery-sample-new-project",
             ButtonVariant::Ghost => "gallery-sample-open-folder",
+            ButtonVariant::Text => "menu-file",
         });
         let icon = (variant == ButtonVariant::Primary && size == ButtonSize::Small)
             .then_some(IconName::Play);

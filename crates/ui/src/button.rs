@@ -19,6 +19,8 @@ pub enum ButtonVariant {
     Secondary,
     /// No background until hovered: toolbar actions.
     Ghost,
+    /// Regular-weight text, no background until hovered: title bar menus.
+    Text,
 }
 
 /// Height of a [`Button`].
@@ -109,7 +111,7 @@ impl RenderOnce for Button {
                 },
                 colors.text_primary.into(),
             ),
-            ButtonVariant::Ghost => (
+            ButtonVariant::Ghost | ButtonVariant::Text => (
                 StateColors {
                     normal: transparent_black(),
                     hover: colors.bg_ghost_hover.into(),
@@ -123,9 +125,12 @@ impl RenderOnce for Button {
             ButtonSize::Medium => metrics.size.button_medium_height,
         };
         let radius = metrics.radius.md;
-        let padding = metrics.space.lg;
         let gap = metrics.space.sm;
-        let font_size = metrics.font_size.md;
+        let (padding, font_size, weight) = if self.variant == ButtonVariant::Text {
+            (metrics.space.md, metrics.font_size.base, FontWeight::NORMAL)
+        } else {
+            (metrics.space.lg, metrics.font_size.md, FontWeight::SEMIBOLD)
+        };
         let icon = self.icon.map(|name| Icon::new(name).color(text));
         let mut interactivity = self.interactivity;
         if self.variant == ButtonVariant::Primary {
@@ -140,7 +145,7 @@ impl RenderOnce for Button {
             .rounded(px(radius))
             .text_color(text)
             .text_size(px(font_size))
-            .font_weight(FontWeight::SEMIBOLD)
+            .font_weight(weight)
             .children(icon)
             .child(self.label);
         if let Some(width) = self.width {

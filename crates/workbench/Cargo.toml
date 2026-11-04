@@ -1,0 +1,20 @@
+[package]
+name = "workbench"
+description = "Window layout: title bar, activity bar, sidebar, editor area, bottom panel, status bar."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+commands.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+i18n.workspace = true
+theme.workspace = true
+tracing.workspace = true
+ui.workspace = true
+
+[lints]
+workspace = true

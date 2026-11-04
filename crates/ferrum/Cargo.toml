@@ -13,6 +13,7 @@ app_identity.workspace = true
 commands.workspace = true
 fs.workspace = true
 gpui.workspace = true
+workbench.workspace = true
 gpui-component.workspace = true
 gpui_platform.workspace = true
 i18n.workspace = true

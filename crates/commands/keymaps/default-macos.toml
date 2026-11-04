@@ -2,3 +2,15 @@
 
 [global]
 "cmd-q" = "app.quit"
+
+# Layout.
+"mod-b" = "workbench.toggleSidebar"
+"mod-j" = "workbench.togglePanel"
+"mod-shift-e" = "workbench.showExplorer"
+"mod-shift-f" = "workbench.showSearch"
+"ctrl-shift-g" = "workbench.showSourceControl"
+"mod-shift-d" = "workbench.showRunAndDebug"
+"mod-shift-x" = "workbench.showExtensions"
+
+# Temporary component gallery (stage 1).
+"mod-k mod-g" = "workbench.toggleComponentGallery"

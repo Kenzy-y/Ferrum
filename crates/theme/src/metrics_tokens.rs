@@ -6,8 +6,22 @@ token_struct! {
     /// Fixed sizes of interface elements.
     SizeTokens: f32 {
         titlebar_height = "titlebar.height",
+        /// Left padding before the logo.
+        titlebar_inset = "titlebar.inset",
+        titlebar_logo_size = "titlebar.logo.size",
+        titlebar_logo_radius = "titlebar.logo.radius",
+        /// Gap between the wordmark and the menus.
+        titlebar_menus_offset = "titlebar.menus.offset",
+        titlebar_search_width = "titlebar.search.width",
+        window_control_width = "window_control.width",
+        /// Gap between the title bar and the panels.
+        layout_gap_top = "layout.gap.top",
         statusbar_height = "statusbar.height",
         activity_bar_width = "activity_bar.width",
+        /// Space above the first activity button.
+        activity_bar_top = "activity_bar.top",
+        activity_bar_gap = "activity_bar.gap",
+        bottom_panel_height = "bottom_panel.height",
         activity_button_width = "activity_button.width",
         activity_button_height = "activity_button.height",
         sidebar_width = "sidebar.width",

@@ -7,6 +7,34 @@ app-title = { -product-name }
 
 command-app-quit = Выйти из { -product-name }
 
+## Рабочая область
+
+app-wordmark = { -product-wordmark }
+menu-file = Файл
+menu-edit = Правка
+menu-view = Вид
+menu-go = Переход
+titlebar-search-placeholder = Поиск команд и настроек
+titlebar-open-folder = Открыть папку
+view-explorer = Проводник
+view-search = Поиск
+view-source-control = Система контроля версий
+view-run-and-debug = Запуск и отладка
+view-extensions = Расширения
+panel-terminal = Терминал
+panel-problems = Проблемы
+panel-output = Вывод
+panel-debug-console = Консоль отладки
+status-no-folder = Папка не открыта
+command-workbench-toggle-sidebar = Показать или скрыть боковую панель
+command-workbench-toggle-panel = Показать или скрыть нижнюю панель
+command-workbench-show-explorer = Открыть проводник
+command-workbench-show-search = Открыть поиск
+command-workbench-show-source-control = Открыть систему контроля версий
+command-workbench-show-run-and-debug = Открыть запуск и отладку
+command-workbench-show-extensions = Открыть расширения
+command-workbench-toggle-component-gallery = Показать или скрыть витрину компонентов
+
 ## Витрина компонентов (временная, этап 1)
 
 gallery-title = Витрина компонентов

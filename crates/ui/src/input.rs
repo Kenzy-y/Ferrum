@@ -71,6 +71,9 @@ impl RenderOnce for SearchField {
         self.interactivity
             .root_with_border(background, border, window, cx)
             .w_full()
+            .min_w_0()
+            .flex_shrink(1.0)
+            .overflow_hidden()
             .h(px(height))
             .px(px(padding))
             .gap(px(gap))

@@ -3,8 +3,18 @@
 
 [size]
 "titlebar.height" = 48
+"titlebar.inset" = 14
+"titlebar.logo.size" = 24
+"titlebar.logo.radius" = 6
+"titlebar.menus.offset" = 24
+"titlebar.search.width" = 480
+"window_control.width" = 40
+"layout.gap.top" = 4
 "statusbar.height" = 26
 "activity_bar.width" = 52
+"activity_bar.top" = 16
+"activity_bar.gap" = 12
+"bottom_panel.height" = 220
 "activity_button.width" = 38
 "activity_button.height" = 36
 "sidebar.width" = 260

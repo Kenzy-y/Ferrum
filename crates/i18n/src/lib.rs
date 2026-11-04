@@ -6,7 +6,7 @@
 //!
 //! The product name is not written in the `.ftl` files: every bundle gets a
 //! `-product-name` term built from `app_identity`, so messages reference it
-//! as `{ -product-name }`.
+//! as `{ -product-name }`; `-product-wordmark` is the lowercase logo form.
 
 mod locale;
 mod localization_settings;
@@ -147,7 +147,11 @@ fn build_bundle(locale: &'static str) -> Result<Bundle, I18nError> {
     // but the text renderer does not handle them yet and would show them.
     bundle.set_use_isolating(false);
 
-    let identity = format!("-product-name = {}\n", app_identity::PRODUCT_NAME);
+    let identity = format!(
+        "-product-name = {}\n-product-wordmark = {}\n",
+        app_identity::PRODUCT_NAME,
+        app_identity::LOWERCASE_NAME
+    );
     for source in std::iter::once(identity.as_str()).chain(sources(locale).iter().copied()) {
         let resource = FluentResource::try_new(source.to_owned())
             .map_err(|(_, errors)| invalid(format!("{errors:?}")))?;
@@ -200,6 +204,16 @@ mod tests {
             assert_eq!(
                 I18n::new(locale).unwrap().text("app-title"),
                 app_identity::PRODUCT_NAME
+            );
+        }
+    }
+
+    #[test]
+    fn wordmark_comes_from_app_identity() {
+        for locale in AVAILABLE_LOCALES {
+            assert_eq!(
+                I18n::new(locale).unwrap().text("app-wordmark"),
+                app_identity::LOWERCASE_NAME
             );
         }
     }

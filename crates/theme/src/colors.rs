@@ -37,6 +37,8 @@ token_struct! {
         /// Icon buttons, menu items.
         bg_ghost_hover = "bg.ghost.hover",
         bg_ghost_pressed = "bg.ghost.pressed",
+        /// Close button of the window controls.
+        bg_window_close_hover = "bg.window_close.hover",
         bg_list_hover = "bg.list.hover",
         bg_list_pressed = "bg.list.pressed",
         bg_list_selected = "bg.list.selected",

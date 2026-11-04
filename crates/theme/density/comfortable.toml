@@ -3,8 +3,18 @@
 
 [size]
 "titlebar.height" = 64
+"titlebar.inset" = 20               # left padding before the logo
+"titlebar.logo.size" = 30
+"titlebar.logo.radius" = 7
+"titlebar.menus.offset" = 42        # gap between the wordmark and the menus
+"titlebar.search.width" = 599
+"window_control.width" = 46
+"layout.gap.top" = 8                # gap between the title bar and the panels
 "statusbar.height" = 34
 "activity_bar.width" = 66
+"activity_bar.top" = 28             # space above the first activity button
+"activity_bar.gap" = 20
+"bottom_panel.height" = 265
 "activity_button.width" = 46
 "activity_button.height" = 44
 "sidebar.width" = 291

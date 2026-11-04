@@ -37,6 +37,7 @@ mono = "JetBrains Mono"
 "bg.button.secondary.pressed" = "#1F2226"
 "bg.ghost.hover" = "#202226"          # icon buttons, menu items
 "bg.ghost.pressed" = "#272A30"
+"bg.window_close.hover" = "#B5473F"   # close button of the window controls
 
 # Lists, tabs, activity bar.
 "bg.list.hover" = "#1C1E22"

@@ -7,6 +7,34 @@ app-title = { -product-name }
 
 command-app-quit = Quit { -product-name }
 
+## Workbench
+
+app-wordmark = { -product-wordmark }
+menu-file = File
+menu-edit = Edit
+menu-view = View
+menu-go = Go
+titlebar-search-placeholder = Search commands and settings
+titlebar-open-folder = Open folder
+view-explorer = Explorer
+view-search = Search
+view-source-control = Source control
+view-run-and-debug = Run and debug
+view-extensions = Extensions
+panel-terminal = Terminal
+panel-problems = Problems
+panel-output = Output
+panel-debug-console = Debug console
+status-no-folder = No folder open
+command-workbench-toggle-sidebar = Toggle sidebar
+command-workbench-toggle-panel = Toggle panel
+command-workbench-show-explorer = Show Explorer
+command-workbench-show-search = Show Search
+command-workbench-show-source-control = Show Source control
+command-workbench-show-run-and-debug = Show Run and debug
+command-workbench-show-extensions = Show Extensions
+command-workbench-toggle-component-gallery = Toggle component gallery
+
 ## Component gallery (temporary, stage 1)
 
 gallery-title = Component gallery
