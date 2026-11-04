@@ -135,6 +135,45 @@ pub fn previous_word_start(rope: &Rope, offset: usize) -> usize {
     rope.char_to_byte(index)
 }
 
+/// The run of same-class characters around `offset` (a word, punctuation
+/// or whitespace), for double-click selection. At the end of a word the
+/// word before the offset wins over whitespace after it.
+pub fn word_range(rope: &Rope, offset: usize) -> std::ops::Range<usize> {
+    let index = rope.byte_to_char(offset.min(rope.len_bytes()));
+    let after = rope
+        .get_char(index)
+        .filter(|character| !is_break(*character));
+    let before = index
+        .checked_sub(1)
+        .and_then(|previous| rope.get_char(previous))
+        .filter(|character| !is_break(*character));
+    let run = match (before.map(class), after.map(class)) {
+        (Some(before), Some(CharClass::Whitespace)) if before != CharClass::Whitespace => before,
+        (_, Some(after)) => after,
+        (Some(before), None) => before,
+        (None, None) => return offset..offset,
+    };
+    let mut start = index;
+    for character in rope.chars_at(index).reversed() {
+        if is_break(character) || class(character) != run {
+            break;
+        }
+        start -= 1;
+    }
+    let mut end = index;
+    for character in rope.chars_at(index) {
+        if is_break(character) || class(character) != run {
+            break;
+        }
+        end += 1;
+    }
+    rope.char_to_byte(start)..rope.char_to_byte(end)
+}
+
+fn is_break(character: char) -> bool {
+    character == '\n' || character == '\r'
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,6 +213,20 @@ mod tests {
         assert!(rope.chunks().count() > 1);
         assert_eq!(next_grapheme(&rope, 5000), 5000 + FAMILY.len());
         assert_eq!(previous_grapheme(&rope, 5000 + FAMILY.len()), 5000);
+    }
+
+    #[test]
+    fn word_around_an_offset() {
+        let rope = Rope::from_str("let value = 1;\nnext");
+        assert_eq!(word_range(&rope, 6), 4..9, "inside");
+        assert_eq!(
+            word_range(&rope, 9),
+            4..9,
+            "at the end, the word wins over the space"
+        );
+        assert_eq!(word_range(&rope, 10), 10..11, "punctuation");
+        assert_eq!(word_range(&rope, 14), 13..14, "end of the line stays on it");
+        assert_eq!(word_range(&rope, 15), 15..19, "next line");
     }
 
     #[test]

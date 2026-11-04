@@ -299,6 +299,20 @@ impl Buffer {
             .char_to_byte((line_start_char + char_column).min(line_end_char))
     }
 
+    /// `offset` in UTF-16 code units from the start (input methods and
+    /// language servers count in them).
+    pub fn offset_to_utf16(&self, offset: usize) -> usize {
+        let index = self.rope.byte_to_char(self.clamp(offset));
+        self.rope.char_to_utf16_cu(index)
+    }
+
+    /// The byte offset `utf16` UTF-16 code units from the start; a position
+    /// inside a surrogate pair moves to the character's start.
+    pub fn utf16_to_offset(&self, utf16: usize) -> usize {
+        let utf16 = utf16.min(self.rope.len_utf16_cu());
+        self.rope.char_to_byte(self.rope.utf16_cu_to_char(utf16))
+    }
+
     /// Replaces `range` (bytes, on character boundaries) with `text`.
     /// Line ending counts are updated from the removed and inserted text
     /// only, so the cost is that of the edit, not of the document. A `\r`

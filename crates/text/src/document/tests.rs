@@ -263,3 +263,64 @@ fn crlf_is_one_step_for_the_cursor_and_backspace() {
     document.delete_backward();
     assert_eq!(marked(&document), "a|b");
 }
+
+#[test]
+fn tab_inserts_spaces_to_the_next_stop() {
+    let mut document = document("ab|c");
+    document.indent(crate::Indent::default());
+    assert_eq!(marked(&document), "ab  |c");
+}
+
+#[test]
+fn tab_and_shift_tab_on_several_lines() {
+    let mut document = document("a\nb\nc");
+    document.set_selections(&Selections::single(Selection::new(0, 4)));
+    document.indent(crate::Indent::default());
+    assert_eq!(
+        document.buffer().to_text(),
+        "    a\n    b\nc",
+        "c is not touched"
+    );
+    document.outdent(crate::Indent::default());
+    assert_eq!(document.buffer().to_text(), "a\nb\nc");
+    let mut tabs = document_from("\t\tx|");
+    tabs.outdent(crate::Indent::default());
+    assert_eq!(marked(&tabs), "\tx|");
+}
+
+fn document_from(marked_text: &str) -> Document {
+    document(marked_text)
+}
+
+#[test]
+fn copy_and_cut_whole_lines_without_a_selection() {
+    let mut document = document("one\ntw|o\nthree");
+    let copied = document.copy_text();
+    assert_eq!(
+        copied,
+        crate::CopiedText {
+            text: "two\n".to_owned(),
+            whole_lines: true
+        }
+    );
+    document.cut();
+    assert_eq!(marked(&document), "one\n|three");
+    document.paste_lines(&copied.text);
+    assert_eq!(
+        marked(&document),
+        "one\ntwo\n|three",
+        "the cursor moves down with its line"
+    );
+}
+
+#[test]
+fn replace_and_primary_selection() {
+    let mut document = document("hello|");
+    let range = document.replace(0..5, "привет");
+    assert_eq!(range, 0.."привет".len());
+    assert_eq!(marked(&document), "привет|");
+    document.set_primary_selection(Selection::new(0, 4));
+    assert_eq!(document.selected_text(), "пр");
+    assert_eq!(document.buffer().offset_to_utf16(4), 2);
+    assert_eq!(document.buffer().utf16_to_offset(2), 4);
+}

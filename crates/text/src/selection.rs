@@ -133,6 +133,13 @@ impl Selections {
         mapped
     }
 
+    /// Replaces the primary selection, merging it with others it now
+    /// overlaps.
+    pub fn replace_primary(&mut self, selection: Selection) {
+        self.selections[self.primary] = selection;
+        self.normalize();
+    }
+
     /// Adds a selection and makes it primary.
     pub fn add(&mut self, selection: Selection) {
         self.selections.push(selection);

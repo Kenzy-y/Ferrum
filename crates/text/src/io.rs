@@ -3,6 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use fs::{Fs, FsError};
+use tracing::Instrument as _;
 
 use crate::Buffer;
 
@@ -37,17 +38,21 @@ pub enum TextError {
 ///
 /// Fails for binary and non-UTF-8 files, and if the file cannot be read.
 pub async fn load(fs: &dyn Fs, path: &Path) -> Result<Buffer, TextError> {
-    let _span = tracing::debug_span!("text.load", path = %path.display()).entered();
-    let bytes = fs.read(path).await?;
-    if bytes.iter().take(BINARY_SNIFF_BYTES).any(|byte| *byte == 0) {
-        return Err(TextError::Binary {
+    let span = tracing::debug_span!("text.load", path = %path.display());
+    async {
+        let bytes = fs.read(path).await?;
+        if bytes.iter().take(BINARY_SNIFF_BYTES).any(|byte| *byte == 0) {
+            return Err(TextError::Binary {
+                path: path.to_path_buf(),
+            });
+        }
+        let text = String::from_utf8(bytes).map_err(|_| TextError::NotUtf8 {
             path: path.to_path_buf(),
-        });
+        })?;
+        Ok(Buffer::from_text(&text))
     }
-    let text = String::from_utf8(bytes).map_err(|_| TextError::NotUtf8 {
-        path: path.to_path_buf(),
-    })?;
-    Ok(Buffer::from_text(&text))
+    .instrument(span)
+    .await
 }
 
 /// Writes `buffer` to `path` atomically with its line ending and BOM.
@@ -56,9 +61,13 @@ pub async fn load(fs: &dyn Fs, path: &Path) -> Result<Buffer, TextError> {
 ///
 /// Fails if the file cannot be written.
 pub async fn save(fs: &dyn Fs, path: &Path, buffer: &Buffer) -> Result<(), TextError> {
-    let _span = tracing::debug_span!("text.save", path = %path.display()).entered();
-    fs.write(path, buffer.to_text().as_bytes()).await?;
-    Ok(())
+    let span = tracing::debug_span!("text.save", path = %path.display());
+    async {
+        fs.write(path, buffer.to_text().as_bytes()).await?;
+        Ok(())
+    }
+    .instrument(span)
+    .await
 }
 
 #[cfg(test)]

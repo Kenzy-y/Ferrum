@@ -56,6 +56,12 @@ token_struct! {
         bg_diff_added = "bg.diff.added",
         bg_diff_removed = "bg.diff.removed",
         bg_scrollbar_thumb = "bg.scrollbar.thumb",
+        /// Selected text in a focused editor.
+        bg_selection = "bg.selection",
+        /// Selected text in an editor without focus.
+        bg_selection_inactive = "bg.selection.inactive",
+        /// Text cursor in the editor.
+        cursor = "cursor",
         border_panel = "border.panel",
         border_input = "border.input",
         border_overlay = "border.overlay",
@@ -90,6 +96,10 @@ token_struct! {
         text_kbd = "text.kbd",
         text_line_number = "text.line_number",
         text_line_number_active = "text.line_number.active",
+        /// Folders of the breadcrumbs above the editor.
+        text_breadcrumb = "text.breadcrumb",
+        /// The file in the breadcrumbs.
+        text_breadcrumb_active = "text.breadcrumb.active",
         text_success = "text.success",
         /// "M" modified marker.
         text_warning = "text.warning",

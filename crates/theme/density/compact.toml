@@ -52,6 +52,17 @@
 "icon.small" = 16
 "icon.medium" = 20
 "code.line_height" = 19
+"breadcrumbs.height" = 40  # path row above the editor text
+"editor.inset" = 20  # left inset of line numbers and breadcrumbs
+"editor.top" = 10
+"editor.gutter_gap" = 40  # line numbers to text
+"editor.active_line.inset" = 14  # line numbers to the current line highlight
+"editor.active_line.height" = 20
+"editor.right" = 24
+"cursor.width" = 1.5
+"cursor.height" = 17
+"scrollbar.width" = 4
+"scrollbar.inset" = 5
 
 [space]
 "xxs" = 2

@@ -17,6 +17,7 @@ theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
 workbench = { path = "crates/workbench" }
 commands = { path = "crates/commands" }
+editor = { path = "crates/editor" }
 fs = { path = "crates/fs" }
 i18n = { path = "crates/i18n" }
 process = { path = "crates/process" }

@@ -84,8 +84,11 @@ pub struct Document {
 enum Placement<'a> {
     /// One selection per edit.
     PerEdit(&'a dyn Fn(&Edit) -> Selection),
-    /// The existing selections, moved by the edits.
+    /// The existing selections, moved by the edits; an offset where text
+    /// is inserted stays in front of it.
     Keep,
+    /// Like `Keep`, but an offset where text is inserted moves after it.
+    Shift,
 }
 
 impl Document {
@@ -418,8 +421,8 @@ impl Document {
         let before = self.selections.clone();
         let after = match placement {
             Placement::PerEdit(place) => Selections::from_vec(edits.iter().map(place).collect()),
-            Placement::Keep => {
-                let mapper = OffsetMapper::new(&edits);
+            Placement::Keep | Placement::Shift => {
+                let mapper = OffsetMapper::new(&edits, matches!(placement, Placement::Shift));
                 before.map(|selection| Selection {
                     anchor: mapper.map(selection.anchor),
                     head: mapper.map(selection.head),
@@ -439,19 +442,25 @@ impl Document {
 /// in logarithmic time per offset.
 struct OffsetMapper<'a> {
     edits: &'a [Edit],
+    /// Offsets at the start of an edit move after its new text.
+    after_insertions: bool,
 }
 
 impl<'a> OffsetMapper<'a> {
-    fn new(edits: &'a [Edit]) -> Self {
-        Self { edits }
+    fn new(edits: &'a [Edit], after_insertions: bool) -> Self {
+        Self {
+            edits,
+            after_insertions,
+        }
     }
 
     fn map(&self, offset: usize) -> usize {
-        // The last edit that starts before `offset`; an offset at the start
-        // of an edit stays in front of it.
-        let index = self
-            .edits
-            .partition_point(|edit| edit.old_range.start < offset);
+        // The last edit that starts before `offset` (or at it, when offsets
+        // move after insertions).
+        let index = self.edits.partition_point(|edit| {
+            edit.old_range.start < offset
+                || (self.after_insertions && edit.old_range.start == offset)
+        });
         let Some(edit) = index.checked_sub(1).map(|index| &self.edits[index]) else {
             return offset;
         };
@@ -551,6 +560,12 @@ fn moved(buffer: &Buffer, selection: Selection, movement: Movement) -> (usize, O
         Movement::DocumentEnd => (buffer.len(), None),
     }
 }
+
+mod indentation;
+mod ranges;
+
+pub use indentation::Indent;
+pub use ranges::CopiedText;
 
 #[cfg(test)]
 mod tests;

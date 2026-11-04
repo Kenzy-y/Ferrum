@@ -71,6 +71,25 @@ token_struct! {
         icon_small = "icon.small",
         icon_medium = "icon.medium",
         code_line_height = "code.line_height",
+        /// Row with the file path above the editor text.
+        breadcrumbs_height = "breadcrumbs.height",
+        /// Left inset of the line numbers and the breadcrumbs.
+        editor_inset = "editor.inset",
+        /// Space above the first line of text.
+        editor_top = "editor.top",
+        /// Gap between the line numbers and the text (markers go here).
+        editor_gutter_gap = "editor.gutter_gap",
+        /// Gap between the line numbers and the current line highlight.
+        editor_active_line_inset = "editor.active_line.inset",
+        /// Height of the current line highlight (slightly taller than a line).
+        editor_active_line_height = "editor.active_line.height",
+        /// Space right of the text before the panel edge.
+        editor_right = "editor.right",
+        cursor_width = "cursor.width",
+        cursor_height = "cursor.height",
+        scrollbar_width = "scrollbar.width",
+        /// Gap between the scrollbar and the panel edge.
+        scrollbar_inset = "scrollbar.inset",
     }
 }
 

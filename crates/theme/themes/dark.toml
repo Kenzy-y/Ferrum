@@ -59,6 +59,9 @@ mono = "JetBrains Mono"
 "bg.diff.added" = "#21332B"
 "bg.diff.removed" = "#382427"
 "bg.scrollbar.thumb" = "#30353D"
+"bg.selection" = "#3C2F2A"            # not in the mockups: accent at 22% over bg.editor
+"bg.selection.inactive" = "#292221"   # not in the mockups: accent at 12% over bg.editor
+"cursor" = "#E0B69D"
 
 # Borders and lines.
 "border.panel" = "#2A2D33"
@@ -86,6 +89,8 @@ mono = "JetBrains Mono"
 "text.kbd" = "#9CA6B4"                # keyboard shortcut labels
 "text.line_number" = "#535C69"
 "text.line_number.active" = "#D5D8DF"
+"text.breadcrumb" = "#7D8591"
+"text.breadcrumb.active" = "#B3BBC6"
 "text.success" = "#A8BC9C"
 "text.warning" = "#C6A571"            # "M" modified marker
 "text.error" = "#D69B98"
