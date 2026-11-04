@@ -1,7 +1,24 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
-default-members = ["crates/ferrum"]
+members = [
+    "src/base/app_identity",
+    "src/base/text",
+    "src/base/fs",
+    "src/base/process",
+    "src/base/i18n",
+    "src/platform/settings",
+    "src/platform/commands",
+    "src/platform/syntax",
+    "src/platform/project",
+    "src/languages/lang_rust",
+    "src/languages/lang_toml",
+    "src/design/theme",
+    "src/design/ui",
+    "src/editor",
+    "src/workbench",
+    "src/app/ferrum",
+]
+default-members = ["src/app/ferrum"]
 
 [workspace.package]
 version = "0.0.0"
@@ -12,21 +29,21 @@ publish = false
 
 [workspace.dependencies]
 # Internal crates.
-app_identity = { path = "crates/app_identity" }
-theme = { path = "crates/theme" }
-ui = { path = "crates/ui" }
-workbench = { path = "crates/workbench" }
-commands = { path = "crates/commands" }
-editor = { path = "crates/editor" }
-fs = { path = "crates/fs" }
-i18n = { path = "crates/i18n" }
-lang_rust = { path = "crates/lang_rust" }
-lang_toml = { path = "crates/lang_toml" }
-process = { path = "crates/process" }
-project = { path = "crates/project" }
-settings = { path = "crates/settings" }
-syntax = { path = "crates/syntax" }
-text = { path = "crates/text" }
+app_identity = { path = "src/base/app_identity" }
+theme = { path = "src/design/theme" }
+ui = { path = "src/design/ui" }
+workbench = { path = "src/workbench" }
+commands = { path = "src/platform/commands" }
+editor = { path = "src/editor" }
+fs = { path = "src/base/fs" }
+i18n = { path = "src/base/i18n" }
+lang_rust = { path = "src/languages/lang_rust" }
+lang_toml = { path = "src/languages/lang_toml" }
+process = { path = "src/base/process" }
+project = { path = "src/platform/project" }
+settings = { path = "src/platform/settings" }
+syntax = { path = "src/platform/syntax" }
+text = { path = "src/base/text" }
 
 # UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built
 # against; both are pinned to exact versions and updated together in a

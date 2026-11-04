@@ -77,43 +77,49 @@ ferrum/
 │   ├── design/mockups/      # mockups — source of truth for design
 │   ├── decisions/           # architecture decision records (ADR)
 │   └── architecture/        # subsystem descriptions, written as they appear
-├── crates/
-│   ├── ferrum/              # binary: only main() and wiring
-│   ├── app_identity/        # product name and identifiers, single source
-│   ├── workbench/           # window layout, panels, tabs, status bar
-│   ├── ui/                  # design system: components on top of gpui-component
-│   ├── theme/               # design tokens, themes, theme loading and import
-│   ├── i18n/                # localization, UI strings
-│   ├── editor/              # editor rendering and input (GPUI)
-│   ├── text/                # buffer, edits, undo, selections, multi-cursor
-│   ├── syntax/              # tree-sitter: highlighting, outline, folding
-│   ├── language/            # LanguageService trait, language registry
-│   ├── lsp/                 # generic LSP client
-│   ├── lang_rust/           # built-in Rust language pack
-│   ├── lang_toml/           # built-in TOML language pack (declarative)
-│   ├── project/             # workspace, file tree, recent projects
-│   ├── fs/                  # Fs trait, real and fake implementations
-│   ├── process/             # process spawning trait
-│   ├── search/              # project-wide search and replace
-│   ├── git/                 # repository operations via gix
-│   ├── terminal/            # terminal
-│   ├── debugger/            # DAP client
-│   ├── commands/            # command registry, palette, keymaps
-│   ├── settings/            # settings registry and layers
-│   ├── extension_api/       # WIT interfaces and SDK for plugin authors
-│   ├── extension_host/      # running plugins in wasmtime
-│   └── extension_registry/  # plugin sources, install, update
+├── src/                     # every crate, grouped by layer (ADR 0005)
+│   ├── base/                # primitives without UI
+│   │   ├── app_identity/    # product name and identifiers, single source
+│   │   ├── text/            # buffer, edits, undo, selections, multi-cursor
+│   │   ├── fs/              # Fs trait, real and fake implementations
+│   │   ├── process/         # process spawning trait
+│   │   └── i18n/            # localization, UI strings
+│   ├── platform/            # services without UI
+│   │   ├── settings/        # settings registry and layers
+│   │   ├── commands/        # command registry, palette matching, keymaps
+│   │   ├── syntax/          # tree-sitter: highlighting, outline, folding
+│   │   ├── project/         # workspace, file tree, recent projects
+│   │   ├── language/        # LanguageService trait, language registry
+│   │   ├── lsp/             # generic LSP client
+│   │   ├── search/          # project-wide search and replace
+│   │   ├── git/             # repository operations via gix
+│   │   ├── terminal/        # terminal logic
+│   │   └── debugger/        # DAP client
+│   ├── languages/           # built-in language packs
+│   │   ├── lang_rust/       # Rust
+│   │   └── lang_toml/       # TOML (declarative)
+│   ├── extensions/          # extension_api (WIT, SDK), extension_host (wasmtime),
+│   │                        # extension_registry (sources, install, update)
+│   ├── design/              # theme (tokens, themes), ui (components on gpui-component)
+│   ├── editor/              # crate `editor`: editor rendering and input (GPUI)
+│   ├── workbench/           # crate `workbench`: window parts (src/parts) and
+│   │                        # features (src/contrib), one folder per feature
+│   └── app/
+│       ├── shell/           # window root: command routing, keyboard, config, wiring
+│       └── ferrum/          # binary: only main()
 └── extensions/              # built-in declarative plugins (themes, icons)
 ```
 
-Crates are created when the ROADMAP reaches them, not all at once.
+Crates are created when the ROADMAP reaches them, not all at once. A new crate goes into the folder of its layer and is listed explicitly in `[workspace] members`. Inside a crate, a feature or concern with more than one file gets its own module folder; `lib.rs` only declares modules and re-exports.
 
 ### 4.2 Layers and dependency direction
 
 1. **Core without UI:** `app_identity`, `text`, `syntax`, `fs`, `process`, `lsp`, `git`, `search`, `settings`, `commands`, `language`, `i18n`. These crates **do not depend on GPUI** and can be tested without a window.
 2. **Services:** `project`, `lang_rust`, `debugger`, `terminal` (logic), `extension_host`, `extension_registry`.
 3. **UI:** `theme`, `ui`, `editor`, `workbench`.
-4. **Application:** `ferrum`.
+4. **Application:** `shell`, `ferrum`.
+
+Folders map to layers: `src/base` and `src/platform` are layers 1–2, `src/languages` and `src/extensions` are layer 2, `src/design`, `src/editor`, `src/workbench` are layer 3, `src/app` is layer 4.
 
 Dependencies only point down the layers. If a lower crate needs an upper one, the boundary is wrong: stop and propose a solution.
 
@@ -191,7 +197,7 @@ Goal: very detailed settings in the future without rewriting the system.
 
 - **Source of truth** — the mockups in `docs/design/mockups/`. Implement as close to them as possible. Design changes only with the owner's approval.
 - **Tokens.** Colors, spacing, radii, font sizes come only from tokens in the `theme` crate. A hardcoded color or spacing value in a component is a bug. Tokens are structured so that light and high-contrast themes and a compact density mode (spacing via density tokens) can be added later.
-- **Base dark theme.** Exact values from the Figma SVG exports in `docs/design/mockups/` (near-identical greys merged into one token per group). The complete token set, including derived state tokens (hover, pressed, disabled, focus), lives in `crates/theme/themes/dark.toml`; that file is the source of truth for values. Main tokens:
+- **Base dark theme.** Exact values from the Figma SVG exports in `docs/design/mockups/` (near-identical greys merged into one token per group). The complete token set, including derived state tokens (hover, pressed, disabled, focus), lives in `src/design/theme/themes/dark.toml`; that file is the source of truth for values. Main tokens:
 
 | Token | Color | Where |
 |---|---|---|

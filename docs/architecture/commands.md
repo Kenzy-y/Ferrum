@@ -12,7 +12,7 @@ Crate `commands` (core layer, no GPUI).
 - `Keystroke`, `KeySequence`, `Platform` — `ctrl-shift-p`, `ctrl-k ctrl-s`;
   `mod` is Cmd on macOS and Ctrl elsewhere.
 - `Keymap` — bindings per context. `Keymap::defaults(platform)` loads
-  `crates/commands/keymaps/default-<platform>.toml`; `apply(text)` layers a
+  `src/platform/commands/keymaps/default-<platform>.toml`; `apply(text)` layers a
   user `keymap.toml` on top (an empty command unbinds). Invalid files are
   rejected whole. Bindings keep file order (the first one is shown in
   hints). `diagnostics(&registry)` finds unknown commands.
