@@ -61,3 +61,8 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Test
         run: cargo test --workspace --locked
+      # Every benchmark once, as a test: catches broken benchmarks without
+      # timing them on shared runners. Budgets are checked on a dedicated
+      # machine (see docs/architecture/text.md).
+      - name: Benchmarks (smoke run)
+        run: cargo test --workspace --benches --locked

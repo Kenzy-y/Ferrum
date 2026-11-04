@@ -22,6 +22,7 @@ i18n = { path = "crates/i18n" }
 process = { path = "crates/process" }
 project = { path = "crates/project" }
 settings = { path = "crates/settings" }
+text = { path = "crates/text" }
 
 # UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built
 # against; both are pinned to exact versions and updated together in a
@@ -37,11 +38,13 @@ gpui-component = { version = "=0.9.0", default-features = false }
 
 # Core.
 anyhow = "1.0.104"
+criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 directories = "6.0.0"
 fluent-bundle = "0.16.0"
 futures = "0.3.34"
 ignore = "0.4.34"
 notify = "8.2.1"
+ropey = "1.6.1"
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }
 sys-locale = "0.3.2"
@@ -50,6 +53,7 @@ toml = { version = "1.1.8", features = ["preserve_order"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 unic-langid = "0.9.6"
+unicode-segmentation = "1.13.3"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
