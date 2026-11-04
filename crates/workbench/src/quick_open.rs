@@ -245,21 +245,34 @@ impl Render for QuickOpen {
                 .child(self.no_results.clone())
         });
 
+        let results = div()
+            .flex()
+            .flex_col()
+            .p(px(metrics.space.xs))
+            .border_t_1()
+            .border_color(theme.colors.border_divider)
+            .child(list)
+            .children(empty);
+        // Same width, corner radius and field height as the title bar search
+        // field it opens over, so the field stays in place and the list
+        // unfolds below it.
         div()
             .id("quick-open")
             .flex()
             .flex_col()
-            .w(px(metrics.size.titlebar_search_width))
-            .p(px(metrics.space.sm))
-            .gap(px(metrics.space.sm))
-            .rounded(px(metrics.radius.lg))
+            .w_full()
+            .overflow_hidden()
+            .rounded(px(metrics.radius.md))
             .border_1()
-            .border_color(theme.colors.border_overlay)
+            .border_color(theme.colors.border_focus)
             .bg(theme.colors.bg_overlay)
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             .capture_key_down(cx.listener(Self::on_key_down))
-            .child(TextField::new(&self.input).icon(IconName::Search))
-            .child(list)
-            .children(empty)
+            .child(
+                TextField::new(&self.input)
+                    .icon(IconName::Search)
+                    .embedded(),
+            )
+            .child(results)
     }
 }

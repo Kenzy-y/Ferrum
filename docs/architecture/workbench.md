@@ -21,7 +21,9 @@ callback given by the application, which routes ids to their owners;
 **Quick open.** `quick_open::QuickOpen` is the overlay behind the title bar
 search (`workbench.quickOpen`, Ctrl K) and the command palette
 (`workbench.showCommandPalette`, Ctrl Shift P / F1; it starts with the `>`
-prefix). It lists every registered command with its localized title and
+prefix). It opens exactly over the title bar field (same position and width,
+drawn with `deferred` above the panels; a full-window backdrop closes it on
+a click outside). It lists every registered command with its localized title and
 first shortcut, filters with `commands::filter`, highlights matches, and is
 driven by the keyboard (Up / Down / Enter / Escape) or the mouse. Closing
 restores the previous focus. Commands are the only source for now; files,

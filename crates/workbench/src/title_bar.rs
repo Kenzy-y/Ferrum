@@ -4,7 +4,8 @@ use commands::CommandId;
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, App, Context, Div, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
-    ParentElement as _, Styled as _, TitlebarOptions, Window, WindowControlArea, div, point, px,
+    ParentElement as _, Styled as _, TitlebarOptions, Window, WindowControlArea, deferred, div,
+    point, px,
 };
 use theme::ActiveTheme as _;
 use ui::{Button, ButtonVariant, Icon, IconButton, IconName, SearchField};
@@ -108,6 +109,7 @@ fn search(workbench: &Workbench, cx: &App) -> AnyElement {
                 .w_full()
                 .min_w_0()
                 .max_w(px(theme.metrics.size.titlebar_search_width))
+                .relative()
                 // Covers the drag area, see `clickable`.
                 .occlude()
                 .child({
@@ -120,7 +122,13 @@ fn search(workbench: &Workbench, cx: &App) -> AnyElement {
                         Some(keys) => field.shortcut(keys),
                         None => field,
                     }
-                }),
+                })
+                // Quick open opens exactly over the field; `deferred` paints
+                // it after the panels so its list is not covered by them.
+                .children(workbench.quick_open_view().map(|view| {
+                    deferred(div().absolute().top_0().left_0().w_full().child(view))
+                        .with_priority(1)
+                })),
         )
         .into_any_element()
 }

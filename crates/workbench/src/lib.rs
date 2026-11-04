@@ -237,6 +237,11 @@ impl Workbench {
         }
     }
 
+    /// The open quick open view, drawn by the title bar.
+    fn quick_open_view(&self) -> Option<Entity<QuickOpen>> {
+        self.quick_open.as_ref().map(|open| open.view.clone())
+    }
+
     /// Label of the first shortcut bound to `command`, for hints.
     fn shortcut_label(&self, command: &str) -> Option<SharedString> {
         let id = CommandId::new(command).ok()?;
@@ -285,23 +290,17 @@ impl Render for Workbench {
         let editor = editor_area::render(self, cx);
         let panel = self.panel_visible.then(|| bottom_panel::render(self, cx));
         let status_bar = status_bar::render(self, cx);
-        let overlay = self.quick_open.as_ref().map(|open| {
-            let size = &cx.theme().metrics.size;
-            let top = (size.titlebar_height - size.input_inset_height) / 2.0
-                - cx.theme().metrics.space.sm;
+        // Catches clicks outside quick open; the box itself is drawn by the
+        // title bar over its search field.
+        let backdrop = self.quick_open.is_some().then(|| {
             div()
-                .id("quick-open-overlay")
+                .id("quick-open-backdrop")
                 .absolute()
                 .inset_0()
-                .flex()
-                .flex_col()
-                .items_center()
-                .pt(px(top))
                 .on_mouse_down(
                     MouseButton::Left,
                     cx.listener(|this, _, window, cx| this.close_quick_open(window, cx)),
                 )
-                .child(open.view.clone())
         });
 
         let theme = cx.theme();
@@ -340,7 +339,7 @@ impl Render for Workbench {
             .child(title_bar)
             .child(body)
             .child(status_bar)
-            .children(overlay)
+            .children(backdrop)
     }
 }
 

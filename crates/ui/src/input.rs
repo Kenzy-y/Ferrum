@@ -128,6 +128,7 @@ pub struct TextField {
     icon: Option<IconName>,
     disabled: bool,
     forced: Option<InteractionState>,
+    embedded: bool,
 }
 
 impl TextField {
@@ -138,7 +139,17 @@ impl TextField {
             icon: None,
             disabled: false,
             forced: None,
+            embedded: false,
         }
+    }
+
+    /// Draws only the text and icon, without background or border, at the
+    /// height of the title bar search field: for fields inside another
+    /// frame (quick open).
+    #[must_use]
+    pub fn embedded(mut self) -> Self {
+        self.embedded = true;
+        self
     }
 
     /// Adds a leading icon.
@@ -173,16 +184,40 @@ impl RenderOnce for TextField {
         } else {
             InteractionState::Normal
         });
-        let height = cx.theme().metrics.size.input_inset_height;
         let icon = self.icon.map(Icon::new);
-        field_container(state, false, cx)
-            .h(px(height))
-            .children(icon)
-            .child(
-                Input::new(&self.state)
-                    .appearance(false)
-                    .disabled(self.disabled || state == InteractionState::Disabled),
-            )
+        let size = &cx.theme().metrics.size;
+        let font_size = if self.embedded {
+            cx.theme().metrics.font_size.md
+        } else {
+            cx.theme().metrics.font_size.base
+        };
+        let container = if self.embedded {
+            // Same height as `SearchField` without its 1px border on each side.
+            let height = size.input_height - 2.0;
+            let padding = cx.theme().metrics.space.lg;
+            let gap = cx.theme().metrics.space.md;
+            div()
+                .flex()
+                .items_center()
+                .w_full()
+                .h(px(height))
+                .px(px(padding - 1.0))
+                .gap(px(gap))
+                .text_size(px(cx.theme().metrics.font_size.md))
+                .text_color(cx.theme().colors.text_primary)
+        } else {
+            let height = size.input_inset_height;
+            field_container(state, false, cx).h(px(height))
+        };
+        container.children(icon).child(
+            Input::new(&self.state)
+                .appearance(false)
+                // The frame owns the padding; the text sits right after the
+                // icon, as in `SearchField`.
+                .px_0()
+                .text_size(px(font_size))
+                .disabled(self.disabled || state == InteractionState::Disabled),
+        )
     }
 }
 
