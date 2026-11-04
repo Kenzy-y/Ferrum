@@ -1,6 +1,6 @@
 //! Parsing a rope into a syntax tree, incrementally after edits.
 
-use std::ops::ControlFlow;
+use std::ops::{ControlFlow, Range};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
@@ -59,36 +59,67 @@ impl SyntaxTree {
             incremental = old.is_some()
         )
         .entered();
-        let mut parser = Parser::new();
+        let mut parser = parser(grammar)?;
+        run(&mut parser, rope, old, timeout, cancel)
+    }
+
+    /// Parses only `range` of `rope` as a text of its own; nodes keep the
+    /// offsets of the rope. For a quick tree of the text around an edit
+    /// while the whole text is parsed again: `range` should be a span that
+    /// parses on its own ([`Self::top_level_span`]).
+    ///
+    /// # Errors
+    ///
+    /// As [`Self::parse`].
+    pub fn parse_range(
+        grammar: &Grammar,
+        rope: &Rope,
+        range: Range<usize>,
+        timeout: Duration,
+        cancel: &AtomicBool,
+    ) -> Result<Self, SyntaxError> {
+        let _span = tracing::trace_span!(
+            "syntax.parse_range",
+            grammar = grammar.id(),
+            bytes = range.len()
+        )
+        .entered();
+        let mut parser = parser(grammar)?;
+        let end = range.end.min(rope.len_bytes());
+        let start = range.start.min(end);
+        let point_at = |offset: usize| {
+            let row = rope.byte_to_line(offset);
+            Point::new(row, offset - rope.line_to_byte(row))
+        };
         parser
-            .set_language(&grammar.language)
+            .set_included_ranges(&[tree_sitter::Range {
+                start_byte: start,
+                end_byte: end,
+                start_point: point_at(start),
+                end_point: point_at(end),
+            }])
             .map_err(|error| SyntaxError::Language {
                 grammar: grammar.id().to_owned(),
                 message: error.to_string(),
             })?;
-        let started = Instant::now();
-        let mut stop = None;
-        let mut progress = |_: &tree_sitter::ParseState| {
-            if cancel.load(Ordering::Relaxed) {
-                stop = Some(ParseStop::Cancelled);
-                ControlFlow::Break(())
-            } else if started.elapsed() > timeout {
-                stop = Some(ParseStop::TimedOut);
-                ControlFlow::Break(())
-            } else {
-                ControlFlow::Continue(())
-            }
+        run(&mut parser, rope, None, timeout, cancel)
+    }
+
+    /// The span of the top-level nodes that overlap `range`: whole items
+    /// (functions, tables), which parse correctly on their own. Logarithmic
+    /// in the number of items.
+    pub fn top_level_span(&self, range: Range<usize>) -> Range<usize> {
+        let root = self.tree.root_node();
+        let child_at = |offset: usize| {
+            let mut cursor = root.walk();
+            cursor
+                .goto_first_child_for_byte(offset)
+                .map(|_| cursor.node().byte_range())
         };
-        let mut read = |offset: usize, _: Point| chunk_at(rope, offset);
-        let tree = parser.parse_with_options(
-            &mut read,
-            old.map(|old| &old.tree),
-            Some(ParseOptions::new().progress_callback(&mut progress)),
-        );
-        match tree {
-            Some(tree) => Ok(Self { tree }),
-            None => Err(SyntaxError::Parse(stop.unwrap_or(ParseStop::Cancelled))),
-        }
+        let start = child_at(range.start).map_or(range.start, |node| node.start.min(range.start));
+        let end = child_at(range.end.saturating_sub(1).max(range.start))
+            .map_or(range.end, |node| node.end.max(range.end));
+        start..end
     }
 
     /// Moves the tree through `edit`, so its nodes keep matching the text
@@ -106,6 +137,50 @@ impl SyntaxTree {
     /// The tree as an S-expression (tests, debugging).
     pub fn to_sexp(&self) -> String {
         self.tree.root_node().to_sexp()
+    }
+}
+
+fn parser(grammar: &Grammar) -> Result<Parser, SyntaxError> {
+    let mut parser = Parser::new();
+    parser
+        .set_language(&grammar.language)
+        .map_err(|error| SyntaxError::Language {
+            grammar: grammar.id().to_owned(),
+            message: error.to_string(),
+        })?;
+    Ok(parser)
+}
+
+/// Parses with `parser`, stopping on `cancel` or after `timeout`.
+fn run(
+    parser: &mut Parser,
+    rope: &Rope,
+    old: Option<&SyntaxTree>,
+    timeout: Duration,
+    cancel: &AtomicBool,
+) -> Result<SyntaxTree, SyntaxError> {
+    let started = Instant::now();
+    let mut stop = None;
+    let mut progress = |_: &tree_sitter::ParseState| {
+        if cancel.load(Ordering::Relaxed) {
+            stop = Some(ParseStop::Cancelled);
+            ControlFlow::Break(())
+        } else if started.elapsed() > timeout {
+            stop = Some(ParseStop::TimedOut);
+            ControlFlow::Break(())
+        } else {
+            ControlFlow::Continue(())
+        }
+    };
+    let mut read = |offset: usize, _: Point| chunk_at(rope, offset);
+    let tree = parser.parse_with_options(
+        &mut read,
+        old.map(|old| &old.tree),
+        Some(ParseOptions::new().progress_callback(&mut progress)),
+    );
+    match tree {
+        Some(tree) => Ok(SyntaxTree { tree }),
+        None => Err(SyntaxError::Parse(stop.unwrap_or(ParseStop::Cancelled))),
     }
 }
 

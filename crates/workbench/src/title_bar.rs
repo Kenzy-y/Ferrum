@@ -133,9 +133,12 @@ fn search(workbench: &Workbench, cx: &App) -> AnyElement {
 /// Actions on the right, before the window controls.
 fn actions(workbench: &Workbench, cx: &App) -> AnyElement {
     let gap = cx.theme().metrics.space.lg;
-    let open_folder = Button::new("open-folder", workbench.text("titlebar-open-folder"))
-        .icon(IconName::Folder)
-        .on_activate(run(&workbench.dispatch, command_ids::OPEN_FOLDER));
+    // Runs the project's main target once language support and the
+    // debugger arrive (stages 4 and 8); until then it says so.
+    let run_project = Button::new("run-project", workbench.text("titlebar-run-project"))
+        .icon(IconName::Play)
+        .disabled(true)
+        .tooltip(workbench.text("welcome-later"));
     let toggle_sidebar = IconButton::new("toggle-sidebar", IconName::Columns)
         .on_activate(run(&workbench.dispatch, command_ids::TOGGLE_SIDEBAR));
     div()
@@ -143,7 +146,7 @@ fn actions(workbench: &Workbench, cx: &App) -> AnyElement {
         .flex_none()
         .items_center()
         .gap(px(gap))
-        .child(clickable(open_folder))
+        .child(clickable(run_project))
         .child(clickable(toggle_sidebar))
         .into_any_element()
 }

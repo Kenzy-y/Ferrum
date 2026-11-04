@@ -21,9 +21,10 @@ mod mouse;
 mod runs;
 mod scene;
 mod settings;
+mod syntax_patch;
 mod syntax_state;
 mod viewport;
 
-pub use actions::{CONTEXT, SAVE, is_editor_command, register_commands};
+pub use actions::{CONTEXT, SAVE, init, is_editor_command, register_commands};
 pub use editor::{Editor, EditorEvent, EditorStatus};
 pub use settings::{EditorSettings, MultiCursorModifier};

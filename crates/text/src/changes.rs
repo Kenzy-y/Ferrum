@@ -44,11 +44,11 @@ impl TextChanges {
 /// replaced, so a document nobody drains stays small (about 0.5 MB).
 const MAX_LOGGED_EDITS: usize = 10_000;
 
-/// A step with more edits than this (thousands of cursors) is logged as
+/// A step with more edits than this (over a thousand cursors) is logged as
 /// one edit spanning all of them: logging each costs three point lookups
 /// and would double the cost of the step, while a spanning edit only makes
 /// the next parse look at more text.
-const MAX_EDITS_PER_STEP: usize = 64;
+const MAX_EDITS_PER_STEP: usize = 1024;
 
 /// The log of a document. Off by default: then replacing costs nothing
 /// extra.
@@ -173,32 +173,23 @@ mod tests {
 
     #[test]
     fn a_step_of_many_edits_is_logged_as_one_spanning_edit() {
-        let mut buffer = Buffer::from_text(
-            &"ab
-"
-            .repeat(100),
-        );
+        let mut buffer = Buffer::from_text(&"ab\n".repeat(2000));
         let mut log = ChangeLog::default();
         log.enable();
         // Insert "x" after the "a" of every line.
-        let replacements = (0..100).map(|row| (row * 3 + 1..row * 3 + 1, "x"));
+        let replacements = (0..2000).map(|row| (row * 3 + 1..row * 3 + 1, "x"));
         log.replace_step(&mut buffer, replacements);
-        assert_eq!(
-            buffer.slice(0..8),
-            "axb
-axb
-"
-        );
+        assert_eq!(buffer.slice(0..8), "axb\naxb\n");
         let changes = log.take();
         assert_eq!(
             changes.edits,
             vec![TextEdit {
                 start: 1,
-                old_end: 298,
-                new_end: 398,
+                old_end: 5998,
+                new_end: 7998,
                 start_point: Point::new(0, 1),
-                old_end_point: Point::new(99, 1),
-                new_end_point: Point::new(99, 2),
+                old_end_point: Point::new(1999, 1),
+                new_end_point: Point::new(1999, 2),
             }]
         );
 

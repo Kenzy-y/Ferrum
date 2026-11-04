@@ -266,6 +266,9 @@ impl Render for QuickOpen {
             .border_1()
             .border_color(theme.colors.border_focus)
             .bg(theme.colors.bg_overlay)
+            // Wheel and clicks over the box stay in it (the list scrolls,
+            // the editor below does not).
+            .occlude()
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             .capture_key_down(cx.listener(Self::on_key_down))
             .child(

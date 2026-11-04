@@ -16,6 +16,7 @@ menu-view = Вид
 menu-go = Переход
 titlebar-search-placeholder = Поиск команд и настроек
 titlebar-open-folder = Открыть папку
+titlebar-run-project = Запустить проект
 view-explorer = Проводник
 view-search = Поиск
 view-source-control = Система контроля версий

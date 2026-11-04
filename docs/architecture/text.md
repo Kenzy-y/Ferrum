@@ -40,7 +40,7 @@ Crate `text` (core layer, no GPUI): what the editor edits.
 - `TextChanges` — with `Document::track_changes` (off by default), every
   replacement is logged as a `TextEdit` with offsets and points, in the
   order it was applied. `take_changes` drains the log. Syntax trees follow
-  the text with it. A step of more than 64 edits is logged as one
+  the text with it. A step of more than 1024 edits is logged as one
   spanning edit. A reload, or a log of 10 000 undrained edits, reports
   `replaced`. Cost: typing 1.7 → 3.1 µs per character with tracking;
   1000 and 5000 cursors unchanged (2.0 and 9.3 ms).

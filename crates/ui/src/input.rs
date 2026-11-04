@@ -192,7 +192,9 @@ impl RenderOnce for TextField {
             cx.theme().metrics.font_size.base
         };
         let container = if self.embedded {
-            // Same height as `SearchField` without its 1px border on each side.
+            // Drawn inside a frame with the same 1px border as `SearchField`:
+            // the height loses the border, the padding stays the same so the
+            // icon and the text do not move when quick open opens.
             let height = size.input_height - 2.0;
             let padding = cx.theme().metrics.space.lg;
             let gap = cx.theme().metrics.space.md;
@@ -201,7 +203,7 @@ impl RenderOnce for TextField {
                 .items_center()
                 .w_full()
                 .h(px(height))
-                .px(px(padding - 1.0))
+                .px(px(padding))
                 .gap(px(gap))
                 .text_size(px(cx.theme().metrics.font_size.md))
                 .text_color(cx.theme().colors.text_primary)

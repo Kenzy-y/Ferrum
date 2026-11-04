@@ -34,12 +34,22 @@ Crate `editor` (UI layer): the view that shows and edits a `text::Document`.
   clone). The file's folder is watched non-recursively; when the file
   changes and there are no unsaved edits, it is read and compared in the
   background and swapped in only if it differs, so own saves change
-  nothing.
+  nothing. If the file is gone and exactly one other file of the folder
+  has its saved text (`FileState::saved`, a rope clone), it was renamed:
+  the editor saves there from now on, unsaved edits included, and emits
+  `EditorEvent::Renamed`. Renames are atomic, so the new name exists
+  when the old one is reported gone. Moves to another folder are not
+  followed.
 
 **Cursor blink.** A timer flips the cursor every
 `cursor_blink_interval_ms`; it runs only while the editor is focused in an
 active window, restarts on every edit or move, and is off with
 `cursor_blink = false`. Without focus nothing ticks.
+
+**Tab** indents. The component library binds Tab to moving the focus at
+the window root, and GPUI runs action bindings before key listeners, so
+`editor::init` binds Tab and Shift+Tab to `NoAction` in the `editor`
+context.
 
 **Clipboard.** Copy without a selection copies the cursor's line; such text
 carries metadata, and pasting it at a single cursor inserts it above the

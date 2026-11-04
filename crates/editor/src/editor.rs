@@ -35,6 +35,9 @@ pub enum EditorEvent {
     SaveFailed(String),
     /// The file changed on disk and was read again.
     Reloaded,
+    /// The file was renamed on disk; the editor now saves to the new name
+    /// ([`Editor::path`]).
+    Renamed,
     /// The outline was computed again ([`Editor::outline`]).
     OutlineChanged,
 }
@@ -149,7 +152,8 @@ impl Editor {
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
-            editor.file = Some(FileState::new(fs, path, version, cx));
+            let saved = editor.document.buffer().clone();
+            editor.file = Some(FileState::new(fs, path, version, saved, cx));
         }
         editor
     }

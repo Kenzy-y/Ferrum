@@ -474,6 +474,9 @@ impl Render for Workbench {
                 .id("quick-open-backdrop")
                 .absolute()
                 .inset_0()
+                // While quick open is open nothing below reacts to the
+                // pointer: the wheel does not scroll the editor.
+                .occlude()
                 .on_mouse_down(
                     MouseButton::Left,
                     cx.listener(|this, _, window, cx| this.close_quick_open(window, cx)),

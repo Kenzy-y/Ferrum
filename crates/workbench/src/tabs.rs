@@ -109,8 +109,20 @@ impl Workbench {
         let subscription = cx.subscribe(&editor, |workbench, editor, event: &EditorEvent, cx| {
             match event {
                 EditorEvent::SaveFailed(message) => tracing::error!(%message, "saving failed"),
-                EditorEvent::OutlineChanged if workbench.active_editor() == Some(editor) => {
+                EditorEvent::OutlineChanged
+                    if workbench.active_editor().as_ref() == Some(&editor) =>
+                {
                     workbench.sync_outline(cx);
+                }
+                EditorEvent::Renamed => {
+                    let path = editor.read(cx).path().map(Path::to_path_buf);
+                    if let Some(path) = path
+                        && let Some(tab) = workbench.tabs.iter_mut().find(|tab| {
+                            matches!(&tab.content, TabContent::Editor(open) if open == &editor)
+                        })
+                    {
+                        tab.title = file_title(&path);
+                    }
                 }
                 _ => {}
             }

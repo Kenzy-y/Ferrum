@@ -46,6 +46,7 @@ fn main() -> anyhow::Result<()> {
         .with_assets(ui::Assets)
         .run(move |cx: &mut App| {
             gpui_component::init(cx);
+            editor::init(cx);
             if let Err(error) = theme::register_fonts(cx) {
                 tracing::error!("{error}");
             }

@@ -198,15 +198,13 @@ fn incremental_parse_matches_a_full_parse() {
 #[test]
 fn incremental_parse_after_typing_at_many_cursors_matches_a_full_parse() {
     let grammar = Grammar::compile(&grammar()).unwrap();
-    let source = "fn f() { g(1); }
-"
-    .repeat(200);
+    let source = "fn f() { g(1); }\n".repeat(2000);
     let mut document = text::Document::from_text(&source);
     document.track_changes();
     let (_, mut tree) = parse(&grammar, &source);
     // One cursor per line, more than are logged one by one.
     let buffer = document.buffer();
-    let cursors = (0..200)
+    let cursors = (0..2000)
         .map(|row| text::Selection::cursor(buffer.line_range(row).start + 9))
         .collect();
     document.set_selections(&text::Selections::from_vec(cursors));
@@ -215,7 +213,7 @@ fn incremental_parse_after_typing_at_many_cursors_matches_a_full_parse() {
     document.redo();
     let changes = document.take_changes();
     assert!(
-        changes.edits.len() < 200,
+        changes.edits.len() < 2000,
         "large steps are logged as one edit"
     );
     for edit in changes.edits {
@@ -248,5 +246,28 @@ fn a_set_cancel_flag_stops_parsing() {
     assert_eq!(
         result.unwrap_err(),
         syntax::SyntaxError::Parse(syntax::ParseStop::Cancelled)
+    );
+}
+
+#[test]
+fn a_top_level_span_parses_like_the_whole_file() {
+    let grammar = Grammar::compile(&grammar()).unwrap();
+    let (rope, full) = parse(&grammar, MOCKUP);
+    // Inside `main`: the span is the whole function.
+    let inside = MOCKUP.find("Cli::parse").unwrap();
+    let span = full.top_level_span(inside..inside + 1);
+    assert_eq!(&MOCKUP[span.clone()][..7], "fn main");
+    assert!(MOCKUP[span.clone()].ends_with('}'));
+    let part = SyntaxTree::parse_range(
+        &grammar,
+        &rope,
+        span.clone(),
+        Duration::from_secs(5),
+        &AtomicBool::new(false),
+    )
+    .unwrap();
+    assert_eq!(
+        syntax::highlights(&grammar, &part, &rope, span.clone()),
+        syntax::highlights(&grammar, &full, &rope, span)
     );
 }

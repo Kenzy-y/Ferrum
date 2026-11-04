@@ -44,7 +44,17 @@ Display for Cli`). Depth comes from how item ranges contain one another.
   background parse, unless one is already running.
 - Edits made during a parse are replayed on its result, then the next
   parse starts from that tree, so fast typing batches itself.
-- A reloaded file (`TextChanges::replaced`) is parsed from scratch.
+- A reloaded file (`TextChanges::replaced`), and an edit removing more
+  than 64 KB (select all and delete), start over: the running parse is
+  cancelled and the text is parsed from scratch. Moving a tree through a
+  wide edit visits every node in it (400 ms for 12 MB on the UI thread).
+- **Patches** (`syntax_patch.rs`). Even unchanged, a 300 000-line file
+  takes about 130 ms to reparse: tree-sitter walks the whole top level.
+  When full parses take over 8 ms, each edit also starts a quick parse of
+  just the top-level items around it (`SyntaxTree::top_level_span`, then
+  `parse_range`: about 0.1 ms). Its highlights win inside its range until
+  the full parse is current. A patch is moved through further edits, and
+  it grows to cover earlier ones up to 64 KB.
 - Each frame highlights only the visible rows. A cache covers the visible
   text plus a margin, keyed by tree generation, so cursor blinks and small
   scrolls reuse it.
@@ -57,8 +67,9 @@ Display for Cli`). Depth comes from how item ranges contain one another.
 
 **Change tracking** (`text::TextChanges`). Every replacement is logged in
 the order it was applied, with byte offsets and points. A step of more
-than 64 edits (thousands of cursors) is logged as one spanning edit,
-otherwise logging would double the cost of the step. A log nobody drains
+than 1024 edits is logged as one spanning edit, otherwise logging would
+double the cost of the step. The editor treats such an edit as a
+replacement and parses the text from scratch. A log nobody drains
 turns into "replaced" after 10 000 edits.
 
 **Benchmarks** (`cargo bench -p lang_rust --bench syntax`; release, Windows
@@ -73,9 +84,10 @@ turns into "replaced" after 10 000 edits.
 | move the tree through an edit (UI) | 7 µs | 16 µs |
 | highlight 60 visible rows (UI) | 190 µs | 270 ms → not done, see above |
 
-Reparsing a large file costs tens of milliseconds because the top level
-has tens of thousands of items. It runs in the background, and the edited
-tree keeps the highlights in place meanwhile.
+Reparsing a large file costs tens of milliseconds, even without an edit,
+because the top level has tens of thousands of items: 130 ms at 300 000
+lines. It runs in the background. Meanwhile the edited tree keeps the
+highlights in place and a patch colors the edited items.
 
 **Adding a language.** Create a crate with a `GrammarSpec`
 (`lang_toml` is the example), its `queries/highlights.scm` and

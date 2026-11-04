@@ -3,7 +3,8 @@
 Crate `workbench` (UI layer): the layout of a main window as in
 `docs/design/mockups`.
 
-**Parts.** `title_bar` (logo, menus, search, actions, `window_controls`),
+**Parts.** `title_bar` (logo, menus, search, actions: Run project,
+disabled until stages 4 and 8, and the sidebar toggle; `window_controls`),
 `activity_bar`, `sidebar`, `editor_area`, `bottom_panel`, `status_bar`. All
 sizes come from `theme` tokens (`titlebar.*`, `activity_bar.*`,
 `sidebar.width`, `bottom_panel.height`, `layout.gap.top`, `panel.gap`).

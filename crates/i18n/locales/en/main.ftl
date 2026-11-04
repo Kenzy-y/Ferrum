@@ -16,6 +16,7 @@ menu-view = View
 menu-go = Go
 titlebar-search-placeholder = Search commands and settings
 titlebar-open-folder = Open folder
+titlebar-run-project = Run project
 view-explorer = Explorer
 view-search = Search
 view-source-control = Source control

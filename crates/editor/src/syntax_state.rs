@@ -4,13 +4,14 @@
 //!
 //! At most one parse runs at a time. Edits made while it runs are kept and
 //! replayed on its result, then the next parse starts from that tree, so
-//! fast typing batches itself.
+//! fast typing batches itself. When full parses are slow (large files), a
+//! [`Patch`] colors the edited items within milliseconds meanwhile.
 
 use std::cell::RefCell;
 use std::ops::Range;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use gpui::{Context, Hsla, Task};
 use syntax::{
@@ -20,6 +21,7 @@ use text::{Buffer, TextChanges, TextEdit};
 use theme::SyntaxTokens;
 
 use crate::editor::{Editor, EditorEvent};
+use crate::syntax_patch::{Patch, edited_range, spans_in};
 
 /// Pause after the last parse before the outline is computed again.
 const OUTLINE_DEBOUNCE: Duration = Duration::from_millis(150);
@@ -31,6 +33,20 @@ const CACHE_MARGIN_BYTES: usize = 16 * 1024;
 /// Visible text longer than this (rows of huge lines) is highlighted per
 /// row instead of cached as a whole.
 const MAX_CACHED_BYTES: usize = 256 * 1024;
+
+/// An edit that removes more than this many bytes is not moved through the
+/// tree (that visits every node in the range: 400 ms for 12 MB on the UI
+/// thread); the text counts as replaced and is parsed from scratch.
+const LARGE_EDIT_BYTES: usize = 64 * 1024;
+
+/// Full parses slower than this get patches.
+const SLOW_PARSE: Duration = Duration::from_millis(8);
+
+/// Largest text a patch parses; wider edits wait for the full parse.
+const MAX_PATCH_BYTES: usize = 64 * 1024;
+
+/// Batches with more edits than this (many cursors) get no patch.
+const MAX_PATCH_EDITS: usize = 8;
 
 /// Whether highlighting works for the text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,14 +84,16 @@ pub(crate) struct SyntaxState {
     grammar: Option<Arc<Grammar>>,
     /// The tree, moved through every edit since it was parsed.
     tree: Option<SyntaxTree>,
-    /// Changes with every change of `tree`; highlights cached for another
-    /// generation are stale.
+    /// Changes with every change of the text or the tree; cached
+    /// highlights and patch results of another generation are stale.
     generation: u64,
     job: Option<ParseJob>,
     /// Edits since the running parse took its snapshot of the text.
     pending: Vec<TextEdit>,
-    /// The whole text was replaced since the running parse started.
-    pending_replaced: bool,
+    /// How long the last full parse took; slow ones get patches.
+    parse_time: Duration,
+    patch: Option<Patch>,
+    patch_task: Option<Task<()>>,
     outline: Arc<[OutlineItem]>,
     /// The waiting or running outline computation.
     outline_task: Option<Task<()>>,
@@ -84,8 +102,8 @@ pub(crate) struct SyntaxState {
 
 impl SyntaxState {
     /// Highlights of `range` (bytes) of line `row`, sorted. Served from the
-    /// cache when it covers the range; lines longer than
-    /// `max_line_length` get none.
+    /// cache when it covers the range; a patch wins inside its range; lines
+    /// longer than `max_line_length` get none.
     pub(crate) fn highlights(
         &self,
         buffer: &Buffer,
@@ -98,21 +116,18 @@ impl SyntaxState {
         if buffer.line_range(row).len() > self.settings.max_line_length {
             return Vec::new();
         }
-        if let Some(cache) = self.cache.borrow().as_ref()
-            && cache.generation == self.generation
-            && cache.range.start <= range.start
-            && range.end <= cache.range.end
-        {
-            let first = cache
-                .spans
-                .partition_point(|span| span.range.end <= range.start);
-            return cache.spans[first..]
-                .iter()
-                .take_while(|span| span.range.start < range.end)
-                .cloned()
-                .collect();
+        let cached = self.cache.borrow().as_ref().and_then(|cache| {
+            (cache.generation == self.generation
+                && cache.range.start <= range.start
+                && range.end <= cache.range.end)
+                .then(|| spans_in(&cache.spans, &range))
+        });
+        let spans = cached
+            .unwrap_or_else(|| syntax::highlights(grammar, tree, buffer.rope(), range.clone()));
+        match &self.patch {
+            Some(patch) if patch.overlaps(&range) => patch.overlay(&spans, &range),
+            _ => spans,
         }
-        syntax::highlights(grammar, tree, buffer.rope(), range)
     }
 
     /// Makes the cache cover `visible` (the bytes of the visible rows), if
@@ -165,6 +180,16 @@ impl SyntaxState {
             })
             .collect()
     }
+
+    /// Forgets the tree and everything derived from it; the next parse
+    /// starts from scratch. A running parse is cancelled.
+    fn reset_tree(&mut self) {
+        self.job = None;
+        self.tree = None;
+        self.pending.clear();
+        self.patch = None;
+        self.patch_task = None;
+    }
 }
 
 impl Editor {
@@ -187,7 +212,9 @@ impl Editor {
             generation: 0,
             job: None,
             pending: Vec::new(),
-            pending_replaced: false,
+            parse_time: Duration::ZERO,
+            patch: None,
+            patch_task: None,
             outline: Arc::from([]),
             outline_task: None,
             cache: RefCell::new(None),
@@ -244,22 +271,33 @@ impl Editor {
         if changes.is_empty() || syntax.status == Status::Disabled {
             return;
         }
-        if changes.replaced {
-            syntax.tree = None;
-            syntax.pending.clear();
-            syntax.pending_replaced = syntax.job.is_some();
+        let large = changes
+            .edits
+            .iter()
+            .any(|edit| edit.old_end - edit.start > LARGE_EDIT_BYTES);
+        let replaced = changes.replaced || large;
+        if replaced {
+            syntax.reset_tree();
         } else {
             if let Some(tree) = &mut syntax.tree {
                 for edit in &changes.edits {
                     tree.edit(edit);
                 }
             }
+            if let Some(patch) = &mut syntax.patch {
+                for edit in &changes.edits {
+                    patch.edit(edit);
+                }
+            }
             if syntax.job.is_some() {
-                syntax.pending.extend(changes.edits);
+                syntax.pending.extend(changes.edits.iter().copied());
             }
         }
         syntax.generation += 1;
         self.start_parse(cx);
+        if !replaced {
+            self.start_patch(&changes.edits, cx);
+        }
     }
 
     /// Starts a parse of the current text unless one runs (its result is
@@ -288,8 +326,9 @@ impl Editor {
                 .background_executor()
                 .spawn(async move {
                     let grammar = entry.load()?;
+                    let started = Instant::now();
                     let tree = SyntaxTree::parse(&grammar, &rope, old.as_ref(), timeout, &flag)?;
-                    Ok::<_, SyntaxError>((grammar, tree))
+                    Ok::<_, SyntaxError>((grammar, tree, started.elapsed()))
                 })
                 .await;
             let _ = editor.update(cx, |editor, cx| editor.finish_parse(result, cx));
@@ -302,7 +341,7 @@ impl Editor {
 
     fn finish_parse(
         &mut self,
-        result: Result<(Arc<Grammar>, SyntaxTree), SyntaxError>,
+        result: Result<(Arc<Grammar>, SyntaxTree, Duration), SyntaxError>,
         cx: &mut Context<Self>,
     ) {
         let Some(syntax) = &mut self.syntax else {
@@ -313,25 +352,24 @@ impl Editor {
         if let Some(task) = syntax.job.take().and_then(|mut job| job.task.take()) {
             task.detach();
         }
-        let replaced = std::mem::take(&mut syntax.pending_replaced);
         let pending = std::mem::take(&mut syntax.pending);
         match result {
-            Ok((grammar, mut tree)) => {
+            Ok((grammar, mut tree, parse_time)) => {
                 syntax.grammar = Some(grammar);
                 syntax.status = Status::Ready;
-                if replaced {
-                    syntax.tree = None;
-                } else {
-                    for edit in &pending {
-                        tree.edit(edit);
-                    }
-                    syntax.tree = Some(tree);
+                syntax.parse_time = parse_time;
+                for edit in &pending {
+                    tree.edit(edit);
                 }
+                syntax.tree = Some(tree);
                 syntax.generation += 1;
-                if replaced || !pending.is_empty() {
-                    self.start_parse(cx);
-                } else {
+                if pending.is_empty() {
+                    // The tree is current: patches are no longer needed.
+                    syntax.patch = None;
+                    syntax.patch_task = None;
                     self.schedule_outline(cx);
+                } else {
+                    self.start_parse(cx);
                 }
                 cx.notify();
             }
@@ -343,6 +381,65 @@ impl Editor {
                 cx.notify();
             }
         }
+    }
+
+    /// When full parses of this text are slow, parses just the items
+    /// around `edits` in the background, so the edited text is colored
+    /// within milliseconds while the full parse runs.
+    fn start_patch(&mut self, edits: &[TextEdit], cx: &mut Context<Self>) {
+        let rope = self.document.buffer().rope().clone();
+        let Some(syntax) = &mut self.syntax else {
+            return;
+        };
+        let (Some(grammar), Some(tree)) = (syntax.grammar.clone(), syntax.tree.clone()) else {
+            return;
+        };
+        if syntax.job.is_none() || syntax.parse_time < SLOW_PARSE || edits.len() > MAX_PATCH_EDITS {
+            return;
+        }
+        let Some(edited) = edited_range(edits) else {
+            return;
+        };
+        // Keep covering earlier edits the full parse has not caught up with.
+        let region = syntax.patch.as_ref().map_or(edited.clone(), |patch| {
+            edited.start.min(patch.range.start)..edited.end.max(patch.range.end)
+        });
+        let generation = syntax.generation;
+        let timeout = syntax.settings.parse_timeout();
+        let task = cx.spawn(async move |editor, cx| {
+            let patch = cx
+                .background_executor()
+                .spawn(async move {
+                    let mut range = tree.top_level_span(region);
+                    if range.len() > MAX_PATCH_BYTES {
+                        range = tree.top_level_span(edited);
+                    }
+                    if range.len() > MAX_PATCH_BYTES {
+                        return None;
+                    }
+                    let part = SyntaxTree::parse_range(
+                        &grammar,
+                        &rope,
+                        range.clone(),
+                        timeout,
+                        &AtomicBool::new(false),
+                    )
+                    .ok()?;
+                    let spans = syntax::highlights(&grammar, &part, &rope, range.clone());
+                    Some(Patch { range, spans })
+                })
+                .await;
+            let _ = editor.update(cx, |editor, cx| {
+                if let Some(syntax) = &mut editor.syntax
+                    && syntax.generation == generation
+                    && syntax.job.is_some()
+                {
+                    syntax.patch = patch;
+                    cx.notify();
+                }
+            });
+        });
+        syntax.patch_task = Some(task);
     }
 
     /// Computes the outline in the background after a pause; a newer
@@ -374,8 +471,7 @@ impl Editor {
 
 fn disable(syntax: &mut SyntaxState) {
     syntax.status = Status::Disabled;
-    syntax.tree = None;
-    syntax.job = None;
+    syntax.reset_tree();
     syntax.outline = Arc::from([]);
     syntax.outline_task = None;
     *syntax.cache.borrow_mut() = None;

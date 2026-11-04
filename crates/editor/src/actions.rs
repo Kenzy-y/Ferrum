@@ -6,6 +6,21 @@ use text::{LineEnding, Movement};
 /// Keybinding context of a focused editor.
 pub const CONTEXT: &str = "editor";
 
+/// Keys the editor's own keymap uses that the component library binds to
+/// GPUI actions at the window root (Tab moves the focus there). GPUI runs
+/// action bindings before key listeners, so these keys never reached the
+/// keymap inside the editor.
+const KEYS_TAKEN_BY_THE_ROOT: [&str; 2] = ["tab", "shift-tab"];
+
+/// Turns off the root's action bindings for keys the editor handles itself,
+/// so Tab indents instead of moving the focus. Call once at startup, after
+/// the component library is initialized.
+pub fn init(cx: &mut gpui::App) {
+    cx.bind_keys(
+        KEYS_TAKEN_BY_THE_ROOT.map(|key| gpui::KeyBinding::new(key, gpui::NoAction, Some(CONTEXT))),
+    );
+}
+
 /// Saves the file of the active editor.
 pub const SAVE: &str = "editor.save";
 
