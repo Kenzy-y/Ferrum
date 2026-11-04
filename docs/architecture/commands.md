@@ -7,8 +7,8 @@ Crate `commands` (core layer, no GPUI).
 **Key types.**
 - `CommandId` — validated `area.action` id (`editor.save`).
 - `CommandRegistry` / `CommandDescriptor` — known commands with the i18n id of
-  their title. Running commands is the UI layer's job: it maps ids to
-  handlers (for now `ferrum::app_commands`).
+  their title. Running commands is the UI layer's job: handlers live in
+  `workbench::CommandHandlers` (see `workbench.md`).
 - `Keystroke`, `KeySequence`, `Platform` — `ctrl-shift-p`, `ctrl-k ctrl-s`;
   `mod` is Cmd on macOS and Ctrl elsewhere.
 - `Keymap` — bindings per context. `Keymap::defaults(platform)` loads
@@ -45,6 +45,8 @@ Crate `commands` (core layer, no GPUI).
 `key_context` (`editor`, `file_tree`); the shell passes the contexts of the
 focused view and its parents, innermost first, then `workbench`.
 
-**Extending.** New command: register a descriptor, add a handler and a title
-message in every locale. New context: set `key_context` on the view and use
+**Extending.** New command: register a descriptor, register its handler
+next to the code that implements it (`Workbench::register_handlers`,
+`Shell::register_handlers`), and add a title message in every locale. A
+test fails if a registered command has no handler. New context: set `key_context` on the view and use
 the name in keymaps.

@@ -2,6 +2,13 @@
 
 Crate `editor` (UI layer): the view that shows and edits a `text::Document`.
 
+**Layout.** `editor.rs` (the entity), `actions.rs` (commands), `file.rs`
+(saving, disk state), `settings.rs`; `render/` draws the visible rows
+(layout, shaping, display lines, scene, element, viewport arithmetic,
+text runs); `input/` takes keyboard text and the mouse; `decorations/`
+holds the minimap and the scrollbar; `highlighting/` keeps the syntax
+tree in step with edits (`patch.rs` maps highlight ranges across edits).
+
 **Key types.**
 - `Editor` — the entity: document, `EditorSettings`, scroll position,
   cursor blink, input method composition (`marked`), the geometry of the
@@ -9,23 +16,24 @@ Crate `editor` (UI layer): the view that shows and edits a `text::Document`.
   `EditorEvent` (`Edited`, `SelectionsChanged`, `Saved`, `SaveFailed`,
   `Reloaded`); `status()` gives the status bar line, column, selections,
   indentation and line endings.
-- `EditorElement` (`element.rs`) — the GPUI element. Prepaint shapes only
+- `EditorElement` (`render/element.rs`) — the GPUI element. Prepaint shapes only
   the visible rows; of a line longer than `LONG_LINE_CHARS` (1024) only the
   visible columns plus a margin (`viewport::column_window`), so a line of
   megabytes costs the same as a short one. Tabs are expanded per row
-  (`display::DisplayLine` maps offsets both ways). `scene.rs` builds the
+  (`display::DisplayLine` maps offsets both ways). `render/scene.rs` builds the
   layers around the text: current line highlights, selections, indent
   guides (`viewport::guide_levels`, blank lines take the level of their
   neighbours), cursors, line numbers. Then the scrollbar thumb.
-- `viewport.rs` — pure arithmetic: visible rows, long-line windows,
+- `render/viewport.rs` — pure arithmetic: visible rows, long-line windows,
   following the cursor with a margin (`follow_row`, `follow_x`), limits.
 - `actions.rs` — every `editor.*` command: id, title, action. The keymap
   binds them in the `editor` context (the editor's `key_context`); the
-  application runs them on the active editor with `Editor::run_command`.
-- `input.rs` — `EntityInputHandler`: typed text arrives here, not as key
+  workbench registers a handler for each id in `command_ids()` that runs
+  it on the active editor with `Editor::run_command`.
+- `input/mod.rs` — `EntityInputHandler`: typed text arrives here, not as key
   bindings; input methods compose with marked text (underlined). Offsets
   convert to UTF-16 through `text::Buffer`.
-- `mouse.rs` — click places a cursor, Shift+click extends, double click
+- `input/mouse.rs` — click places a cursor, Shift+click extends, double click
   selects a word, triple a line, dragging extends by the unit of the click;
   `[editor] multi_cursor_modifier` (`alt` default, or `ctrl` / Cmd for
   window managers that take Alt+click) adds a cursor. The wheel scrolls
@@ -69,14 +77,14 @@ line. With as many lines as cursors, each cursor gets one.
 `code.line_height`, `editor.inset`, `editor.gutter_gap`, `editor.top`,
 `editor.active_line.*`, `cursor.*`, `scrollbar.*`, `minimap.*`; line
 numbers are at least four digits wide (`MIN_LINE_NUMBER_DIGITS`).
-`shaping.rs` shapes the visible rows.
+`render/shaping.rs` shapes the visible rows.
 
-**Scrollbar** (`scrollbar.rs`, pure geometry). Dragging the thumb keeps it
+**Scrollbar** (`decorations/scrollbar.rs`, pure geometry). Dragging the thumb keeps it
 where it was grabbed. A click on the track jumps there, holding the thumb
 by its middle. Hovered or dragged, it uses `bg.scrollbar.thumb.hover`. The
 strip around it shows the arrow cursor.
 
-**Minimap** (`minimap.rs`, `[editor] minimap`, on by default; ADR 0004).
+**Minimap** (`decorations/minimap.rs`, `[editor] minimap`, on by default; ADR 0004).
 It is drawn right of the text: one bar per run of a syntax color (spaces
 included), dimmed by `opacity.minimap`, and the visible part in
 `bg.minimap.viewport`. While the whole text fits, it does not scroll;
@@ -100,14 +108,14 @@ About 1.1 ms of a 100 000-line frame is painting the minimap's bars, on
 every repaint including cursor blinks. ROADMAP stage 10 tracks drawing
 the minimap once per change.
 
-**Highlighting and outline** (`syntax_state.rs`, see
+**Highlighting and outline** (`highlighting/`, see
 `docs/architecture/syntax.md`). `Editor::set_grammar` gives the editor a
 grammar. The tree follows every edit, parsing runs in the background, and
-`runs.rs` turns the highlights of a shaped row into text runs (colors from
+`render/runs.rs` turns the highlights of a shaped row into text runs (colors from
 the theme's `[syntax]` tokens, the input method underline on top).
 `outline()`, `symbols_at_cursor()` and `go_to()` serve the Outline section
 and the breadcrumbs. `language_id()` selects `[lang.<id>]` settings.
 
 **Extending.** Decorations (diagnostics, inlay hints) become further
-layers in `scene.rs`. New commands: a row in `actions::COMMANDS`, a title
+layers in `render/scene.rs`. New commands: a row in `actions::COMMANDS`, a title
 in every locale, a binding in the default keymaps.

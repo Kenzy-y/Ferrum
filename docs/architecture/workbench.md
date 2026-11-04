@@ -3,6 +3,16 @@
 Crate `workbench` (UI layer): the layout of a main window as in
 `docs/design/mockups`.
 
+**Layout of the crate.** `workbench.rs` is the `Workbench` entity (state
+shared with the parts, `Render`); `layout.rs` the sidebar view and panel
+state; `overlays.rs` quick open and the path dialog with focus restore;
+`command_ids.rs` and `command_handlers.rs` the commands. `parts/` are the
+regions of the window (one file each, `editor_area/` with tabs, closing
+and the message view). `contrib/` are features, one folder each:
+`explorer/` (with the file tree and file icons), `outline/`,
+`quick_open/`, `welcome/`. `dialogs/` holds modal dialogs. A new region
+goes to `parts/`, a new feature to its own `contrib/<name>/` folder.
+
 **Parts.** `title_bar` (logo, menus, search, actions: Run project,
 disabled until stages 4 and 8, and the sidebar toggle; `window_controls`),
 `activity_bar`, `sidebar`, `editor_area`, `bottom_panel`, `status_bar`. All
@@ -35,9 +45,13 @@ offers its commands (ADR 0004).
 
 **Commands.** Every action is a command (`command_ids`):
 `workbench.toggleSidebar`, `workbench.togglePanel`, `workbench.show*`.
-`register_commands` adds them to the registry. Buttons call the `Dispatch`
-callback given by the application, which routes ids to their owners;
-`Workbench::run_command` handles the workbench's own ids.
+`register_commands` adds them to the registry. `CommandHandlers`
+(`command_handlers.rs`) maps ids to what runs: one table per window,
+filled when the window opens and read-only afterwards.
+`Workbench::register_handlers` registers the workbench commands and
+routes every editor command to the active editor; the shell registers
+its own. Buttons call the `Dispatch` callback given by the application,
+which looks the id up in the table.
 
 **Quick open.** `quick_open::QuickOpen` is the overlay behind the title bar
 search (`workbench.quickOpen`, Ctrl K) and the command palette

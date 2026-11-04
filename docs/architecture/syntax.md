@@ -9,7 +9,7 @@ language packs (`lang_rust`, `lang_toml`; plugins in stage 9).
   file extensions and exact file names (`Cargo.lock`), the tree-sitter
   `Language`, the highlight query and the outline query.
 - `GrammarRegistry`: grammars by id, file name (wins) and extension.
-  Filled at startup in `ferrum/src/languages.rs`, read-only afterwards.
+  Filled at startup in `src/app/shell/src/languages.rs`, read-only afterwards.
   `GrammarEntry::load` compiles the queries once (about 20 ms for Rust), so
   it runs in the background on first use.
 - `SyntaxTree`: `parse` reads the rope chunk by chunk, with no copy. It
@@ -92,6 +92,6 @@ highlights in place and a patch colors the edited items.
 **Adding a language.** Create a crate with a `GrammarSpec`
 (`lang_toml` is the example), its `queries/highlights.scm` and
 `queries/outline.scm`, add one `register` line to
-`ferrum/src/languages.rs`. Nothing in `syntax`, `editor` or `workbench`
+`src/app/shell/src/languages.rs`. Nothing in `syntax`, `editor` or `workbench`
 changes. Queries are our own: grammar crates' queries may be the starting
 point, never other editors' ones.
