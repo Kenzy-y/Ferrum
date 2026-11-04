@@ -17,7 +17,8 @@ written and the link stays. Leftover temporary files are removed on error.
 `is_symlink` the path itself; a dangling link is `EntryKind::Other`.
 `canonicalize` resolves links and is how tree walkers detect link cycles.
 
-**Watching.** `watch(root, filter)` watches recursively with `notify`. The
+**Watching.** `watch(root, mode, filter)` watches with `notify`, either
+recursively or only the direct entries of `root` (`WatchMode`). The
 `WatchFilter` runs on the watcher thread, so events under ignored paths
 (build output) are dropped before they are queued. A debounce thread
 collects events for `WATCH_DEBOUNCE` (50 ms) and sends deduplicated batches
