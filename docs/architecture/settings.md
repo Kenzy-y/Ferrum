@@ -35,6 +35,7 @@ The directory holds `settings.toml` and `keymap.toml`. Workspace settings are
 
 **Extending.** New crate settings: define a struct, implement `Settings`,
 register it in the application's registry (`ferrum::config`). New layer:
-add a `LayerKind` variant at its place in the order. Live reload: the UI layer
-re-reads a file, calls `set_layer` and notifies observers of the returned
-`SettingsChange`.
+add a `LayerKind` variant at its place in the order. Live reload: `ferrum::live_config` watches the
+configuration directory (only `settings.toml` and `keymap.toml` pass the
+watch filter), re-reads changed files in the background and applies them
+(`set_layer` / `remove_layer`, new keymap, new language) without a restart.
