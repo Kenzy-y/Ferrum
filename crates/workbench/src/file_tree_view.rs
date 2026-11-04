@@ -24,6 +24,9 @@ use crate::file_icons::{self, FileIcons};
 /// Emitted when `.ferrum/settings.toml` of the workspace changed on disk.
 pub struct WorkspaceSettingsChanged;
 
+/// Emitted when a file is activated (clicked, or Enter).
+pub struct OpenFile(pub PathBuf);
+
 /// Texts of the tree, already localized.
 #[derive(Clone)]
 pub struct FileTreeTexts {
@@ -53,6 +56,7 @@ pub struct FileTreeView {
 }
 
 impl EventEmitter<WorkspaceSettingsChanged> for FileTreeView {}
+impl EventEmitter<OpenFile> for FileTreeView {}
 
 impl FileTreeView {
     /// Shows the tree of `root` and watches it. `settings_file` is the
@@ -265,6 +269,8 @@ impl FileTreeView {
         self.selected = Some(row.entry.path.clone());
         if row.expanded.is_some() {
             self.toggle(&row.entry.path, cx);
+        } else {
+            cx.emit(OpenFile(row.entry.path.clone()));
         }
         cx.notify();
     }
@@ -306,7 +312,8 @@ impl FileTreeView {
             },
             "enter" | "space" => match row {
                 Some(row) if row.expanded.is_some() => self.toggle(&row.entry.path, cx),
-                _ => return,
+                Some(row) => cx.emit(OpenFile(row.entry.path.clone())),
+                None => return,
             },
             _ => return,
         }
@@ -368,6 +375,7 @@ impl Render for FileTreeView {
         let ring = theme.colors.border_focus;
         div()
             .id("file-tree-container")
+            .key_context("file_tree")
             .track_focus(&self.focus_handle.clone().tab_stop(true))
             .on_key_down(cx.listener(Self::on_key_down))
             .flex()

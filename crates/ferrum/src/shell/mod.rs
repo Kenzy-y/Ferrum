@@ -18,14 +18,13 @@ use workbench::{Dispatch, Workbench, command_ids};
 
 use crate::app_commands;
 
+mod files;
+mod keys;
 mod workspace;
 use crate::config::{self, LoadedConfig};
 #[cfg(debug_assertions)]
 use crate::gallery::Gallery;
 use crate::live_config::{self, Reloaded, UserSettings};
-
-/// Keybinding context active everywhere in the main window.
-const WORKBENCH_CONTEXT: &str = "workbench";
 
 pub(crate) struct Shell {
     focus_handle: FocusHandle,
@@ -33,6 +32,14 @@ pub(crate) struct Shell {
     matcher: KeymapMatcher,
     /// Runs the pending sequence's own command if no further key arrives.
     chord_timer: Option<Task<()>>,
+    /// Contexts of the keystroke that started the pending sequence.
+    chord_contexts: Vec<String>,
+    /// Keys of the active keyboard layout to the US keys of keybindings.
+    layout_keys: commands::LayoutKeys,
+    /// Re-reads `layout_keys` when the layout changes.
+    _layout_watch: Option<gpui::Subscription>,
+    /// Reacts to files activated in the file tree.
+    open_file_watch: Option<gpui::Subscription>,
     chord_timeout: Duration,
     i18n: Arc<I18n>,
     settings: SettingsStore,
@@ -91,6 +98,8 @@ impl Shell {
         let workbench_i18n = i18n.clone();
         let workbench_keymap = keymap.clone();
         let entries = workspace::recent_entries(&recent);
+        let file_icons = Arc::new(workbench::FileIcons::new());
+        let workbench_icons = file_icons.clone();
         let workbench = cx.new(|cx| {
             let mut workbench = Workbench::new(
                 workbench_i18n,
@@ -100,20 +109,32 @@ impl Shell {
                 open_path,
             );
             workbench.set_recent(entries, cx);
+            workbench.set_file_icons(workbench_icons, cx);
             workbench
+        });
+        let shell = cx.entity().downgrade();
+        let layout_watch = cx.on_keyboard_layout_change(move |cx| {
+            let _ = shell.update(cx, |shell, cx| {
+                shell.layout_keys = keys::layout_keys(cx);
+                tracing::debug!("keyboard layout changed");
+            });
         });
         Self {
             focus_handle,
             keymap,
             matcher: KeymapMatcher::new(),
             chord_timer: None,
+            chord_contexts: Vec::new(),
+            layout_keys: keys::layout_keys(cx),
+            _layout_watch: Some(layout_watch),
+            open_file_watch: None,
             chord_timeout,
             i18n,
             settings,
             fs,
             workspace: None,
             recent,
-            file_icons: Arc::new(workbench::FileIcons::new()),
+            file_icons,
             workspace_watch: None,
             file_tree: None,
             hidden: Vec::new(),
@@ -159,6 +180,13 @@ impl Shell {
         config::report_settings(&self.settings);
         self.chord_timeout = config::chord_timeout(&self.settings);
         self.apply_language(window, cx);
+        let editor_settings = self.settings.get::<editor::EditorSettings>(None);
+        let editors: Vec<_> = self.workbench.read(cx).editors().cloned().collect();
+        for editor in editors {
+            editor.update(cx, |editor, cx| {
+                editor.set_settings(editor_settings.clone(), cx);
+            });
+        }
         let hidden = self.settings.get::<project::FilesSettings>(None).hidden;
         if hidden != self.hidden
             && let Some(tree) = &self.file_tree
@@ -208,8 +236,9 @@ impl Shell {
 
     #[cfg(debug_assertions)]
     fn toggle_gallery(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let showing = self.workbench.read(cx).has_editor_content();
-        let content = if showing {
+        let title: SharedString = self.i18n.text("gallery-title").into();
+        let showing = self.workbench.read(cx).has_view_tab(&title);
+        let view = if showing {
             None
         } else {
             let i18n = self.i18n.clone();
@@ -217,32 +246,29 @@ impl Shell {
                 .gallery
                 .get_or_insert_with(|| cx.new(|cx| Gallery::new(i18n, window, cx)))
                 .clone();
-            Some(workbench::EditorContent {
-                title: self.i18n.text("gallery-title").into(),
-                view: gallery.into(),
-            })
+            Some(gallery.into())
         };
         self.workbench.update(cx, |workbench, cx| {
-            workbench.set_editor_content(content, cx);
+            workbench.set_view_tab(title, view, window, cx);
         });
     }
 
     fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
-        if event.is_held {
+        if event.is_held && !keys::repeats(&event.keystroke) {
             return;
         }
         self.chord_timer = None;
-        let keystroke = to_keystroke(&event.keystroke);
-        match self
-            .matcher
-            .push(&self.keymap, keystroke, &[WORKBENCH_CONTEXT])
-        {
+        let keystroke = keys::to_keystroke(&event.keystroke, &self.layout_keys);
+        let contexts = keys::focus_contexts(window);
+        let context_names: Vec<&str> = contexts.iter().map(String::as_str).collect();
+        match self.matcher.push(&self.keymap, keystroke, &context_names) {
             MatchResult::Command(id) => {
                 cx.stop_propagation();
                 self.run_command(&id, window, cx);
             }
             MatchResult::Pending => {
                 cx.stop_propagation();
+                self.chord_contexts = contexts;
                 self.start_chord_timer(window, cx);
             }
             MatchResult::NoMatch => {}
@@ -255,9 +281,10 @@ impl Shell {
     /// `Ctrl K, Ctrl G`), runs that shortcut unless another key arrives in
     /// time. No timer runs otherwise, so idle stays idle.
     fn start_chord_timer(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let contexts: Vec<&str> = self.chord_contexts.iter().map(String::as_str).collect();
         if self
             .matcher
-            .pending_command(&self.keymap, &[WORKBENCH_CONTEXT])
+            .pending_command(&self.keymap, &contexts)
             .is_none()
         {
             return;
@@ -267,9 +294,8 @@ impl Shell {
             cx.background_executor().timer(timeout).await;
             let _ = this.update_in(cx, |shell, window, cx| {
                 shell.chord_timer = None;
-                let command = shell
-                    .matcher
-                    .pending_command(&shell.keymap, &[WORKBENCH_CONTEXT]);
+                let contexts: Vec<&str> = shell.chord_contexts.iter().map(String::as_str).collect();
+                let command = shell.matcher.pending_command(&shell.keymap, &contexts);
                 shell.matcher.reset();
                 if let Some(id) = command {
                     shell.run_command(&id, window, cx);
@@ -307,25 +333,5 @@ pub(crate) fn window_title(i18n: &I18n, workspace: Option<&project::Workspace>) 
             i18n.text_with("window-title-workspace", &args)
         }
         None => i18n.text("app-title"),
-    }
-}
-
-/// Converts a GPUI keystroke into the keymap representation.
-fn to_keystroke(keystroke: &gpui::Keystroke) -> commands::Keystroke {
-    let gpui::Modifiers {
-        control,
-        alt,
-        shift,
-        platform,
-        ..
-    } = keystroke.modifiers;
-    commands::Keystroke {
-        modifiers: commands::Modifiers {
-            control,
-            alt,
-            shift,
-            platform,
-        },
-        key: keystroke.key.to_ascii_lowercase(),
     }
 }

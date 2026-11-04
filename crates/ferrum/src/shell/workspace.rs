@@ -136,6 +136,7 @@ impl Shell {
         let info = WorkspaceInfo {
             name: workspace.name().to_owned().into(),
             path: workspace.display_root().into(),
+            root: workspace.root().to_path_buf(),
         };
         let texts = FileTreeTexts {
             cycle: self.i18n.text("file-tree-cycle").into(),
@@ -150,6 +151,13 @@ impl Shell {
             cx.new(|cx| FileTreeView::new(fs, root, settings_file, &hidden, icons, texts, cx));
         self.hidden = hidden;
         self.file_tree = Some(tree.clone());
+        self.open_file_watch = Some(cx.subscribe_in(
+            &tree,
+            window,
+            |shell, _, event: &workbench::OpenFile, window, cx| {
+                shell.open_file(event.0.clone(), window, cx);
+            },
+        ));
         self.workspace_watch = Some(cx.subscribe_in(
             &tree,
             window,

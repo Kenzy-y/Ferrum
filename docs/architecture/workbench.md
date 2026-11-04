@@ -8,9 +8,20 @@ Crate `workbench` (UI layer): the layout of a main window as in
 sizes come from `theme` tokens (`titlebar.*`, `activity_bar.*`,
 `sidebar.width`, `bottom_panel.height`, `layout.gap.top`, `panel.gap`).
 
-**State.** `Workbench` holds layout state only: the `SidebarView`, whether
-the sidebar and the bottom panel are visible, the active `PanelKind`, and an
-optional `EditorContent` (any view with a tab title).
+**State.** `Workbench` holds layout state: the `SidebarView`, whether
+the sidebar and the bottom panel are visible, the active `PanelKind`, and
+the tabs of the editor area.
+
+**Tabs** (`tabs.rs`). A tab shows an `editor::Editor` or another view (the
+component gallery, a `MessageView` explaining why a file cannot be
+opened). `open_editor` reuses the tab of a file that is already open;
+`workbench.closeTab` asks about unsaved changes (Save / Don't save /
+Cancel), `workbench.nextTab` / `previousTab` cycle. Editor commands
+(`editor.*`) go to the active editor. The editor area draws the tab strip
+(`ui::EditorTab` with the file icon, the unsaved dot and a close button),
+the breadcrumbs of the file from the workspace root, and the tab. The
+status bar shows the active editor's position, indentation, encoding and
+line endings (LF, CRLF or Mixed).
 
 **Commands.** Every action is a command (`command_ids`):
 `workbench.toggleSidebar`, `workbench.togglePanel`, `workbench.show*`.
@@ -39,7 +50,8 @@ with the Files section with one. `file_tree_view.rs` is the tree: a `uniform_lis
 `project::FileTree` rows (only visible rows are built), one tab stop with
 arrow keys (Up/Down/Home/End select, Right expands or enters, Left collapses
 or goes to the parent, Enter/Space toggle), a reserved slot for version
-control marks, tooltips for link cycles and unreadable folders. It watches
+control marks, tooltips for link cycles and unreadable folders; activating a
+file emits `OpenFile`, which the application opens in an editor. It watches
 the workspace and emits `WorkspaceSettingsChanged` when
 `.ferrum/settings.toml` changes. File icons come from the `FileIcons`
 registry (by name, then extension; generic icon otherwise), filled by

@@ -66,3 +66,11 @@ jobs:
       # machine (see docs/architecture/text.md).
       - name: Benchmarks (smoke run)
         run: cargo test --workspace --benches --locked
+      # Starts the IDE and asks Windows what the title bar answers at the
+      # window controls, the drag area and the search field.
+      - name: Title bar hit test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cargo build --locked -p ferrum
+          ./scripts/windows/title-bar-hit-test.ps1 -Exe (Join-Path $PWD "target/debug/ferrum.exe") -StartupSeconds 60

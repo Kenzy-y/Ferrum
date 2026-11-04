@@ -13,10 +13,12 @@ mod editor_area;
 mod explorer;
 mod file_icons;
 mod file_tree_view;
+mod message_view;
 mod path_prompt;
 mod quick_open;
 mod sidebar;
 mod status_bar;
+mod tabs;
 mod title_bar;
 mod welcome;
 mod window_controls;
@@ -27,15 +29,15 @@ use std::sync::Arc;
 
 use commands::{CommandDescriptor, CommandId, CommandRegistry, Keymap, Platform, RegistryError};
 use gpui::{
-    AnyView, App, AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _,
-    IntoElement, MouseButton, ParentElement as _, Render, SharedString, Styled as _, Subscription,
-    Window, WindowDecorations, WindowOptions, div, px,
+    App, AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
+    MouseButton, ParentElement as _, Render, SharedString, Styled as _, Subscription, Window,
+    WindowDecorations, WindowOptions, div, px,
 };
 use i18n::I18n;
 use theme::ActiveTheme as _;
 
 pub use crate::file_icons::{FileIcon, FileIcons};
-pub use crate::file_tree_view::{FileTreeTexts, FileTreeView, WorkspaceSettingsChanged};
+pub use crate::file_tree_view::{FileTreeTexts, FileTreeView, OpenFile, WorkspaceSettingsChanged};
 use crate::path_prompt::{PathPrompt, PathPromptEvent, PathPromptTexts};
 use crate::quick_open::{Dismiss, QuickOpen, QuickOpenContext, QuickOpenMode};
 
@@ -53,6 +55,8 @@ pub struct WorkspaceInfo {
     pub name: SharedString,
     /// Folder path for display.
     pub path: SharedString,
+    /// The folder.
+    pub root: PathBuf,
 }
 
 /// A recently opened folder, as listed on the Welcome page.
@@ -115,15 +119,6 @@ impl PanelKind {
     ];
 }
 
-/// A view shown in the editor area with the title of its tab.
-#[derive(Clone)]
-pub struct EditorContent {
-    /// Tab title.
-    pub title: SharedString,
-    /// The view.
-    pub view: AnyView,
-}
-
 /// Root view of a main window.
 pub struct Workbench {
     i18n: Arc<I18n>,
@@ -140,7 +135,9 @@ pub struct Workbench {
     sidebar_visible: bool,
     panel_visible: bool,
     panel: PanelKind,
-    editor: Option<EditorContent>,
+    tabs: Vec<tabs::Tab>,
+    active_tab: Option<usize>,
+    file_icons: Arc<FileIcons>,
 }
 
 impl Workbench {
@@ -174,7 +171,9 @@ impl Workbench {
             sidebar_visible: true,
             panel_visible: false,
             panel: PanelKind::Terminal,
-            editor: None,
+            tabs: Vec::new(),
+            active_tab: None,
+            file_icons: Arc::new(FileIcons::new()),
         }
     }
 
@@ -205,6 +204,23 @@ impl Workbench {
         if let Some(mode) = mode {
             self.open_quick_open(mode, window, cx);
             return true;
+        }
+        match id.as_str() {
+            command_ids::CLOSE_TAB => {
+                self.close_active_tab(window, cx);
+                return true;
+            }
+            command_ids::NEXT_TAB | command_ids::PREVIOUS_TAB => {
+                self.cycle_tab(id.as_str() == command_ids::NEXT_TAB, window, cx);
+                return true;
+            }
+            other if editor::is_editor_command(other) => {
+                if let Some(editor) = self.active_editor() {
+                    editor.update(cx, |editor, cx| editor.run_command(other, window, cx));
+                }
+                return true;
+            }
+            _ => {}
         }
         let handled = self.apply_command(id.as_str());
         if handled {
@@ -237,9 +253,9 @@ impl Workbench {
         }
     }
 
-    /// Replaces what the editor area shows.
-    pub fn set_editor_content(&mut self, content: Option<EditorContent>, cx: &mut Context<Self>) {
-        self.editor = content;
+    /// Icons of files in tabs and breadcrumbs.
+    pub fn set_file_icons(&mut self, icons: Arc<FileIcons>, cx: &mut Context<Self>) {
+        self.file_icons = icons;
         cx.notify();
     }
 
@@ -327,11 +343,6 @@ impl Workbench {
         }
     }
 
-    /// Whether the editor area shows something.
-    pub fn has_editor_content(&self) -> bool {
-        self.editor.is_some()
-    }
-
     fn open_quick_open(
         &mut self,
         mode: QuickOpenMode,
@@ -413,7 +424,7 @@ pub fn register_commands(registry: &mut CommandRegistry) -> Result<(), RegistryE
             registry.register(CommandDescriptor::new(id, *title))?;
         }
     }
-    Ok(())
+    editor::register_commands(registry)
 }
 
 impl Render for Workbench {
@@ -502,7 +513,7 @@ mod tests {
     fn registers_every_command_with_a_localized_title() {
         let mut registry = CommandRegistry::new();
         register_commands(&mut registry).unwrap();
-        assert_eq!(registry.iter().count(), command_ids::ALL.len());
+        assert!(registry.iter().count() > command_ids::ALL.len());
         for locale in i18n::AVAILABLE_LOCALES {
             let i18n = I18n::new(locale).unwrap();
             for command in registry.iter() {

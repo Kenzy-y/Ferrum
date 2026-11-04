@@ -1,8 +1,11 @@
 //! Tabs: editor tabs and underlined tabs (panel tabs, segmented tabs).
 
+use std::rc::Rc;
+
 use gpui::{
-    AnyElement, App, ElementId, Hsla, IntoElement, ParentElement as _, RenderOnce, SharedString,
-    Styled as _, Window, div, px, transparent_black,
+    AnyElement, App, ElementId, Hsla, InteractiveElement as _, IntoElement, MouseButton,
+    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement as _, Styled as _,
+    Window, div, px, transparent_black,
 };
 use theme::ActiveTheme as _;
 
@@ -17,7 +20,11 @@ pub struct EditorTab {
     leading: Option<AnyElement>,
     active: bool,
     dirty: bool,
+    on_close: Option<(ElementId, CloseHandler)>,
 }
+
+/// Called when the close button of a tab is clicked.
+type CloseHandler = Rc<dyn Fn(&mut Window, &mut App)>;
 
 impl EditorTab {
     /// Creates an inactive, saved tab.
@@ -28,7 +35,19 @@ impl EditorTab {
             leading: None,
             active: false,
             dirty: false,
+            on_close: None,
         }
+    }
+
+    /// Makes the close button work; `id` identifies the button.
+    #[must_use]
+    pub fn on_close(
+        mut self,
+        id: impl Into<ElementId>,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_close = Some((id.into(), Rc::new(handler)));
+        self
     }
 
     /// Element before the title (file type icon).
@@ -90,9 +109,25 @@ impl RenderOnce for EditorTab {
                 .rounded_full()
                 .bg(colors.marker_dirty)
         });
-        let close = Icon::new(IconName::X)
+        let icon = Icon::new(IconName::X)
             .size(size.icon_tiny)
             .color(colors.icon);
+        let close = match self.on_close {
+            Some((id, handler)) => div()
+                .id(id)
+                .flex_none()
+                .rounded(px(theme.metrics.radius.xs))
+                .hover(|style| style.bg(colors.bg_ghost_hover))
+                // The press must not also activate the tab under it.
+                .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                .on_click(move |_, window, cx| {
+                    cx.stop_propagation();
+                    handler(window, cx);
+                })
+                .child(icon)
+                .into_any_element(),
+            None => icon.into_any_element(),
+        };
         let (width, height, radius) = (size.tab_width, size.tab_height, theme.metrics.radius.md);
         let (padding, gap) = (space.lg, space.md);
 

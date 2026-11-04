@@ -36,7 +36,15 @@ Crate `commands` (core layer, no GPUI).
 "ctrl-k ctrl-s" = ""   # unbind
 ```
 
+- `LayoutKeys` — shortcuts by physical key. Bindings use US keys; the
+  application asks the platform which key of the active layout sits on
+  each of `US_KEYS` and translates incoming keys back, so Ctrl+S on a
+  Russian layout is still `ctrl-s`. Rebuilt when the layout changes.
+
+**Contexts from focus.** Views name their context with GPUI's
+`key_context` (`editor`, `file_tree`); the shell passes the contexts of the
+focused view and its parents, innermost first, then `workbench`.
+
 **Extending.** New command: register a descriptor, add a handler and a title
-message in every locale. New context: just use its name in keymaps and pass it
-to the matcher from the view that owns focus. Contexts are not yet
-derived from focus: the shell passes `workbench` for the whole window.
+message in every locale. New context: set `key_context` on the view and use
+the name in keymaps.

@@ -14,6 +14,7 @@ mod id;
 mod keyboard_settings;
 mod keymap;
 mod keystroke;
+mod layout_keys;
 mod matcher;
 mod registry;
 
@@ -22,5 +23,6 @@ pub use id::{CommandId, InvalidCommandId};
 pub use keyboard_settings::KeyboardSettings;
 pub use keymap::{Binding, ContextName, GLOBAL_CONTEXT, Keymap, KeymapDiagnostic, KeymapError};
 pub use keystroke::{KeySequence, Keystroke, KeystrokeError, Modifiers, Platform};
+pub use layout_keys::{LayoutKeys, US_KEYS};
 pub use matcher::{KeymapMatcher, MatchResult};
 pub use registry::{CommandDescriptor, CommandRegistry, RegistryError};

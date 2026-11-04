@@ -81,7 +81,9 @@ mod tests {
             commands::Platform::MacOs,
             commands::Platform::Linux,
         ] {
+            #[cfg_attr(not(debug_assertions), allow(unused_mut))]
             let mut keymap = commands::Keymap::defaults(platform);
+            #[cfg(debug_assertions)]
             keymap.apply(DEBUG_KEYMAP, platform).unwrap();
             assert!(keymap.diagnostics(&registry).is_empty(), "{platform:?}");
         }

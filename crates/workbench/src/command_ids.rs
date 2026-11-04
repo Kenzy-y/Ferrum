@@ -22,6 +22,13 @@ pub const QUICK_OPEN: &str = "workbench.quickOpen";
 /// Opens the command palette.
 pub const SHOW_COMMAND_PALETTE: &str = "workbench.showCommandPalette";
 
+/// Closes the active tab (asking about unsaved changes).
+pub const CLOSE_TAB: &str = "workbench.closeTab";
+/// Activates the next tab.
+pub const NEXT_TAB: &str = "workbench.nextTab";
+/// Activates the previous tab.
+pub const PREVIOUS_TAB: &str = "workbench.previousTab";
+
 /// Opens a folder with the system folder picker. Owned by the
 /// application (it knows projects); the workbench shows buttons for it.
 pub const OPEN_FOLDER: &str = "workspace.openFolder";
@@ -42,6 +49,9 @@ pub(crate) const ALL: &[(&str, &str)] = &[
     (SHOW_SOURCE_CONTROL, "command-workbench-show-source-control"),
     (SHOW_RUN_AND_DEBUG, "command-workbench-show-run-and-debug"),
     (SHOW_EXTENSIONS, "command-workbench-show-extensions"),
+    (CLOSE_TAB, "command-workbench-close-tab"),
+    (NEXT_TAB, "command-workbench-next-tab"),
+    (PREVIOUS_TAB, "command-workbench-previous-tab"),
 ];
 
 /// The command that shows `view`.
