@@ -1576,6 +1576,7 @@ dependencies = [
  "app_identity",
  "commands",
  "fs",
+ "futures",
  "gpui-component",
  "gpui-pre",
  "gpui-pre-platform",

@@ -12,6 +12,7 @@ anyhow.workspace = true
 app_identity.workspace = true
 commands.workspace = true
 fs.workspace = true
+futures.workspace = true
 gpui.workspace = true
 workbench.workspace = true
 gpui-component.workspace = true

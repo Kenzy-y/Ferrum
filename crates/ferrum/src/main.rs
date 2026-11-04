@@ -9,11 +9,11 @@ mod config;
 // Development aid: the component gallery exists only in debug builds.
 #[cfg(debug_assertions)]
 mod gallery;
+mod live_config;
 mod logging;
 mod shell;
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use anyhow::Context as _;
 use gpui::{App, AppContext as _, Bounds, WindowBounds, px, size};
@@ -104,17 +104,9 @@ fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
     )));
     options.app_id = Some(app_identity::APP_ID.to_owned());
 
-    let chord_timeout = Duration::from_millis(
-        loaded
-            .settings
-            .get::<commands::KeyboardSettings>(None)
-            .chord_timeout_ms,
-    );
-    let keymap = Arc::new(loaded.keymap);
-    let registry = loaded.commands;
     let i18n = Arc::new(i18n);
     cx.open_window(options, |window, cx| {
-        let shell = cx.new(|cx| Shell::new(keymap, registry, chord_timeout, i18n, window, cx));
+        let shell = cx.new(|cx| Shell::new(loaded, i18n, window, cx));
         cx.new(|cx| gpui_component::Root::new(shell, window, cx))
     })
     .context("cannot open the main window")?;

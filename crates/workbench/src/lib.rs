@@ -200,6 +200,20 @@ impl Workbench {
         cx.notify();
     }
 
+    /// Switches the interface language.
+    pub fn set_i18n(&mut self, i18n: Arc<I18n>, cx: &mut Context<Self>) {
+        self.quick_open_context.i18n = i18n.clone();
+        self.i18n = i18n;
+        cx.notify();
+    }
+
+    /// Replaces the keybindings shown in hints and the palette.
+    pub fn set_keymap(&mut self, keymap: Arc<Keymap>, cx: &mut Context<Self>) {
+        self.quick_open_context.keymap = keymap.clone();
+        self.keymap = keymap;
+        cx.notify();
+    }
+
     /// Whether the editor area shows something.
     pub fn has_editor_content(&self) -> bool {
         self.editor.is_some()

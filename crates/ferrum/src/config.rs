@@ -1,25 +1,28 @@
-//! Loading settings and keymaps at startup.
+//! Loading settings and keymaps, at startup and when their files change.
 
 use std::sync::Arc;
+use std::time::Duration;
 
-use commands::{CommandRegistry, Keymap, KeymapDiagnostic, Platform};
+use commands::{CommandRegistry, KeyboardSettings, Keymap, KeymapDiagnostic, Platform};
 use fs::Fs;
 use i18n::{I18n, LocalizationSettings};
 use settings::paths::ConfigPaths;
-use settings::{LayerKind, SettingsRegistry, SettingsStore, load};
+use settings::{LayerKind, SettingsLayer, SettingsRegistry, SettingsStore, load};
 
 /// Configuration ready for the UI.
 pub(crate) struct LoadedConfig {
     pub(crate) settings: SettingsStore,
     pub(crate) keymap: Keymap,
     pub(crate) commands: Arc<CommandRegistry>,
+    pub(crate) fs: Arc<dyn Fs>,
+    pub(crate) paths: Option<ConfigPaths>,
 }
 
 /// Registers the settings of every crate linked into the application.
 pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
     Ok(SettingsRegistry::builder()
         .register::<LocalizationSettings>()?
-        .register::<commands::KeyboardSettings>()?
+        .register::<KeyboardSettings>()?
         .build())
 }
 
@@ -33,54 +36,84 @@ pub(crate) async fn load(
     settings_registry: Arc<SettingsRegistry>,
     command_registry: Arc<CommandRegistry>,
 ) -> LoadedConfig {
-    let platform = Platform::current();
     let mut settings = SettingsStore::new(settings_registry);
+    if let Some(paths) = &paths
+        && let Some(layer) = read_user_settings(fs.as_ref(), paths).await
+    {
+        settings.set_layer(LayerKind::User, layer);
+    }
+    report_settings(&settings);
+    let keymap = read_keymap(fs.as_ref(), paths.as_ref(), &command_registry).await;
+    LoadedConfig {
+        settings,
+        keymap,
+        commands: command_registry,
+        fs,
+        paths,
+    }
+}
+
+/// The user settings layer, or `None` if the file is missing or invalid
+/// (invalid files are logged; the defaults apply).
+pub(crate) async fn read_user_settings(fs: &dyn Fs, paths: &ConfigPaths) -> Option<SettingsLayer> {
+    let path = paths.user_settings();
+    match load::load_layer(fs, &path).await {
+        Ok(Some(layer)) => {
+            tracing::info!(path = %path.display(), "loaded user settings");
+            Some(layer)
+        }
+        Ok(None) => {
+            tracing::debug!(path = %path.display(), "no user settings file");
+            None
+        }
+        Err(error) => {
+            tracing::warn!("{error}; using default settings");
+            None
+        }
+    }
+}
+
+/// Default keymap of the platform with the user keymap on top. An invalid
+/// user keymap is logged and ignored as a whole.
+pub(crate) async fn read_keymap(
+    fs: &dyn Fs,
+    paths: Option<&ConfigPaths>,
+    command_registry: &CommandRegistry,
+) -> Keymap {
+    let platform = Platform::current();
     let mut keymap = Keymap::defaults(platform);
     #[cfg(debug_assertions)]
     if let Err(error) = keymap.apply(crate::app_commands::DEBUG_KEYMAP, platform) {
         tracing::error!(%error, "debug keymap is invalid");
     }
-
     if let Some(paths) = paths {
-        let settings_path = paths.user_settings();
-        match load::load_layer(fs.as_ref(), &settings_path).await {
-            Ok(Some(layer)) => {
-                settings.set_layer(LayerKind::User, layer);
-                tracing::info!(path = %settings_path.display(), "loaded user settings");
-            }
-            Ok(None) => tracing::debug!(path = %settings_path.display(), "no user settings file"),
-            Err(error) => tracing::warn!("{error}; using default settings"),
-        }
-
-        let keymap_path = paths.user_keymap();
-        match load::read_config_file(fs.as_ref(), &keymap_path).await {
+        let path = paths.user_keymap();
+        match load::read_config_file(fs, &path).await {
             Ok(Some(text)) => match keymap.apply(&text, platform) {
-                Ok(()) => tracing::info!(path = %keymap_path.display(), "loaded user keymap"),
+                Ok(()) => tracing::info!(path = %path.display(), "loaded user keymap"),
                 Err(error) => {
-                    tracing::warn!(path = %keymap_path.display(), "{error}; using default keymap");
+                    tracing::warn!(path = %path.display(), "{error}; using default keymap");
                 }
             },
-            Ok(None) => tracing::debug!(path = %keymap_path.display(), "no user keymap file"),
+            Ok(None) => tracing::debug!(path = %path.display(), "no user keymap file"),
             Err(error) => tracing::warn!("{error}; using default keymap"),
         }
     }
+    for KeymapDiagnostic::UnknownCommand(binding) in keymap.diagnostics(command_registry) {
+        tracing::warn!(keys = %binding.keys, command = %binding.command, "keymap binds an unknown command");
+    }
+    keymap
+}
 
+/// Logs problems in the settings.
+pub(crate) fn report_settings(settings: &SettingsStore) {
     for diagnostic in settings
         .unknown_namespaces()
         .into_iter()
         .chain(settings.check::<LocalizationSettings>())
-        .chain(settings.check::<commands::KeyboardSettings>())
+        .chain(settings.check::<KeyboardSettings>())
     {
         tracing::warn!(?diagnostic, "settings problem");
-    }
-    for KeymapDiagnostic::UnknownCommand(binding) in keymap.diagnostics(&command_registry) {
-        tracing::warn!(keys = %binding.keys, command = %binding.command, "keymap binds an unknown command");
-    }
-
-    LoadedConfig {
-        settings,
-        keymap,
-        commands: command_registry,
     }
 }
 
@@ -92,4 +125,9 @@ pub(crate) fn localization(settings: &SettingsStore) -> anyhow::Result<I18n> {
     let locale = i18n::resolve_locale(configured.as_deref(), system.as_deref());
     tracing::info!(locale, ?configured, ?system, "selected UI language");
     Ok(I18n::new(locale)?)
+}
+
+/// How long to wait for the next key of an ambiguous sequence.
+pub(crate) fn chord_timeout(settings: &SettingsStore) -> Duration {
+    Duration::from_millis(settings.get::<KeyboardSettings>(None).chord_timeout_ms)
 }

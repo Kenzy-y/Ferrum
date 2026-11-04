@@ -5,18 +5,21 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
-use commands::{CommandId, CommandRegistry, Keymap, KeymapMatcher, MatchResult};
+use commands::{CommandId, Keymap, KeymapMatcher, MatchResult};
 use gpui::{
     AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
     KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Task, Window, div, px,
 };
 use i18n::I18n;
+use settings::{LayerKind, SettingsStore};
 use theme::ActiveTheme as _;
 use workbench::{Dispatch, Workbench};
 
 use crate::app_commands;
+use crate::config::{self, LoadedConfig};
 #[cfg(debug_assertions)]
 use crate::gallery::Gallery;
+use crate::live_config::{self, Reloaded, UserSettings};
 
 /// Keybinding context active everywhere in the main window.
 const WORKBENCH_CONTEXT: &str = "workbench";
@@ -28,9 +31,10 @@ pub(crate) struct Shell {
     /// Runs the pending sequence's own command if no further key arrives.
     chord_timer: Option<Task<()>>,
     chord_timeout: Duration,
-    /// Strings for the gallery tab title.
-    #[cfg(debug_assertions)]
     i18n: Arc<I18n>,
+    settings: SettingsStore,
+    /// Re-reads the configuration files when they change.
+    _config_watch: Option<Task<()>>,
     workbench: Entity<Workbench>,
     #[cfg(debug_assertions)]
     gallery: Option<Entity<Gallery>>,
@@ -38,13 +42,22 @@ pub(crate) struct Shell {
 
 impl Shell {
     pub(crate) fn new(
-        keymap: Arc<Keymap>,
-        registry: Arc<CommandRegistry>,
-        chord_timeout: Duration,
+        config: LoadedConfig,
         i18n: Arc<I18n>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let LoadedConfig {
+            settings,
+            keymap,
+            commands: registry,
+            fs,
+            paths,
+        } = config;
+        let keymap = Arc::new(keymap);
+        let chord_timeout = config::chord_timeout(&settings);
+        let config_watch =
+            paths.map(|paths| live_config::start(fs, paths, registry.clone(), window, cx));
         let focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
         let shell = cx.entity().downgrade();
@@ -52,22 +65,72 @@ impl Shell {
             let id = id.clone();
             let _ = shell.update(cx, |shell, cx| shell.run_command(&id, window, cx));
         });
-        #[cfg(debug_assertions)]
-        let gallery_i18n = i18n.clone();
+        let workbench_i18n = i18n.clone();
         let workbench_keymap = keymap.clone();
-        let workbench = cx.new(|_| Workbench::new(i18n, dispatch, registry, workbench_keymap));
+        let workbench =
+            cx.new(|_| Workbench::new(workbench_i18n, dispatch, registry, workbench_keymap));
         Self {
             focus_handle,
             keymap,
             matcher: KeymapMatcher::new(),
             chord_timer: None,
             chord_timeout,
-            #[cfg(debug_assertions)]
-            i18n: gallery_i18n,
+            i18n,
+            settings,
+            _config_watch: config_watch,
             workbench,
             #[cfg(debug_assertions)]
             gallery: None,
         }
+    }
+
+    /// Applies configuration files that changed on disk: language, keyboard
+    /// settings and keybindings take effect without a restart.
+    pub(crate) fn apply_config(
+        &mut self,
+        reloaded: Reloaded,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let change = match reloaded.settings {
+            UserSettings::Untouched => None,
+            UserSettings::Present(layer) => Some(self.settings.set_layer(LayerKind::User, layer)),
+            UserSettings::Absent => Some(self.settings.remove_layer(LayerKind::User)),
+        };
+        if let Some(change) = change
+            && !change.is_empty()
+        {
+            config::report_settings(&self.settings);
+            self.chord_timeout = config::chord_timeout(&self.settings);
+            self.apply_language(window, cx);
+        }
+        if let Some(keymap) = reloaded.keymap {
+            let keymap = Arc::new(keymap);
+            self.keymap = keymap.clone();
+            self.matcher.reset();
+            self.chord_timer = None;
+            self.workbench
+                .update(cx, |workbench, cx| workbench.set_keymap(keymap, cx));
+            tracing::info!("applied keymap changes");
+        }
+    }
+
+    fn apply_language(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let i18n = match config::localization(&self.settings) {
+            Ok(i18n) => i18n,
+            Err(error) => {
+                tracing::error!("{error:#}");
+                return;
+            }
+        };
+        if i18n.locale() == self.i18n.locale() {
+            return;
+        }
+        let i18n = Arc::new(i18n);
+        window.set_window_title(&i18n.text("app-title"));
+        self.i18n = i18n.clone();
+        self.workbench
+            .update(cx, |workbench, cx| workbench.set_i18n(i18n, cx));
     }
 
     /// Runs a command by id, whoever owns it.
