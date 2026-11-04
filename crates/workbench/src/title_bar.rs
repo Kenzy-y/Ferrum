@@ -3,7 +3,7 @@
 use commands::CommandId;
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, Context, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
+    AnyElement, App, Context, Div, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
     ParentElement as _, Styled as _, TitlebarOptions, Window, WindowControlArea, div, point, px,
 };
 use theme::ActiveTheme as _;
@@ -45,6 +45,14 @@ fn run(dispatch: &Dispatch, command: &'static str) -> impl Fn(&mut Window, &mut 
     }
 }
 
+/// Wraps an interactive element of the title bar so that it covers the
+/// window drag area under it. Without this the platform hit test (Windows
+/// `HTCAPTION`) sees the drag area through the element and treats a click on
+/// it as the start of a window move, so the element never gets the click.
+fn clickable(element: impl IntoElement) -> Div {
+    div().flex().flex_none().occlude().child(element)
+}
+
 /// Logo, wordmark and menus.
 fn leading(workbench: &Workbench, cx: &App) -> AnyElement {
     let theme = cx.theme();
@@ -71,11 +79,9 @@ fn leading(workbench: &Workbench, cx: &App) -> AnyElement {
         .flex_none()
         .items_center()
         .ml(px(size.titlebar_menus_offset - metrics.space.md))
-        .children(
-            MENUS
-                .iter()
-                .map(|id| Button::new(*id, workbench.text(id)).variant(ButtonVariant::Text)),
-        );
+        .children(MENUS.iter().map(|id| {
+            clickable(Button::new(*id, workbench.text(id)).variant(ButtonVariant::Text))
+        }));
     div()
         .flex()
         .flex_none()
@@ -102,6 +108,8 @@ fn search(workbench: &Workbench, cx: &App) -> AnyElement {
                 .w_full()
                 .min_w_0()
                 .max_w(px(theme.metrics.size.titlebar_search_width))
+                // Covers the drag area, see `clickable`.
+                .occlude()
                 .child({
                     let field = SearchField::new(
                         "titlebar-search",
@@ -130,8 +138,8 @@ fn actions(workbench: &Workbench, cx: &App) -> AnyElement {
         .flex_none()
         .items_center()
         .gap(px(gap))
-        .child(open_folder)
-        .child(toggle_sidebar)
+        .child(clickable(open_folder))
+        .child(clickable(toggle_sidebar))
         .into_any_element()
 }
 

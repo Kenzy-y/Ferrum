@@ -29,7 +29,9 @@ symbols and settings become further sources in their stages.
 
 **Window chrome.** `Workbench::window_options()` hides the platform title
 bar. Windows: drag and min/max/close use native hit-test areas
-(`window_control_area`), so Snap layouts work. Linux: client-side
+(`window_control_area`), so Snap layouts work. Interactive elements in the
+title bar must cover the drag area with `occlude()` (see `clickable` in
+`title_bar.rs`), otherwise Windows treats a click on them as a window move. Linux: client-side
 decorations, our buttons, `start_window_move`, and `window_border` from
 gpui-component for the resize frame; with server-side decorations our
 buttons are hidden. macOS: system traffic lights over the left inset.
