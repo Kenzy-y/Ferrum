@@ -185,3 +185,81 @@ fn version_changes_only_with_the_text() {
     document.insert("b");
     assert!(document.version() > version);
 }
+
+/// A clock the test moves by hand.
+fn manual_clock() -> (Clock, std::sync::Arc<std::sync::Mutex<std::time::Instant>>) {
+    let now = std::sync::Arc::new(std::sync::Mutex::new(std::time::Instant::now()));
+    let reader = now.clone();
+    (Clock::new(move || *reader.lock().unwrap()), now)
+}
+
+#[test]
+fn a_pause_in_typing_starts_a_new_undo_step() {
+    let (clock, now) = manual_clock();
+    let mut document = Document::from_text("").with_clock(clock);
+    document.insert("a");
+    document.insert("b");
+    *now.lock().unwrap() += crate::UNDO_GROUP_PAUSE * 2;
+    document.insert("c");
+
+    document.undo();
+    assert_eq!(document.buffer().rope().to_string(), "ab");
+    document.undo();
+    assert_eq!(document.buffer().rope().to_string(), "");
+}
+
+#[test]
+fn the_end_of_a_word_starts_a_new_undo_step() {
+    let mut document = document("|");
+    for character in "hello world".chars() {
+        document.insert(&character.to_string());
+    }
+    document.undo();
+    assert_eq!(marked(&document), "hello |");
+    document.undo();
+    assert_eq!(marked(&document), "|");
+}
+
+#[test]
+fn new_lines_get_the_dominant_ending_and_others_stay() {
+    // Two `\n` against one `\r\n`: new lines use `\n`.
+    let mut document = document("a\r\nb\nc|\n");
+    document.newline();
+    document.insert("d");
+    assert_eq!(document.buffer().to_text(), "a\r\nb\nc\nd\n");
+
+    let mut windows = Document::from_text("x\r\n");
+    windows.paste("1\n2");
+    assert_eq!(
+        windows.buffer().to_text(),
+        "1\r\n2x\r\n",
+        "pasted lines get the file's ending"
+    );
+}
+
+#[test]
+fn line_endings_can_be_made_uniform_and_undone() {
+    let mut document = document("a\r\nb|\nc\n");
+    document.set_line_endings(crate::LineEnding::CrLf);
+    assert_eq!(document.buffer().to_text(), "a\r\nb\r\nc\r\n");
+    assert_eq!(
+        marked(&document).replace("\r\n", "\n"),
+        "a\nb|\nc\n",
+        "the cursor stays after b"
+    );
+    assert_eq!(
+        document.buffer().line_endings(),
+        crate::LineEndings::Uniform(crate::LineEnding::CrLf)
+    );
+    document.undo();
+    assert_eq!(document.buffer().to_text(), "a\r\nb\nc\n");
+}
+
+#[test]
+fn crlf_is_one_step_for_the_cursor_and_backspace() {
+    let mut document = document("a|\r\nb");
+    document.move_cursors(Movement::Right, false);
+    assert_eq!(marked(&document), "a\r\n|b");
+    document.delete_backward();
+    assert_eq!(marked(&document), "a|b");
+}

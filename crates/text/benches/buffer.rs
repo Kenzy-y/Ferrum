@@ -106,5 +106,42 @@ fn benches(criterion: &mut Criterion) {
     }
 }
 
-criterion_group!(buffer, benches);
+/// A document of 100 000 lines with `count` cursors spread evenly, each
+/// after the first character of its line.
+fn document_with_cursors(text: &str, count: usize) -> Document {
+    let mut document = Document::from_text(text);
+    let buffer = document.buffer();
+    let step = buffer.line_count() / count;
+    let cursors = (0..count)
+        .map(|index| Selection::cursor(buffer.line_range(index * step).start + 1))
+        .collect();
+    document.set_selections(&Selections::from_vec(cursors));
+    document
+}
+
+/// Editing at many cursors: time must grow linearly with the number of
+/// cursors (compare 1000 and 5000), not quadratically.
+fn many_cursors(criterion: &mut Criterion) {
+    let text = many_lines();
+    let mut group = criterion.benchmark_group("cursors");
+    for count in [1000, 5000] {
+        group.bench_function(format!("type_character_{count}"), |bencher| {
+            bencher.iter_batched_ref(
+                || document_with_cursors(&text, count),
+                |document| document.insert("x"),
+                BatchSize::LargeInput,
+            );
+        });
+        group.bench_function(format!("backspace_{count}"), |bencher| {
+            bencher.iter_batched_ref(
+                || document_with_cursors(&text, count),
+                Document::delete_backward,
+                BatchSize::LargeInput,
+            );
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(buffer, benches, many_cursors);
 criterion_main!(buffer);

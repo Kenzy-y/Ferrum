@@ -1,12 +1,15 @@
 //! A buffer with selections and history: the editing operations.
 
+use std::fmt;
 use std::ops::Range;
+use std::sync::Arc;
+use std::time::Instant;
 
 use unicode_segmentation::UnicodeSegmentation as _;
 
 use crate::boundaries::{next_grapheme, next_word_end, previous_grapheme, previous_word_start};
 use crate::history::Edit;
-use crate::{Buffer, EditKind, History, Selection, Selections};
+use crate::{Buffer, EditKind, History, LineEnding, Selection, Selections};
 
 /// Where a cursor moves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,14 +41,51 @@ pub enum Movement {
     DocumentEnd,
 }
 
+/// Where a document gets the time from (undo grouping by pauses);
+/// replaceable in tests.
+#[derive(Clone)]
+pub struct Clock(Arc<dyn Fn() -> Instant + Send + Sync>);
+
+impl Clock {
+    /// A clock reading `now`.
+    pub fn new(now: impl Fn() -> Instant + Send + Sync + 'static) -> Self {
+        Self(Arc::new(now))
+    }
+
+    fn now(&self) -> Instant {
+        (self.0)()
+    }
+}
+
+impl Default for Clock {
+    fn default() -> Self {
+        Self::new(Instant::now)
+    }
+}
+
+impl fmt::Debug for Clock {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Clock")
+    }
+}
+
 /// Text being edited.
 #[derive(Debug, Clone, Default)]
 pub struct Document {
     buffer: Buffer,
     selections: Selections,
     history: History,
+    clock: Clock,
     /// Increases with every change of the text; for caches.
     version: u64,
+}
+
+/// How the selections after an edit are made.
+enum Placement<'a> {
+    /// One selection per edit.
+    PerEdit(&'a dyn Fn(&Edit) -> Selection),
+    /// The existing selections, moved by the edits.
+    Keep,
 }
 
 impl Document {
@@ -55,8 +95,16 @@ impl Document {
             buffer,
             selections: Selections::default(),
             history: History::default(),
+            clock: Clock::default(),
             version: 0,
         }
+    }
+
+    /// Uses `clock` for the time (tests).
+    #[must_use]
+    pub fn with_clock(mut self, clock: Clock) -> Self {
+        self.clock = clock;
+        self
     }
 
     /// A document with `text` (see [`Buffer::from_text`]).
@@ -144,6 +192,8 @@ impl Document {
 
     /// Types `text` at every cursor, replacing selected text.
     pub fn insert(&mut self, text: &str) {
+        let text = self.buffer.with_line_ending(text);
+        let text = text.as_str();
         let single_grapheme = !text.contains('\n') && text.graphemes(true).count() == 1;
         let kind = if single_grapheme && self.selections.iter().all(Selection::is_empty) {
             EditKind::Typing
@@ -155,35 +205,43 @@ impl Document {
             .iter()
             .map(|selection| (selection.range(), text.to_owned()))
             .collect();
-        self.apply(replacements, kind, |edit| {
-            Selection::cursor(edit.new_range.end)
-        });
+        let typed = if kind == EditKind::Typing {
+            text.chars().next()
+        } else {
+            None
+        };
+        self.apply(
+            replacements,
+            kind,
+            typed,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.end)),
+        );
     }
 
     /// Pastes `text`. With as many lines as cursors, each cursor gets its
     /// line (as copied from several selections).
     pub fn paste(&mut self, text: &str) {
-        let lines: Vec<&str> = text.split('\n').collect();
-        if self.selections.len() > 1 && lines.len() == self.selections.len() {
-            let replacements = self
-                .selections
+        let normalized = text.replace("\r\n", "\n");
+        let lines: Vec<&str> = normalized.split('\n').collect();
+        let replacements = if self.selections.len() > 1 && lines.len() == self.selections.len() {
+            self.selections
                 .iter()
                 .zip(lines)
                 .map(|(selection, line)| (selection.range(), line.to_owned()))
-                .collect();
-            self.apply(replacements, EditKind::Other, |edit| {
-                Selection::cursor(edit.new_range.end)
-            });
+                .collect()
         } else {
-            let replacements = self
-                .selections
+            let text = self.buffer.with_line_ending(&normalized);
+            self.selections
                 .iter()
-                .map(|selection| (selection.range(), text.to_owned()))
-                .collect();
-            self.apply(replacements, EditKind::Other, |edit| {
-                Selection::cursor(edit.new_range.end)
-            });
-        }
+                .map(|selection| (selection.range(), text.clone()))
+                .collect()
+        };
+        self.apply(
+            replacements,
+            EditKind::Other,
+            None,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.end)),
+        );
     }
 
     /// Breaks the line at every cursor, keeping the indentation of the line.
@@ -198,12 +256,18 @@ impl Document {
                     .chars()
                     .take_while(|character| *character == ' ' || *character == '\t')
                     .collect();
-                (selection.range(), format!("\n{indentation}"))
+                (
+                    selection.range(),
+                    format!("{}{indentation}", self.buffer.line_ending().as_str()),
+                )
             })
             .collect();
-        self.apply(replacements, EditKind::Other, |edit| {
-            Selection::cursor(edit.new_range.end)
-        });
+        self.apply(
+            replacements,
+            EditKind::Other,
+            None,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.end)),
+        );
     }
 
     /// Deletes the selections, or the grapheme before each cursor.
@@ -243,9 +307,26 @@ impl Document {
             .filter(|selection| !selection.is_empty())
             .map(|selection| (selection.range(), String::new()))
             .collect();
-        self.apply(replacements, EditKind::Other, |edit| {
-            Selection::cursor(edit.new_range.start)
-        });
+        self.apply(
+            replacements,
+            EditKind::Other,
+            None,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.start)),
+        );
+    }
+
+    /// Makes every line end with `ending` (one undo step); cursors stay
+    /// where they were.
+    pub fn set_line_endings(&mut self, ending: LineEnding) {
+        let replacements = (0..self.buffer.line_count())
+            .filter_map(|row| {
+                let range = self.buffer.line_break_range(row);
+                let current = self.buffer.slice(range.clone());
+                (!current.is_empty() && current != ending.as_str())
+                    .then(|| (range, ending.as_str().to_owned()))
+            })
+            .collect();
+        self.apply(replacements, EditKind::Other, None, &Placement::Keep);
     }
 
     /// Reverts the last undo step and restores the selections it had.
@@ -291,9 +372,12 @@ impl Document {
         } else {
             EditKind::Other
         };
-        self.apply(replacements, kind, |edit| {
-            Selection::cursor(edit.new_range.start)
-        });
+        self.apply(
+            replacements,
+            kind,
+            None,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.start)),
+        );
     }
 
     /// Applies `replacements` (one per selection, any order) as one step:
@@ -305,7 +389,8 @@ impl Document {
         &mut self,
         replacements: Vec<(Range<usize>, String)>,
         kind: EditKind,
-        place: impl Fn(&Edit) -> Selection,
+        typed: Option<char>,
+        placement: &Placement<'_>,
     ) {
         let replacements = merge_replacements(replacements);
         if replacements
@@ -331,10 +416,51 @@ impl Document {
             self.buffer.replace(edit.old_range.clone(), &edit.new_text);
         }
         let before = self.selections.clone();
-        let after = Selections::from_vec(edits.iter().map(&place).collect());
-        self.history.record(edits, kind, before, after.clone());
+        let after = match placement {
+            Placement::PerEdit(place) => Selections::from_vec(edits.iter().map(place).collect()),
+            Placement::Keep => {
+                let mapper = OffsetMapper::new(&edits);
+                before.map(|selection| Selection {
+                    anchor: mapper.map(selection.anchor),
+                    head: mapper.map(selection.head),
+                    goal_column: selection.goal_column,
+                })
+            }
+        };
+        let now = self.clock.now();
+        self.history
+            .record(edits, kind, before, after.clone(), now, typed);
         self.selections = after;
         self.version += 1;
+    }
+}
+
+/// Moves offsets of the old text to the new text after a step of edits,
+/// in logarithmic time per offset.
+struct OffsetMapper<'a> {
+    edits: &'a [Edit],
+}
+
+impl<'a> OffsetMapper<'a> {
+    fn new(edits: &'a [Edit]) -> Self {
+        Self { edits }
+    }
+
+    fn map(&self, offset: usize) -> usize {
+        // The last edit that starts before `offset`; an offset at the start
+        // of an edit stays in front of it.
+        let index = self
+            .edits
+            .partition_point(|edit| edit.old_range.start < offset);
+        let Some(edit) = index.checked_sub(1).map(|index| &self.edits[index]) else {
+            return offset;
+        };
+        if offset < edit.old_range.end {
+            // Inside replaced text: to the end of the replacement.
+            edit.new_range.end
+        } else {
+            edit.new_range.end + (offset - edit.old_range.end)
+        }
     }
 }
 

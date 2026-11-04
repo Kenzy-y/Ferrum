@@ -1,6 +1,8 @@
 //! Undo and redo.
 
+use std::collections::VecDeque;
 use std::ops::Range;
+use std::time::{Duration, Instant};
 
 use crate::{Buffer, Selections};
 
@@ -27,6 +29,9 @@ pub enum EditKind {
     Other,
 }
 
+/// A pause in typing longer than this starts a new undo step.
+pub const UNDO_GROUP_PAUSE: Duration = Duration::from_secs(1);
+
 /// Edits applied together (one per cursor), in document order.
 type Step = Vec<Edit>;
 
@@ -37,12 +42,16 @@ struct Transaction {
     kind: EditKind,
     selections_before: Selections,
     selections_after: Selections,
+    /// When the last step was added.
+    last_edit: Instant,
+    /// The last character typed, to end the group at word ends.
+    last_typed: Option<char>,
 }
 
 /// Undo and redo stacks.
 #[derive(Debug, Clone)]
 pub struct History {
-    undo: Vec<Transaction>,
+    undo: VecDeque<Transaction>,
     redo: Vec<Transaction>,
     limit: usize,
 }
@@ -60,7 +69,7 @@ impl History {
     /// A history keeping at most `limit` undo steps.
     pub fn new(limit: usize) -> Self {
         Self {
-            undo: Vec::new(),
+            undo: VecDeque::new(),
             redo: Vec::new(),
             limit,
         }
@@ -77,46 +86,56 @@ impl History {
     }
 
     /// Records a step. It joins the previous transaction when both are
-    /// typing (or both deletion) and the cursors did not move in between.
+    /// typing (or both deletion), the cursors did not move in between, less
+    /// than [`UNDO_GROUP_PAUSE`] passed, and the typing did not start a new
+    /// word (a non-space after a space ends the previous word).
     pub(crate) fn record(
         &mut self,
         step: Step,
         kind: EditKind,
         before: Selections,
         after: Selections,
+        at: Instant,
+        typed: Option<char>,
     ) {
         self.redo.clear();
         if kind != EditKind::Other
-            && let Some(last) = self.undo.last_mut()
+            && let Some(last) = self.undo.back_mut()
             && last.kind == kind
             && last.selections_after == before
+            && at.saturating_duration_since(last.last_edit) < UNDO_GROUP_PAUSE
+            && !starts_new_word(last.last_typed, typed)
         {
             last.steps.push(step);
             last.selections_after = after;
+            last.last_edit = at;
+            last.last_typed = typed;
             return;
         }
-        self.undo.push(Transaction {
+        self.undo.push_back(Transaction {
             steps: vec![step],
             kind,
             selections_before: before,
             selections_after: after,
+            last_edit: at,
+            last_typed: typed,
         });
         if self.undo.len() > self.limit {
-            self.undo.remove(0);
+            self.undo.pop_front();
         }
     }
 
     /// Ends the current group: the next edit starts a new undo step even if
     /// it is of the same kind (used after cursor moves, saves, focus loss).
     pub fn break_group(&mut self) {
-        if let Some(last) = self.undo.last_mut() {
+        if let Some(last) = self.undo.back_mut() {
             last.kind = EditKind::Other;
         }
     }
 
     /// Reverts the last transaction; returns the selections it had before.
     pub(crate) fn undo(&mut self, buffer: &mut Buffer) -> Option<Selections> {
-        let transaction = self.undo.pop()?;
+        let transaction = self.undo.pop_back()?;
         for step in transaction.steps.iter().rev() {
             // Later edits first, so earlier ranges stay valid.
             for edit in step.iter().rev() {
@@ -138,7 +157,13 @@ impl History {
             }
         }
         let selections = transaction.selections_after.clone();
-        self.undo.push(transaction);
+        self.undo.push_back(transaction);
         Some(selections)
     }
+}
+
+/// Whether typing `typed` after `previous` starts a new word: the first
+/// non-space after a space. "hello world" becomes "hello " and "world".
+fn starts_new_word(previous: Option<char>, typed: Option<char>) -> bool {
+    matches!((previous, typed), (Some(previous), Some(typed)) if previous.is_whitespace() && !typed.is_whitespace())
 }

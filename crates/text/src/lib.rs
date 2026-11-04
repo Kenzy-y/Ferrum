@@ -18,9 +18,9 @@ mod io;
 mod selection;
 
 pub use boundaries::{next_grapheme, next_word_end, previous_grapheme, previous_word_start};
-pub use buffer::{Buffer, LineEnding, Point};
-pub use document::{Document, Movement};
-pub use history::{EditKind, History};
+pub use buffer::{Buffer, LineEnding, LineEndings, Point};
+pub use document::{Clock, Document, Movement};
+pub use history::{EditKind, History, UNDO_GROUP_PAUSE};
 pub use io::{TextError, load, save};
 pub use selection::{Selection, Selections};
 

@@ -3,12 +3,18 @@
 Crate `text` (core layer, no GPUI): what the editor edits.
 
 **Key types.**
-- `Buffer` — a `ropey` rope plus the file's line ending (`LineEnding`) and
-  UTF-8 BOM. The rope always holds `
-`; `to_text()` restores the original
-  ending (the dominant one for mixed files) and the BOM. Positions are byte
-  offsets; `Point` is a row and a byte column; `char_column` /
-  `offset_at_char_column` serve vertical movement.
+- `Buffer` — a `ropey` rope plus the UTF-8 BOM. The text is kept exactly as
+  in the file, line breaks included, so lines nobody edits are saved with
+  their own ending even in files that mix `
+` and `
+`. Counts of both
+  kinds are updated by every edit from the edited text only (plus one byte of
+  context on each side, for pairs split or joined at the edges).
+  `line_ending()` is the dominant kind, which new lines and pasted text get
+  (`with_line_ending`); `line_endings()` is `Uniform(..)` or `Mixed { .. }`
+  (the status bar shows "Mixed"). Positions are byte offsets; `Point` is a
+  row and a byte column; `char_column` / `offset_at_char_column` serve
+  vertical movement.
 - `Selection` / `Selections` — anchor and head (a cursor is an empty
   selection), sorted, merged when they overlap (touching selections stay
   apart, a cursor at or inside a selection merges), never empty, with a
@@ -17,11 +23,15 @@ Crate `text` (core layer, no GPUI): what the editor edits.
   all cursors at once: `insert`, `paste` (one line per cursor when the
   counts match), `newline` (keeps indentation), `delete_backward/forward`,
   `delete_word_*`, `delete_selections`, `move_cursors(Movement, extend)`,
-  `add_cursor_vertically`, `select_all`. `version()` changes with the text.
+  `add_cursor_vertically`, `select_all`, `set_line_endings` (one undo step,
+  cursors keep their places). `version()` changes with the text.
 - `History` — each transaction stores its edits and the selections before
   and after, so undo and redo put the cursors back where they were.
-  Consecutive typing, or consecutive deleting, with cursors that did not
-  move in between is one undo step; anything else is its own step.
+  Consecutive typing, or consecutive deleting, is one undo step until the
+  cursors move, typing pauses for `UNDO_GROUP_PAUSE` (1 s) or a new word
+  starts (a non-space typed after a space: "hello world" undoes as
+  "world", then "hello "). Anything else is its own step. The time comes
+  from the document's `Clock`, replaceable in tests.
 - `next_grapheme` / `previous_grapheme` — boundaries of grapheme clusters
   (`unicode-segmentation`) over rope chunks: an emoji of several code
   points, a letter with combining marks or a flag is one step for the
@@ -48,6 +58,17 @@ run in the background.
 | page down + up | 3.6 µs | 0.94 µs |
 | right + left | 0.45 µs | 0.44 µs |
 | offset ↔ point | 1.0 µs | 0.71 µs |
+
+Many cursors (100 000 lines, cursors spread evenly):
+
+| Operation | 1000 cursors | 5000 cursors | growth |
+|---|---|---|---|
+| type a character | 2.7 ms | 13.0 ms | ×4.9 |
+| backspace | 1.8 ms | 5.1 ms | ×2.9 |
+
+Growth is linear (×5 cursors, at most ×5 time). Typing at 5000 cursors takes
+more than one 8 ms frame; per cursor it is about 2.6 µs, spent in the rope
+edits and the undo record.
 
 CI runs every benchmark once as a smoke test (`cargo test --benches`);
 timings are only meaningful on a quiet machine.

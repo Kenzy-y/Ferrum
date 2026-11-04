@@ -4,8 +4,7 @@ use std::ops::Range;
 
 use ropey::Rope;
 
-/// How lines end in the file. The buffer always holds `\n`; the original
-/// ending is restored when saving.
+/// A kind of line break.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum LineEnding {
     /// `\n` (Unix, macOS).
@@ -21,6 +20,70 @@ impl LineEnding {
         match self {
             Self::Lf => "\n",
             Self::CrLf => "\r\n",
+        }
+    }
+}
+
+/// Line endings of a buffer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LineEndings {
+    /// All lines end the same way (or there is a single line).
+    Uniform(LineEnding),
+    /// Both kinds occur; new lines get the dominant one.
+    Mixed {
+        /// The more frequent kind.
+        dominant: LineEnding,
+    },
+}
+
+/// Counts of each kind of line break.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+struct EndingCounts {
+    crlf: usize,
+    lf: usize,
+}
+
+impl EndingCounts {
+    fn of(text: &str) -> Self {
+        let crlf = text.matches("\r\n").count();
+        Self {
+            crlf,
+            lf: text.matches('\n').count() - crlf,
+        }
+    }
+
+    /// Counts in a rope slice without copying it.
+    fn of_slice(slice: ropey::RopeSlice<'_>) -> Self {
+        let mut counts = Self::default();
+        let mut previous_was_cr = false;
+        for byte in slice.bytes() {
+            if byte == b'\n' {
+                if previous_was_cr {
+                    counts.crlf += 1;
+                } else {
+                    counts.lf += 1;
+                }
+            }
+            previous_was_cr = byte == b'\r';
+        }
+        counts
+    }
+
+    fn add(&mut self, other: Self) {
+        self.crlf += other.crlf;
+        self.lf += other.lf;
+    }
+
+    fn remove(&mut self, other: Self) {
+        self.crlf -= other.crlf;
+        self.lf -= other.lf;
+    }
+
+    fn dominant(self) -> LineEnding {
+        if self.crlf > self.lf {
+            LineEnding::CrLf
+        } else {
+            LineEnding::Lf
         }
     }
 }
@@ -41,11 +104,14 @@ impl Point {
     }
 }
 
-/// Text with its line ending and byte order mark.
+/// Text with its byte order mark. The text is kept exactly as in the file,
+/// line breaks included, so lines nobody edits are saved unchanged.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Buffer {
     rope: Rope,
-    line_ending: LineEnding,
+    endings: EndingCounts,
+    /// Ending for new lines when the file has none yet.
+    default_ending: LineEnding,
     bom: bool,
 }
 
@@ -58,44 +124,29 @@ impl Buffer {
         Self::default()
     }
 
-    /// A buffer from file contents: the BOM is remembered and removed, line
-    /// endings become `\n` and the dominant ending is remembered.
+    /// A buffer from file contents. The BOM is remembered and removed;
+    /// line breaks are kept as they are.
     pub fn from_text(text: &str) -> Self {
         let (text, bom) = match text.strip_prefix(BOM) {
             Some(rest) => (rest, true),
             None => (text, false),
         };
-        let crlf = text.matches("\r\n").count();
-        let lf = text.matches('\n').count() - crlf;
-        let (rope, line_ending) = if crlf > lf {
-            (
-                Rope::from_str(&text.replace("\r\n", "\n")),
-                LineEnding::CrLf,
-            )
-        } else if crlf > 0 {
-            // Mixed endings: the dominant one wins when saving.
-            (Rope::from_str(&text.replace("\r\n", "\n")), LineEnding::Lf)
-        } else {
-            (Rope::from_str(text), LineEnding::Lf)
-        };
         Self {
-            rope,
-            line_ending,
+            rope: Rope::from_str(text),
+            endings: EndingCounts::of(text),
+            default_ending: LineEnding::default(),
             bom,
         }
     }
 
-    /// The file contents: original line ending and BOM restored.
+    /// The file contents: the text with its BOM.
     pub fn to_text(&self) -> String {
         let mut text = String::with_capacity(self.rope.len_bytes() + BOM.len());
         if self.bom {
             text.push_str(BOM);
         }
         for chunk in self.rope.chunks() {
-            match self.line_ending {
-                LineEnding::Lf => text.push_str(chunk),
-                LineEnding::CrLf => text.push_str(&chunk.replace('\n', "\r\n")),
-            }
+            text.push_str(chunk);
         }
         text
     }
@@ -105,14 +156,52 @@ impl Buffer {
         &self.rope
     }
 
-    /// The line ending used when saving.
+    /// The ending new lines get: the dominant one in the file, or the
+    /// default for files without line breaks.
     pub fn line_ending(&self) -> LineEnding {
-        self.line_ending
+        if self.endings.crlf == 0 && self.endings.lf == 0 {
+            self.default_ending
+        } else {
+            self.endings.dominant()
+        }
     }
 
-    /// Changes the line ending used when saving.
-    pub fn set_line_ending(&mut self, line_ending: LineEnding) {
-        self.line_ending = line_ending;
+    /// Whether the line endings are uniform or mixed.
+    pub fn line_endings(&self) -> LineEndings {
+        if self.endings.crlf > 0 && self.endings.lf > 0 {
+            LineEndings::Mixed {
+                dominant: self.endings.dominant(),
+            }
+        } else {
+            LineEndings::Uniform(self.line_ending())
+        }
+    }
+
+    /// The ending for new lines in a file without line breaks yet (new
+    /// files); files with breaks keep using their dominant one.
+    pub fn set_default_line_ending(&mut self, line_ending: LineEnding) {
+        self.default_ending = line_ending;
+    }
+
+    /// `text` with every line break turned into the buffer's ending.
+    pub fn with_line_ending(&self, text: &str) -> String {
+        let normalized = text.replace("\r\n", "\n");
+        match self.line_ending() {
+            LineEnding::Lf => normalized,
+            LineEnding::CrLf => normalized.replace('\n', "\r\n"),
+        }
+    }
+
+    /// The byte range of the line break that ends line `row` (empty for the
+    /// last line).
+    pub fn line_break_range(&self, row: usize) -> Range<usize> {
+        let end = self.line_range(row).end;
+        let next = if row + 1 < self.line_count() {
+            self.rope.line_to_byte(row + 1)
+        } else {
+            end
+        };
+        end..next
     }
 
     /// Whether the file had a UTF-8 BOM.
@@ -211,7 +300,17 @@ impl Buffer {
     }
 
     /// Replaces `range` (bytes, on character boundaries) with `text`.
+    /// Line ending counts are updated from the removed and inserted text
+    /// only, so the cost is that of the edit, not of the document. A `\r`
+    /// right before the range or a `\n` right after it can pair up with the
+    /// edges, so one byte of context on each side is counted too.
     pub(crate) fn replace(&mut self, range: Range<usize>, text: &str) {
+        let context_start = self.floor_char_boundary(range.start.saturating_sub(1));
+        let context_end = (range.end + 1).min(self.len());
+        let context_end = self.clamp_up(context_end);
+        self.endings.remove(EndingCounts::of_slice(
+            self.rope.byte_slice(context_start..context_end),
+        ));
         let start = self.rope.byte_to_char(range.start);
         let end = self.rope.byte_to_char(range.end);
         if start < end {
@@ -219,6 +318,21 @@ impl Buffer {
         }
         if !text.is_empty() {
             self.rope.insert(start, text);
+        }
+        let after_end = context_end - range.len() + text.len();
+        self.endings.add(EndingCounts::of_slice(
+            self.rope.byte_slice(context_start..after_end),
+        ));
+    }
+
+    /// `offset` moved forward to a character boundary.
+    fn clamp_up(&self, offset: usize) -> usize {
+        let floor = self.floor_char_boundary(offset);
+        if floor == offset {
+            offset
+        } else {
+            let index = self.rope.byte_to_char(offset);
+            self.rope.char_to_byte(index + 1)
         }
     }
 }
@@ -240,16 +354,41 @@ mod tests {
         let windows = Buffer::from_text("\u{feff}one\r\ntwo\r\n");
         assert_eq!(windows.line_ending(), LineEnding::CrLf);
         assert!(windows.has_bom());
-        assert_eq!(windows.rope().to_string(), "one\ntwo\n");
+        assert_eq!(windows.line(0).to_string(), "one");
+        assert_eq!(windows.line_count(), 3);
         assert_eq!(windows.to_text(), "\u{feff}one\r\ntwo\r\n");
 
         let unix = Buffer::from_text("one\ntwo");
-        assert_eq!(unix.line_ending(), LineEnding::Lf);
+        assert_eq!(unix.line_endings(), LineEndings::Uniform(LineEnding::Lf));
         assert_eq!(unix.to_text(), "one\ntwo");
+    }
 
+    #[test]
+    fn mixed_endings_are_saved_as_they_are() {
         let mixed = Buffer::from_text("a\r\nb\nc\nd\n");
-        assert_eq!(mixed.line_ending(), LineEnding::Lf, "dominant ending wins");
-        assert_eq!(mixed.to_text(), "a\nb\nc\nd\n");
+        assert_eq!(
+            mixed.line_endings(),
+            LineEndings::Mixed {
+                dominant: LineEnding::Lf
+            }
+        );
+        assert_eq!(mixed.to_text(), "a\r\nb\nc\nd\n");
+        assert_eq!(mixed.line_break_range(0), 1..3);
+        assert_eq!(mixed.with_line_ending("x\r\ny"), "x\ny");
+    }
+
+    #[test]
+    fn ending_counts_follow_edits_including_split_pairs() {
+        let mut buffer = Buffer::from_text("a\r\nb\r\n");
+        // Deleting the `\n` of a pair leaves a lone `\r` (not a counted ending).
+        buffer.replace(2..3, "");
+        assert_eq!(buffer.endings, EndingCounts { crlf: 1, lf: 0 });
+        // Inserting `\n` right after that `\r` forms a pair again.
+        buffer.replace(2..2, "\n");
+        assert_eq!(buffer.endings, EndingCounts { crlf: 2, lf: 0 });
+        buffer.replace(0..0, "x\n");
+        assert_eq!(buffer.endings, EndingCounts { crlf: 2, lf: 1 });
+        assert_eq!(buffer.endings, EndingCounts::of(&buffer.rope().to_string()));
     }
 
     #[test]
