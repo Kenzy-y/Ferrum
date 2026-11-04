@@ -1,6 +1,10 @@
 //! The editor area: the tab strip, the breadcrumbs of the active file and
 //! the active tab; the Welcome page when no tab is open.
 
+pub(crate) mod closing;
+pub(crate) mod message_view;
+pub(crate) mod tabs;
+
 use std::path::{Component, Path};
 
 use commands::CommandId;
@@ -12,8 +16,11 @@ use syntax::OutlineItem;
 use theme::ActiveTheme as _;
 use ui::{Button, ButtonVariant, EditorTab, Icon, IconName, Label, NoticeBar, Panel, PanelSurface};
 
-use crate::tabs::TabContent;
-use crate::{Workbench, command_ids, file_icons, symbol_icons, welcome};
+use crate::contrib::explorer::file_icons;
+use crate::contrib::outline::symbol_icons;
+use crate::contrib::welcome;
+use crate::parts::editor_area::tabs::TabContent;
+use crate::{Workbench, command_ids};
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -171,7 +178,7 @@ fn breadcrumbs(
                         }),
                 );
             }
-            None => segments.push(crate::tabs::file_title(path)),
+            None => segments.push(crate::parts::editor_area::tabs::file_title(path)),
         }
     }
     let last = segments.len().saturating_sub(1);

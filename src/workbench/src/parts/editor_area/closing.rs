@@ -7,7 +7,7 @@ use gpui::{Context, Entity, PromptLevel, Task, Window};
 use i18n::FluentArgs;
 
 use crate::Workbench;
-use crate::tabs::file_title;
+use crate::parts::editor_area::tabs::file_title;
 
 /// What happens once the user agreed to close.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

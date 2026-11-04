@@ -5,7 +5,8 @@ use gpui::{Context, IntoElement, ParentElement as _, Styled as _, px};
 use theme::ActiveTheme as _;
 use ui::{IconButton, IconName, Panel, PanelSurface, SectionHeader};
 
-use crate::{SidebarView, Workbench, explorer};
+use crate::contrib::explorer;
+use crate::{SidebarView, Workbench};
 
 /// Message id of the title of `view`.
 pub(crate) fn title(view: SidebarView) -> &'static str {

@@ -11,7 +11,7 @@ use gpui::{
 use i18n::FluentArgs;
 
 use crate::Workbench;
-use crate::message_view::MessageView;
+use crate::parts::editor_area::message_view::MessageView;
 
 /// What a tab shows.
 #[derive(Clone)]

@@ -1,6 +1,9 @@
 //! The Outline section of the Explorer: which items it shows (those of the
 //! active editor), collapsing it, and going to an item.
 
+pub(crate) mod symbol_icons;
+pub(crate) mod view;
+
 use gpui::{
     AnyElement, AppContext as _, Context, Entity, InteractiveElement as _, IntoElement as _,
     ParentElement as _, StatefulInteractiveElement as _, Styled as _, Subscription, Window, div,
@@ -10,7 +13,7 @@ use theme::ActiveTheme as _;
 use ui::SectionHeader;
 
 use crate::Workbench;
-use crate::outline_view::{GoToSymbol, OutlineView};
+use crate::contrib::outline::view::{GoToSymbol, OutlineView};
 
 /// State of the section.
 pub(crate) struct OutlineSection {

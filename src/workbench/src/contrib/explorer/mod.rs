@@ -2,6 +2,9 @@
 //! project card and the files section with one. The file tree itself is
 //! filled in by the project tree (stage 2, part 3).
 
+pub(crate) mod file_icons;
+pub(crate) mod file_tree_view;
+
 use commands::CommandId;
 use gpui::{
     AnyElement, App, Context, FontWeight, IntoElement, ParentElement as _, Styled as _, div, px,

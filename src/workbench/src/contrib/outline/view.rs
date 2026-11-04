@@ -12,7 +12,7 @@ use syntax::OutlineItem;
 use theme::ActiveTheme as _;
 use ui::{Label, ListRow};
 
-use crate::symbol_icons;
+use crate::contrib::outline::symbol_icons;
 
 /// Emitted when an item is activated: go to its name in the editor.
 pub struct GoToSymbol {

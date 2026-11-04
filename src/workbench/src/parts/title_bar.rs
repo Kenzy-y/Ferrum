@@ -10,7 +10,8 @@ use gpui::{
 use theme::ActiveTheme as _;
 use ui::{Button, ButtonVariant, Icon, IconButton, IconName, SearchField};
 
-use crate::{Dispatch, Workbench, command_ids, window_controls};
+use crate::parts::window_controls;
+use crate::{Dispatch, Workbench, command_ids};
 
 /// Space reserved on macOS for the traffic light buttons, which the system
 /// draws over the left edge of the title bar.

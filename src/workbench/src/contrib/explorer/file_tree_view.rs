@@ -19,7 +19,7 @@ use project::{
 use theme::ActiveTheme as _;
 use ui::{Icon, IconName, ListRow};
 
-use crate::file_icons::{self, FileIcons};
+use crate::contrib::explorer::file_icons::{self, FileIcons};
 
 /// Emitted when `.ferrum/settings.toml` of the workspace changed on disk.
 pub struct WorkspaceSettingsChanged;
