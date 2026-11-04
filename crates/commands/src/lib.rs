@@ -9,13 +9,17 @@
 //! Keybindings come from `keymap.toml` files whose tables are contexts
 //! (`global`, `editor`, `terminal`, ...). See [`Keymap`].
 
+mod fuzzy;
 mod id;
+mod keyboard_settings;
 mod keymap;
 mod keystroke;
 mod matcher;
 mod registry;
 
+pub use fuzzy::{FuzzyMatch, filter, fuzzy_match};
 pub use id::{CommandId, InvalidCommandId};
+pub use keyboard_settings::KeyboardSettings;
 pub use keymap::{Binding, ContextName, GLOBAL_CONTEXT, Keymap, KeymapDiagnostic, KeymapError};
 pub use keystroke::{KeySequence, Keystroke, KeystrokeError, Modifiers, Platform};
 pub use matcher::{KeymapMatcher, MatchResult};

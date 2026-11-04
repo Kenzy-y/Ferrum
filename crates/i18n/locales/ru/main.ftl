@@ -33,6 +33,10 @@ command-workbench-show-search = Открыть поиск
 command-workbench-show-source-control = Открыть систему контроля версий
 command-workbench-show-run-and-debug = Открыть запуск и отладку
 command-workbench-show-extensions = Открыть расширения
+command-workbench-quick-open = Поиск файлов, символов и команд
+command-workbench-show-command-palette = Показать все команды
+quick-open-commands-placeholder = Введите название команды
+quick-open-no-results = Ничего не найдено
 command-workbench-toggle-component-gallery = Показать или скрыть витрину компонентов
 
 ## Витрина компонентов (временная, этап 1)

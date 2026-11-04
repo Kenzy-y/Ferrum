@@ -116,6 +116,63 @@ impl Keystroke {
     }
 }
 
+impl Keystroke {
+    /// Human-readable form for menus, the palette and hints, e.g.
+    /// `Ctrl Shift P` or `Cmd K`, using the names of `platform`.
+    pub fn label(&self, platform: Platform) -> String {
+        let Modifiers {
+            control,
+            alt,
+            shift,
+            platform: platform_key,
+        } = self.modifiers;
+        let alt_name = if platform == Platform::MacOs {
+            "Option"
+        } else {
+            "Alt"
+        };
+        let platform_name = match platform {
+            Platform::MacOs => "Cmd",
+            Platform::Windows => "Win",
+            Platform::Linux => "Super",
+        };
+        let mut parts: Vec<String> = [
+            (control, "Ctrl"),
+            (alt, alt_name),
+            (shift, "Shift"),
+            (platform_key, platform_name),
+        ]
+        .into_iter()
+        .filter(|(held, _)| *held)
+        .map(|(_, name)| name.to_owned())
+        .collect();
+        parts.push(key_label(&self.key));
+        parts.join(" ")
+    }
+}
+
+/// Display name of a key.
+fn key_label(key: &str) -> String {
+    let named = match key {
+        "escape" => "Esc",
+        "enter" => "Enter",
+        "space" => "Space",
+        "tab" => "Tab",
+        "backspace" => "Backspace",
+        "delete" => "Del",
+        "home" => "Home",
+        "end" => "End",
+        "pageup" => "PgUp",
+        "pagedown" => "PgDn",
+        "up" => "↑",
+        "down" => "↓",
+        "left" => "←",
+        "right" => "→",
+        _ => return key.to_uppercase(),
+    };
+    named.to_owned()
+}
+
 fn bad_modifier(keystroke: &str, modifier: &str) -> KeystrokeError {
     KeystrokeError::BadModifier {
         keystroke: keystroke.to_owned(),
@@ -172,6 +229,18 @@ impl KeySequence {
     }
 }
 
+impl KeySequence {
+    /// Human-readable form, keystrokes separated by commas:
+    /// `Ctrl K, Ctrl G`.
+    pub fn label(&self, platform: Platform) -> String {
+        self.0
+            .iter()
+            .map(|keystroke| keystroke.label(platform))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+}
+
 impl fmt::Display for KeySequence {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (index, keystroke) in self.0.iter().enumerate() {
@@ -222,6 +291,20 @@ mod tests {
         for text in ["", "ctrl-", "hyper-a", "ctrl-ctrl-a", "ctrl-mod-a"] {
             assert!(Keystroke::parse(text, Platform::Linux).is_err(), "{text}");
         }
+    }
+
+    #[test]
+    fn labels_use_platform_names() {
+        assert_eq!(
+            parse("ctrl-shift-p").label(Platform::Windows),
+            "Ctrl Shift P"
+        );
+        let mac = Keystroke::parse("mod-alt-f4", Platform::MacOs).unwrap();
+        assert_eq!(mac.label(Platform::MacOs), "Option Cmd F4");
+        assert_eq!(parse("ctrl-`").label(Platform::Linux), "Ctrl `");
+        assert_eq!(parse("escape").label(Platform::Linux), "Esc");
+        let chord = KeySequence::parse("ctrl-k ctrl-g", Platform::Linux).unwrap();
+        assert_eq!(chord.label(Platform::Linux), "Ctrl K, Ctrl G");
     }
 
     #[test]

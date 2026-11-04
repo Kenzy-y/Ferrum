@@ -3,11 +3,12 @@
 
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Duration;
 
-use commands::{CommandId, Keymap, KeymapMatcher, MatchResult};
+use commands::{CommandId, CommandRegistry, Keymap, KeymapMatcher, MatchResult};
 use gpui::{
     AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
-    KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Window, div, px,
+    KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Task, Window, div, px,
 };
 use i18n::I18n;
 use theme::ActiveTheme as _;
@@ -23,6 +24,9 @@ pub(crate) struct Shell {
     focus_handle: FocusHandle,
     keymap: Arc<Keymap>,
     matcher: KeymapMatcher,
+    /// Runs the pending sequence's own command if no further key arrives.
+    chord_timer: Option<Task<()>>,
+    chord_timeout: Duration,
     i18n: Arc<I18n>,
     workbench: Entity<Workbench>,
     gallery: Option<Entity<Gallery>>,
@@ -31,6 +35,8 @@ pub(crate) struct Shell {
 impl Shell {
     pub(crate) fn new(
         keymap: Arc<Keymap>,
+        registry: Arc<CommandRegistry>,
+        chord_timeout: Duration,
         i18n: Arc<I18n>,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -43,11 +49,15 @@ impl Shell {
             let _ = shell.update(cx, |shell, cx| shell.run_command(&id, window, cx));
         });
         let workbench_i18n = i18n.clone();
-        let workbench = cx.new(|_| Workbench::new(workbench_i18n, dispatch));
+        let workbench_keymap = keymap.clone();
+        let workbench =
+            cx.new(|_| Workbench::new(workbench_i18n, dispatch, registry, workbench_keymap));
         Self {
             focus_handle,
             keymap,
             matcher: KeymapMatcher::new(),
+            chord_timer: None,
+            chord_timeout,
             i18n,
             workbench,
             gallery: None,
@@ -63,7 +73,7 @@ impl Shell {
             _ => {
                 let handled = self
                     .workbench
-                    .update(cx, |workbench, cx| workbench.run_command(id, cx));
+                    .update(cx, |workbench, cx| workbench.run_command(id, window, cx));
                 if !handled {
                     tracing::debug!(command = %id, "command is not implemented yet");
                 }
@@ -95,6 +105,7 @@ impl Shell {
         if event.is_held {
             return;
         }
+        self.chord_timer = None;
         let keystroke = to_keystroke(&event.keystroke);
         match self
             .matcher
@@ -104,9 +115,41 @@ impl Shell {
                 cx.stop_propagation();
                 self.run_command(&id, window, cx);
             }
-            MatchResult::Pending => cx.stop_propagation(),
+            MatchResult::Pending => {
+                cx.stop_propagation();
+                self.start_chord_timer(window, cx);
+            }
             MatchResult::NoMatch => {}
         }
+    }
+}
+
+impl Shell {
+    /// When the pending keys are also a complete shortcut (`Ctrl K` next to
+    /// `Ctrl K, Ctrl G`), runs that shortcut unless another key arrives in
+    /// time. No timer runs otherwise, so idle stays idle.
+    fn start_chord_timer(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self
+            .matcher
+            .pending_command(&self.keymap, &[WORKBENCH_CONTEXT])
+            .is_none()
+        {
+            return;
+        }
+        let timeout = self.chord_timeout;
+        self.chord_timer = Some(cx.spawn_in(window, async move |this, cx| {
+            cx.background_executor().timer(timeout).await;
+            let _ = this.update_in(cx, |shell, window, cx| {
+                shell.chord_timer = None;
+                let command = shell
+                    .matcher
+                    .pending_command(&shell.keymap, &[WORKBENCH_CONTEXT]);
+                shell.matcher.reset();
+                if let Some(id) = command {
+                    shell.run_command(&id, window, cx);
+                }
+            });
+        }));
     }
 }
 

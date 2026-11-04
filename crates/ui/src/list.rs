@@ -1,8 +1,10 @@
 //! List rows and activity bar buttons.
 
+use std::ops::Range;
+
 use gpui::{
-    AnyElement, App, ElementId, Hsla, IntoElement, ParentElement as _, RenderOnce, SharedString,
-    Styled as _, Window, div, px, transparent_black,
+    AnyElement, App, ElementId, HighlightStyle, Hsla, IntoElement, ParentElement as _, RenderOnce,
+    SharedString, Styled as _, StyledText, Window, div, px, transparent_black,
 };
 use theme::ActiveTheme as _;
 
@@ -20,6 +22,8 @@ pub struct ListRow {
     expanded: Option<bool>,
     selected: bool,
     ignored: bool,
+    highlights: Vec<Range<usize>>,
+    disclosure_slot: bool,
 }
 
 impl ListRow {
@@ -34,7 +38,24 @@ impl ListRow {
             expanded: None,
             selected: false,
             ignored: false,
+            highlights: Vec::new(),
+            disclosure_slot: true,
         }
+    }
+
+    /// Drops the space reserved for a disclosure chevron: for flat lists
+    /// (palette, search results) rather than trees.
+    #[must_use]
+    pub fn flat(mut self) -> Self {
+        self.disclosure_slot = false;
+        self
+    }
+
+    /// Highlights byte ranges of the label (matched characters of a search).
+    #[must_use]
+    pub fn highlights(mut self, highlights: Vec<Range<usize>>) -> Self {
+        self.highlights = highlights;
+        self
     }
 
     /// Element before the label (file icon).
@@ -126,7 +147,14 @@ impl RenderOnce for ListRow {
             Icon::new(name).color(colors.icon)
         });
         // Rows without a chevron keep its space so labels stay aligned.
-        let chevron_slot = div().flex().flex_none().w(px(icon_size)).children(chevron);
+        let chevron_slot = (self.disclosure_slot || chevron.is_some())
+            .then(|| div().flex().flex_none().w(px(icon_size)).children(chevron));
+        let highlight = HighlightStyle {
+            color: Some(colors.text_accent.into()),
+            ..HighlightStyle::default()
+        };
+        let label = StyledText::new(self.label)
+            .with_highlights(self.highlights.into_iter().map(|range| (range, highlight)));
         let indent = metrics.space.md + metrics.size.tree_indent * depth_factor(self.depth);
         let (height, radius, gap, right) = (
             metrics.size.list_row_height,
@@ -145,14 +173,14 @@ impl RenderOnce for ListRow {
             .gap(px(gap))
             .rounded(px(radius))
             .children(marker)
-            .child(chevron_slot)
+            .children(chevron_slot)
             .children(self.leading)
             .child(
                 div()
                     .flex_1()
                     .truncate()
                     .text_color(label_color)
-                    .child(self.label),
+                    .child(label),
             )
             .children(self.trailing)
     }

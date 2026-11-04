@@ -17,8 +17,18 @@ pub const SHOW_RUN_AND_DEBUG: &str = "workbench.showRunAndDebug";
 /// Shows the Extensions view.
 pub const SHOW_EXTENSIONS: &str = "workbench.showExtensions";
 
+/// Opens quick open (title bar search).
+pub const QUICK_OPEN: &str = "workbench.quickOpen";
+/// Opens the command palette.
+pub const SHOW_COMMAND_PALETTE: &str = "workbench.showCommandPalette";
+
 /// Every workbench command with the id of its localized title.
 pub(crate) const ALL: &[(&str, &str)] = &[
+    (QUICK_OPEN, "command-workbench-quick-open"),
+    (
+        SHOW_COMMAND_PALETTE,
+        "command-workbench-show-command-palette",
+    ),
     (TOGGLE_SIDEBAR, "command-workbench-toggle-sidebar"),
     (TOGGLE_PANEL, "command-workbench-toggle-panel"),
     (SHOW_EXPLORER, "command-workbench-show-explorer"),

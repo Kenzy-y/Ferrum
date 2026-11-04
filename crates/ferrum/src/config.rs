@@ -12,12 +12,14 @@ use settings::{LayerKind, SettingsRegistry, SettingsStore, load};
 pub(crate) struct LoadedConfig {
     pub(crate) settings: SettingsStore,
     pub(crate) keymap: Keymap,
+    pub(crate) commands: Arc<CommandRegistry>,
 }
 
 /// Registers the settings of every crate linked into the application.
 pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
     Ok(SettingsRegistry::builder()
         .register::<LocalizationSettings>()?
+        .register::<commands::KeyboardSettings>()?
         .build())
 }
 
@@ -63,6 +65,7 @@ pub(crate) async fn load(
         .unknown_namespaces()
         .into_iter()
         .chain(settings.check::<LocalizationSettings>())
+        .chain(settings.check::<commands::KeyboardSettings>())
     {
         tracing::warn!(?diagnostic, "settings problem");
     }
@@ -70,7 +73,11 @@ pub(crate) async fn load(
         tracing::warn!(keys = %binding.keys, command = %binding.command, "keymap binds an unknown command");
     }
 
-    LoadedConfig { settings, keymap }
+    LoadedConfig {
+        settings,
+        keymap,
+        commands: command_registry,
+    }
 }
 
 /// Localized strings in the language chosen by the settings, the system or

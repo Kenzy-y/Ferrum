@@ -10,6 +10,7 @@ mod activity_bar;
 mod bottom_panel;
 pub mod command_ids;
 mod editor_area;
+mod quick_open;
 mod sidebar;
 mod status_bar;
 mod title_bar;
@@ -18,13 +19,16 @@ mod window_controls;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use commands::{CommandDescriptor, CommandId, CommandRegistry, RegistryError};
+use commands::{CommandDescriptor, CommandId, CommandRegistry, Keymap, Platform, RegistryError};
 use gpui::{
-    AnyView, App, Context, IntoElement, ParentElement as _, Render, SharedString, Styled as _,
+    AnyView, App, AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _,
+    IntoElement, MouseButton, ParentElement as _, Render, SharedString, Styled as _, Subscription,
     Window, WindowDecorations, WindowOptions, div, px,
 };
 use i18n::I18n;
 use theme::ActiveTheme as _;
+
+use crate::quick_open::{Dismiss, QuickOpen, QuickOpenContext, QuickOpenMode};
 
 /// Runs a command by id. Provided by the application, which knows every
 /// command owner.
@@ -92,6 +96,9 @@ pub struct EditorContent {
 pub struct Workbench {
     i18n: Arc<I18n>,
     dispatch: Dispatch,
+    keymap: Arc<Keymap>,
+    quick_open_context: QuickOpenContext,
+    quick_open: Option<OpenQuickOpen>,
     view: SidebarView,
     sidebar_visible: bool,
     panel_visible: bool,
@@ -100,11 +107,26 @@ pub struct Workbench {
 }
 
 impl Workbench {
-    /// Creates the layout of a window without an open folder.
-    pub fn new(i18n: Arc<I18n>, dispatch: Dispatch) -> Self {
+    /// Creates the layout of a window without an open folder. `registry`
+    /// and `keymap` feed the command palette.
+    pub fn new(
+        i18n: Arc<I18n>,
+        dispatch: Dispatch,
+        registry: Arc<CommandRegistry>,
+        keymap: Arc<Keymap>,
+    ) -> Self {
+        let quick_open_context = QuickOpenContext {
+            i18n: i18n.clone(),
+            registry,
+            keymap: keymap.clone(),
+            dispatch: dispatch.clone(),
+        };
         Self {
             i18n,
             dispatch,
+            keymap,
+            quick_open_context,
+            quick_open: None,
             view: SidebarView::Explorer,
             sidebar_visible: true,
             panel_visible: false,
@@ -126,7 +148,21 @@ impl Workbench {
 
     /// Runs a workbench command. Returns `false` if `id` is not one of
     /// [`command_ids`].
-    pub fn run_command(&mut self, id: &CommandId, cx: &mut Context<Self>) -> bool {
+    pub fn run_command(
+        &mut self,
+        id: &CommandId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let mode = match id.as_str() {
+            command_ids::QUICK_OPEN => Some(QuickOpenMode::Everything),
+            command_ids::SHOW_COMMAND_PALETTE => Some(QuickOpenMode::Commands),
+            _ => None,
+        };
+        if let Some(mode) = mode {
+            self.open_quick_open(mode, window, cx);
+            return true;
+        }
         let handled = self.apply_command(id.as_str());
         if handled {
             cx.notify();
@@ -169,6 +205,47 @@ impl Workbench {
         self.editor.is_some()
     }
 
+    fn open_quick_open(
+        &mut self,
+        mode: QuickOpenMode,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let previous_focus = match self.quick_open.take() {
+            Some(open) => open.previous_focus,
+            None => window.focused(cx),
+        };
+        let context = self.quick_open_context.clone();
+        let view = cx.new(|cx| QuickOpen::new(mode, &context, window, cx));
+        let subscription = cx.subscribe_in(&view, window, |this, _, _: &Dismiss, window, cx| {
+            this.close_quick_open(window, cx);
+        });
+        self.quick_open = Some(OpenQuickOpen {
+            view,
+            previous_focus,
+            _subscription: subscription,
+        });
+        cx.notify();
+    }
+
+    fn close_quick_open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(open) = self.quick_open.take() {
+            if let Some(focus) = open.previous_focus {
+                focus.focus(window, cx);
+            }
+            cx.notify();
+        }
+    }
+
+    /// Label of the first shortcut bound to `command`, for hints.
+    fn shortcut_label(&self, command: &str) -> Option<SharedString> {
+        let id = CommandId::new(command).ok()?;
+        self.keymap
+            .bindings_for(&id)
+            .next()
+            .map(|binding| binding.keys.label(Platform::current()).into())
+    }
+
     fn select_panel(&mut self, panel: PanelKind, cx: &mut Context<Self>) {
         self.panel = panel;
         cx.notify();
@@ -177,6 +254,13 @@ impl Workbench {
     fn text(&self, id: &str) -> SharedString {
         self.i18n.text(id).into()
     }
+}
+
+/// An open quick open overlay and the focus to restore when it closes.
+struct OpenQuickOpen {
+    view: Entity<QuickOpen>,
+    previous_focus: Option<FocusHandle>,
+    _subscription: Subscription,
 }
 
 /// Registers the workbench commands.
@@ -201,6 +285,24 @@ impl Render for Workbench {
         let editor = editor_area::render(self, cx);
         let panel = self.panel_visible.then(|| bottom_panel::render(self, cx));
         let status_bar = status_bar::render(self, cx);
+        let overlay = self.quick_open.as_ref().map(|open| {
+            let size = &cx.theme().metrics.size;
+            let top = (size.titlebar_height - size.input_inset_height) / 2.0
+                - cx.theme().metrics.space.sm;
+            div()
+                .id("quick-open-overlay")
+                .absolute()
+                .inset_0()
+                .flex()
+                .flex_col()
+                .items_center()
+                .pt(px(top))
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(|this, _, window, cx| this.close_quick_open(window, cx)),
+                )
+                .child(open.view.clone())
+        });
 
         let theme = cx.theme();
         let metrics = &theme.metrics;
@@ -230,6 +332,7 @@ impl Render for Workbench {
                     .child(main),
             );
         div()
+            .relative()
             .flex()
             .flex_col()
             .size_full()
@@ -237,6 +340,7 @@ impl Render for Workbench {
             .child(title_bar)
             .child(body)
             .child(status_bar)
+            .children(overlay)
     }
 }
 
@@ -263,7 +367,12 @@ mod tests {
 
     fn workbench() -> Workbench {
         let i18n = Arc::new(I18n::new(i18n::DEFAULT_LOCALE).unwrap());
-        Workbench::new(i18n, Rc::new(|_, _, _| {}))
+        Workbench::new(
+            i18n,
+            Rc::new(|_, _, _| {}),
+            Arc::new(CommandRegistry::new()),
+            Arc::new(Keymap::default()),
+        )
     }
 
     #[test]

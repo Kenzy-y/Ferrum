@@ -33,6 +33,10 @@ command-workbench-show-search = Show Search
 command-workbench-show-source-control = Show Source control
 command-workbench-show-run-and-debug = Show Run and debug
 command-workbench-show-extensions = Show Extensions
+command-workbench-quick-open = Search files, symbols and commands
+command-workbench-show-command-palette = Show all commands
+quick-open-commands-placeholder = Type the name of a command
+quick-open-no-results = Nothing found
 command-workbench-toggle-component-gallery = Toggle component gallery
 
 ## Component gallery (temporary, stage 1)

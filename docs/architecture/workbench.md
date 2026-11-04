@@ -18,6 +18,15 @@ optional `EditorContent` (any view with a tab title).
 callback given by the application, which routes ids to their owners;
 `Workbench::run_command` handles the workbench's own ids.
 
+**Quick open.** `quick_open::QuickOpen` is the overlay behind the title bar
+search (`workbench.quickOpen`, Ctrl K) and the command palette
+(`workbench.showCommandPalette`, Ctrl Shift P / F1; it starts with the `>`
+prefix). It lists every registered command with its localized title and
+first shortcut, filters with `commands::filter`, highlights matches, and is
+driven by the keyboard (Up / Down / Enter / Escape) or the mouse. Closing
+restores the previous focus. Commands are the only source for now; files,
+symbols and settings become further sources in their stages.
+
 **Window chrome.** `Workbench::window_options()` hides the platform title
 bar. Windows: drag and min/max/close use native hit-test areas
 (`window_control_area`), so Snap layouts work. Linux: client-side

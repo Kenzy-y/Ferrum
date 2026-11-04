@@ -3,6 +3,11 @@
 [global]
 "ctrl-q" = "app.quit"
 
+# Search and commands.
+"mod-k" = "workbench.quickOpen"
+"mod-shift-p" = "workbench.showCommandPalette"
+"f1" = "workbench.showCommandPalette"
+
 # Layout.
 "mod-b" = "workbench.toggleSidebar"
 "mod-j" = "workbench.togglePanel"

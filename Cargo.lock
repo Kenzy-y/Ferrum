@@ -884,7 +884,9 @@ checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 name = "commands"
 version = "0.0.0"
 dependencies = [
+ "schemars",
  "serde",
+ "settings",
  "thiserror 2.0.21",
  "toml 1.1.8+spec-1.1.0",
  "tracing",

@@ -243,6 +243,16 @@ mod tests {
     }
 
     #[test]
+    fn bindings_keep_file_order() {
+        // The first binding is the one shown in hints, so it must be the
+        // first one written, not the alphabetically first.
+        let keymap = keymap("[global]\n\"mod-shift-p\" = \"a.palette\"\n\"f1\" = \"a.palette\"");
+        let palette = command("a.palette");
+        let first = keymap.bindings_for(&palette).next().unwrap();
+        assert_eq!(first.keys.to_string(), "ctrl-shift-p");
+    }
+
+    #[test]
     fn later_layer_replaces_and_unbinds() {
         let mut keymap =
             keymap("[editor]\n\"ctrl-s\" = \"editor.save\"\n\"ctrl-w\" = \"editor.close\"");

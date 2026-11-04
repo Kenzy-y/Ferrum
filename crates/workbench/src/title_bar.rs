@@ -102,10 +102,17 @@ fn search(workbench: &Workbench, cx: &App) -> AnyElement {
                 .w_full()
                 .min_w_0()
                 .max_w(px(theme.metrics.size.titlebar_search_width))
-                .child(SearchField::new(
-                    "titlebar-search",
-                    workbench.text("titlebar-search-placeholder"),
-                )),
+                .child({
+                    let field = SearchField::new(
+                        "titlebar-search",
+                        workbench.text("titlebar-search-placeholder"),
+                    )
+                    .on_activate(run(&workbench.dispatch, command_ids::QUICK_OPEN));
+                    match workbench.shortcut_label(command_ids::QUICK_OPEN) {
+                        Some(keys) => field.shortcut(keys),
+                        None => field,
+                    }
+                }),
         )
         .into_any_element()
 }

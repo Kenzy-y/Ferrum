@@ -42,6 +42,28 @@ impl KeymapMatcher {
         self.pending.clear();
     }
 
+    /// The command bound to exactly the pending keystrokes, if any. Used
+    /// when a sequence is both complete and the beginning of a longer one:
+    /// after a timeout the application runs this command.
+    pub fn pending_command(&self, keymap: &Keymap, contexts: &[&str]) -> Option<CommandId> {
+        if self.pending.is_empty() {
+            return None;
+        }
+        contexts
+            .iter()
+            .copied()
+            .chain(std::iter::once(GLOBAL_CONTEXT))
+            .find_map(|context| {
+                keymap
+                    .bindings()
+                    .iter()
+                    .find(|binding| {
+                        binding.context.as_str() == context && binding.keys.0 == self.pending
+                    })
+                    .map(|binding| binding.command.clone())
+            })
+    }
+
     /// Feeds one keystroke.
     pub fn push(
         &mut self,
@@ -150,6 +172,31 @@ mod tests {
             command("workbench.openKeymap")
         );
         assert!(matcher.pending().is_empty());
+    }
+
+    #[test]
+    fn ambiguous_prefix_reports_its_own_command() {
+        let mut keymap = keymap();
+        keymap
+            .apply(
+                "[global]\n\"ctrl-k\" = \"workbench.quickOpen\"",
+                Platform::Linux,
+            )
+            .unwrap();
+        let mut matcher = KeymapMatcher::new();
+        assert_eq!(
+            matcher.push(&keymap, key("ctrl-k"), &[]),
+            MatchResult::Pending
+        );
+        assert_eq!(
+            matcher.pending_command(&keymap, &[]),
+            Some(CommandId::new("workbench.quickOpen").unwrap())
+        );
+        assert_eq!(
+            matcher.push(&keymap, key("ctrl-s"), &[]),
+            command("workbench.openKeymap")
+        );
+        assert_eq!(matcher.pending_command(&keymap, &[]), None);
     }
 
     #[test]

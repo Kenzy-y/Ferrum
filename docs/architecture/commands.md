@@ -14,9 +14,19 @@ Crate `commands` (core layer, no GPUI).
 - `Keymap` — bindings per context. `Keymap::defaults(platform)` loads
   `crates/commands/keymaps/default-<platform>.toml`; `apply(text)` layers a
   user `keymap.toml` on top (an empty command unbinds). Invalid files are
-  rejected whole. `diagnostics(&registry)` finds unknown commands.
+  rejected whole. Bindings keep file order (the first one is shown in
+  hints). `diagnostics(&registry)` finds unknown commands.
 - `KeymapMatcher` — feeds keystrokes with the active contexts (innermost
   first, `global` implied last) and returns `Command`, `Pending` or `NoMatch`.
+  `pending_command` gives the command bound to exactly the pending keys:
+  when keys are both a shortcut and a prefix (`Ctrl K` / `Ctrl K, Ctrl G`)
+  the application runs it after `[keyboard] chord_timeout_ms`
+  (`KeyboardSettings`, default 1000).
+- `Keystroke::label` / `KeySequence::label` — display form for hints and the
+  palette (`Ctrl Shift P`, `Cmd K`, `Ctrl K, Ctrl G`).
+- `fuzzy_match` / `filter` — case-insensitive subsequence matching with
+  word-start and consecutive-run bonuses; returns byte positions for
+  highlighting. Used by quick open.
 
 **Format.**
 ```toml
@@ -28,5 +38,5 @@ Crate `commands` (core layer, no GPUI).
 
 **Extending.** New command: register a descriptor, add a handler and a title
 message in every locale. New context: just use its name in keymaps and pass it
-to the matcher from the view that owns focus. A timeout for ambiguous
-sequences is not implemented yet.
+to the matcher from the view that owns focus. Contexts are not yet
+derived from focus: the shell passes `workbench` for the whole window.
