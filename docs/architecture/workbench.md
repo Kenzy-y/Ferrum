@@ -29,6 +29,16 @@ driven by the keyboard (Up / Down / Enter / Escape) or the mouse. Closing
 restores the previous focus. Commands are the only source for now; files,
 symbols and settings become further sources in their stages.
 
+**Welcome and Explorer.** Without editor content the editor area shows the
+Welcome page (`welcome.rs`, from `welcome.svg`): logo, title, Open folder
+plus two disabled buttons with a "later" tooltip, recent projects (or the
+empty "clean slate" card), Get started with live shortcut labels, and a
+documentation link (`app_identity::REPOSITORY_URL`). The Explorer view
+(`explorer.rs`) shows an empty state without a folder and the project card
+with the Files section with one. `path_prompt.rs` is the dialog for typing
+a folder path. The application passes the open folder (`set_workspace`), the
+recent list (`set_recent`) and an `OpenPath` callback.
+
 **Window chrome.** `Workbench::window_options()` hides the platform title
 bar. Windows: drag and min/max/close use native hit-test areas
 (`window_control_area`), so Snap layouts work. Interactive elements in the
