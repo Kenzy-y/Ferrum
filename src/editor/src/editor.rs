@@ -15,13 +15,13 @@ use serde::{Deserialize, Serialize};
 use text::{Document, LineEndings, Selection, Selections};
 
 use crate::actions::{self, Action};
-use crate::element::EditorElement;
+use crate::decorations::minimap::MinimapCache;
 use crate::file::FileState;
-use crate::layout::LayoutSnapshot;
-use crate::minimap::MinimapCache;
-use crate::mouse::Drag;
+use crate::highlighting::SyntaxState;
+use crate::input::mouse::Drag;
+use crate::render::element::EditorElement;
+use crate::render::layout::LayoutSnapshot;
 use crate::settings::EditorSettings;
-use crate::syntax_state::SyntaxState;
 
 /// What an editor reports to its owner.
 #[derive(Debug, Clone, PartialEq, Eq)]

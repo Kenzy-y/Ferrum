@@ -11,14 +11,14 @@ use gpui::{
 use text::Buffer;
 use theme::{ActiveTheme as _, Theme};
 
+use crate::decorations::minimap::{Minimap, MinimapView};
+use crate::decorations::scrollbar::{Scrollbar, ScrollbarFrame};
 use crate::editor::Editor;
-use crate::layout::{LayoutSnapshot, ShapedRow};
-use crate::minimap::{Minimap, MinimapView};
-use crate::runs::RunStyle;
-use crate::scene::{Scene, near_rows};
-use crate::scrollbar::{Scrollbar, ScrollbarFrame};
-use crate::shaping::{Metrics, head_x, shape_row};
-use crate::viewport::{follow_row, follow_x, max_scroll_y, to_f32, visible_rows};
+use crate::render::layout::{LayoutSnapshot, ShapedRow};
+use crate::render::runs::RunStyle;
+use crate::render::scene::{Scene, near_rows};
+use crate::render::shaping::{Metrics, head_x, shape_row};
+use crate::render::viewport::{follow_row, follow_x, max_scroll_y, to_f32, visible_rows};
 
 /// The fewest digits the line number column is wide for, so the text does
 /// not move while a short file grows (four in the mockups).

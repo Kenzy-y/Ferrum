@@ -8,8 +8,8 @@ use gpui::{Context, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ScrollEvent, W
 use text::{Selection, Selections};
 
 use crate::editor::Editor;
+use crate::render::viewport::max_scroll_y;
 use crate::settings::MultiCursorModifier;
-use crate::viewport::max_scroll_y;
 
 /// What a drag extends by: set by the number of clicks that started it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

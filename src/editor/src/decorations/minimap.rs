@@ -12,7 +12,7 @@ use text::Buffer;
 use theme::Theme;
 
 use crate::editor::Editor;
-use crate::viewport::{to_f32, to_index};
+use crate::render::viewport::{to_f32, to_index};
 
 /// Where the minimap is in one frame and which lines it shows.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -272,7 +272,7 @@ impl Editor {
             highlights: self
                 .syntax
                 .as_ref()
-                .map_or((0, 0), crate::syntax_state::SyntaxState::revision),
+                .map_or((0, 0), crate::highlighting::SyntaxState::revision),
             rows: minimap.row_range(),
             colors: colors.clone(),
             plain,
@@ -339,7 +339,7 @@ impl Editor {
             let text = buffer.slice(range.start..end);
             let shown = range.start..end;
             let spans = match (&region_spans, &self.syntax) {
-                (Some(spans), _) => crate::syntax_patch::spans_in(spans, &shown),
+                (Some(spans), _) => crate::highlighting::patch::spans_in(spans, &shown),
                 (None, Some(syntax)) => syntax.highlights(buffer, row, shown.clone()),
                 (None, None) => Vec::new(),
             };

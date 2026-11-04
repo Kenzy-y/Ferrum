@@ -2,6 +2,8 @@
 //! composition (Chinese, Japanese, Korean, dead keys, emoji pickers).
 //! Platforms count in UTF-16 code units; the buffer converts.
 
+pub(crate) mod mouse;
+
 use std::ops::Range;
 
 use gpui::{Bounds, Context, EntityInputHandler, Pixels, Point, UTF16Selection, Window};

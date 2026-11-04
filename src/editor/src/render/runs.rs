@@ -6,7 +6,7 @@ use std::ops::Range;
 use gpui::{Font, Hsla, TextRun, UnderlineStyle, px};
 use syntax::HighlightSpan;
 
-use crate::display::DisplayLine;
+use crate::render::display::DisplayLine;
 
 /// What a row is drawn with.
 pub(crate) struct RunStyle<'a> {

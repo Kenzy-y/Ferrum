@@ -11,22 +11,13 @@
 //!   [`Editor::run_command`].
 
 mod actions;
-mod display;
+mod decorations;
 mod editor;
-mod element;
 mod file;
+mod highlighting;
 mod input;
-mod layout;
-mod minimap;
-mod mouse;
-mod runs;
-mod scene;
-mod scrollbar;
+mod render;
 mod settings;
-mod shaping;
-mod syntax_patch;
-mod syntax_state;
-mod viewport;
 
 pub use actions::{
     CONTEXT, KEEP_LOCAL_CHANGES, RELOAD_FROM_DISK, SAVE, init, is_editor_command, register_commands,

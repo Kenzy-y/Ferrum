@@ -12,8 +12,8 @@ use text::{Buffer, Selection};
 use theme::Theme;
 
 use crate::editor::Editor;
-use crate::layout::LayoutSnapshot;
-use crate::viewport::{guide_levels, to_f32};
+use crate::render::layout::LayoutSnapshot;
+use crate::render::viewport::{guide_levels, to_f32};
 
 /// Read-only inputs of the layers.
 pub(crate) struct Scene<'a> {
@@ -227,7 +227,7 @@ fn indentation(buffer: &Buffer, row: usize, tab_size: usize) -> Option<usize> {
     for character in buffer
         .line(row)
         .chars()
-        .take(crate::viewport::LONG_LINE_CHARS)
+        .take(crate::render::viewport::LONG_LINE_CHARS)
     {
         match character {
             ' ' => columns += 1,

@@ -4,10 +4,10 @@
 use gpui::{Bounds, Pixels, Point, ShapedLine, point, px, size};
 use text::Buffer;
 
-use crate::display::DisplayLine;
-use crate::minimap::Minimap;
-use crate::scrollbar::Scrollbar;
-use crate::viewport::{to_f32, to_index};
+use crate::decorations::minimap::Minimap;
+use crate::decorations::scrollbar::Scrollbar;
+use crate::render::display::DisplayLine;
+use crate::render::viewport::{to_f32, to_index};
 
 /// A visible row as it was shaped.
 pub(crate) struct ShapedRow {

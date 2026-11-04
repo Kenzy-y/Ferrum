@@ -7,6 +7,8 @@
 //! fast typing batches itself. When full parses are slow (large files), a
 //! [`Patch`] colors the edited items within milliseconds meanwhile.
 
+pub(crate) mod patch;
+
 use std::cell::RefCell;
 use std::ops::Range;
 use std::sync::Arc;
@@ -21,7 +23,7 @@ use text::{Buffer, TextChanges, TextEdit};
 use theme::SyntaxTokens;
 
 use crate::editor::{Editor, EditorEvent};
-use crate::syntax_patch::{Patch, spans_in};
+use crate::highlighting::patch::{Patch, spans_in};
 
 /// Pause after the last parse before the outline is computed again.
 const OUTLINE_DEBOUNCE: Duration = Duration::from_millis(150);

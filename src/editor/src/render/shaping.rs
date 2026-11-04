@@ -5,11 +5,11 @@ use gpui::{Font, Hsla, Pixels, SharedString, TextRun, Window, px};
 use text::Buffer;
 use theme::Theme;
 
-use crate::display::DisplayLine;
 use crate::editor::Editor;
-use crate::layout::ShapedRow;
-use crate::runs::{RunStyle, text_runs};
-use crate::viewport::{LONG_LINE_CHARS, column_window, to_f32};
+use crate::render::display::DisplayLine;
+use crate::render::layout::ShapedRow;
+use crate::render::runs::{RunStyle, text_runs};
+use crate::render::viewport::{LONG_LINE_CHARS, column_window, to_f32};
 
 /// Fonts and measures of the text, from the theme.
 pub(crate) struct Metrics {
