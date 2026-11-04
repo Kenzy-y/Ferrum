@@ -44,29 +44,13 @@ pub async fn load_layer(fs: &dyn Fs, path: &Path) -> Result<Option<SettingsLayer
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use std::future::Future;
-    use std::path::PathBuf;
     use std::pin::pin;
     use std::task::{Context, Poll, Waker};
 
-    use fs::{BoxFuture, FsError};
+    use fs::FakeFs;
 
     use super::*;
-
-    /// In-memory file system for tests; `None` content means "unreadable".
-    struct MemoryFs(HashMap<PathBuf, Option<String>>);
-
-    impl Fs for MemoryFs {
-        fn read_to_string<'a>(&'a self, path: &'a Path) -> BoxFuture<'a, Result<String, FsError>> {
-            let result = match self.0.get(path) {
-                Some(Some(text)) => Ok(text.clone()),
-                Some(None) => Err(FsError::from_io(path, std::io::Error::other("denied"))),
-                None => Err(FsError::from_io(path, std::io::ErrorKind::NotFound.into())),
-            };
-            Box::pin(async move { result })
-        }
-    }
 
     fn poll_ready<T>(future: impl Future<Output = T>) -> T {
         match pin!(future).poll(&mut Context::from_waker(Waker::noop())) {
@@ -75,13 +59,17 @@ mod tests {
         }
     }
 
-    fn memory_fs(files: &[(&str, Option<&str>)]) -> MemoryFs {
-        MemoryFs(
-            files
-                .iter()
-                .map(|(path, text)| (PathBuf::from(path), text.map(str::to_owned)))
-                .collect(),
-        )
+    /// A file system with `files`; `None` content makes the path a
+    /// directory, which cannot be read as a file.
+    fn memory_fs(files: &[(&str, Option<&str>)]) -> FakeFs {
+        let fs = FakeFs::new();
+        for (path, text) in files {
+            match text {
+                Some(text) => fs.insert_file(path, *text),
+                None => fs.insert_dir(path),
+            }
+        }
+        fs
     }
 
     #[test]
