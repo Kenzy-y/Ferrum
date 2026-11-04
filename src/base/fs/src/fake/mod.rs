@@ -1,19 +1,22 @@
 //! In-memory [`Fs`] for tests.
 
 use std::collections::BTreeMap;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::SystemTime;
 
-use futures::channel::mpsc::{UnboundedSender, unbounded};
+use futures::channel::mpsc::unbounded;
 
+mod paths;
+#[cfg(test)]
+mod tests;
+mod watch;
+
+use self::paths::{canonical, metadata_of};
+use self::watch::{FakeWatch, notify};
 use crate::{
-    BoxFuture, DirEntry, EntryKind, Fs, FsError, FsEvent, FsEventKind, Metadata, WatchFilter,
-    WatchMode, Watcher,
+    BoxFuture, DirEntry, Fs, FsError, FsEventKind, Metadata, WatchFilter, WatchMode, Watcher,
 };
-
-/// Maximum number of symbolic links followed while resolving a path.
-const MAX_LINK_DEPTH: usize = 40;
 
 #[derive(Debug, Clone)]
 enum Node {
@@ -24,13 +27,6 @@ enum Node {
     },
     Dir,
     Symlink(PathBuf),
-}
-
-struct FakeWatch {
-    root: PathBuf,
-    mode: WatchMode,
-    filter: Arc<dyn WatchFilter>,
-    sender: UnboundedSender<Vec<FsEvent>>,
 }
 
 #[derive(Default)]
@@ -149,121 +145,6 @@ fn insert_parents(state: &mut State, path: &Path) {
             .or_insert(Node::Dir);
         parent = directory.parent();
     }
-}
-
-fn notify(state: &mut State, path: &Path, kind: FsEventKind) {
-    state.watches.retain(|watch| !watch.sender.is_closed());
-    for watch in &state.watches {
-        let in_scope = match watch.mode {
-            WatchMode::Recursive => path.starts_with(&watch.root),
-            WatchMode::NonRecursive => {
-                path == watch.root || path.parent() == Some(watch.root.as_path())
-            }
-        };
-        if in_scope && !watch.filter.is_ignored(path) {
-            let _ = watch.sender.unbounded_send(vec![FsEvent {
-                path: path.to_path_buf(),
-                kind,
-            }]);
-        }
-    }
-}
-
-/// Joins a link target to the link's directory and removes `.` / `..`.
-fn resolve_target(link: &Path, target: &Path) -> PathBuf {
-    let joined = if target.is_relative() {
-        link.parent().unwrap_or(Path::new("")).join(target)
-    } else {
-        target.to_path_buf()
-    };
-    let mut normalized = PathBuf::new();
-    for component in joined.components() {
-        match component {
-            Component::CurDir => {}
-            Component::ParentDir => {
-                normalized.pop();
-            }
-            other => normalized.push(other),
-        }
-    }
-    normalized
-}
-
-/// Resolves every symbolic link in `path`, component by component.
-fn canonical(state: &State, path: &Path) -> Result<PathBuf, FsError> {
-    let mut resolved = PathBuf::new();
-    let mut hops = 0;
-    let mut pending: Vec<PathBuf> = path
-        .components()
-        .map(|component| PathBuf::from(component.as_os_str()))
-        .collect();
-    pending.reverse();
-    while let Some(component) = pending.pop() {
-        let candidate = resolved.join(&component);
-        match state.nodes.get(&candidate) {
-            Some(Node::Symlink(target)) => {
-                hops += 1;
-                if hops > MAX_LINK_DEPTH {
-                    return Err(FsError::Io {
-                        path: path.to_path_buf(),
-                        source: std::io::Error::other("too many levels of symbolic links"),
-                    });
-                }
-                let target = resolve_target(&candidate, target);
-                let mut parts: Vec<PathBuf> = target
-                    .components()
-                    .map(|part| PathBuf::from(part.as_os_str()))
-                    .collect();
-                parts.reverse();
-                resolved = PathBuf::new();
-                pending.extend(parts);
-            }
-            // Missing components are kept: callers decide whether the
-            // resolved path must exist.
-            Some(_) | None => resolved = candidate,
-        }
-    }
-    Ok(resolved)
-}
-
-fn metadata_of(state: &State, path: &Path) -> Option<Metadata> {
-    let node = state.nodes.get(path)?;
-    let is_symlink = matches!(node, Node::Symlink(_));
-    let target = if is_symlink {
-        canonical(state, path)
-            .ok()
-            .and_then(|resolved| state.nodes.get(&resolved))
-    } else {
-        Some(node)
-    };
-    let metadata = match target {
-        Some(Node::File {
-            contents,
-            read_only,
-            modified,
-        }) => Metadata {
-            kind: EntryKind::File,
-            is_symlink,
-            len: u64::try_from(contents.len()).unwrap_or(u64::MAX),
-            modified: Some(*modified),
-            read_only: *read_only,
-        },
-        Some(Node::Dir) => Metadata {
-            kind: EntryKind::Dir,
-            is_symlink,
-            len: 0,
-            modified: None,
-            read_only: false,
-        },
-        Some(Node::Symlink(_)) | None => Metadata {
-            kind: EntryKind::Other,
-            is_symlink,
-            len: 0,
-            modified: None,
-            read_only: false,
-        },
-    };
-    Some(metadata)
 }
 
 impl FakeFs {
@@ -440,137 +321,5 @@ impl Fs for FakeFs {
             sender,
         });
         Ok(Watcher::new(Box::pin(receiver), Box::new(())))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::future::Future;
-    use std::pin::pin;
-    use std::task::{Context, Poll, Waker};
-
-    use futures::StreamExt as _;
-
-    use super::*;
-
-    fn ready<T>(future: impl Future<Output = T>) -> T {
-        match pin!(future).poll(&mut Context::from_waker(Waker::noop())) {
-            Poll::Ready(value) => value,
-            Poll::Pending => panic!("FakeFs futures complete immediately"),
-        }
-    }
-
-    fn sample() -> FakeFs {
-        let fs = FakeFs::new();
-        fs.insert_file("/project/src/main.rs", "fn main() {}");
-        fs.insert_file("/project/Cargo.toml", "[package]");
-        fs.insert_dir("/project/target/debug");
-        fs
-    }
-
-    #[test]
-    fn reads_lists_and_writes() {
-        let fs = sample();
-        assert_eq!(
-            ready(fs.read_to_string(Path::new("/project/src/main.rs"))).unwrap(),
-            "fn main() {}"
-        );
-
-        let mut names: Vec<_> = ready(fs.read_dir(Path::new("/project")))
-            .unwrap()
-            .into_iter()
-            .map(|entry| entry.name)
-            .collect();
-        names.sort();
-        assert_eq!(names, ["Cargo.toml", "src", "target"]);
-
-        ready(fs.write(Path::new("/project/src/lib.rs"), b"pub fn f() {}")).unwrap();
-        assert!(
-            ready(fs.metadata(Path::new("/project/src/lib.rs")))
-                .unwrap()
-                .unwrap()
-                .is_file()
-        );
-        assert!(
-            ready(fs.write(Path::new("/missing/file.rs"), b"x"))
-                .unwrap_err()
-                .is_not_found()
-        );
-    }
-
-    #[test]
-    fn writing_through_a_link_changes_the_target() {
-        let fs = sample();
-        fs.insert_symlink("/project/link.toml", "Cargo.toml");
-        ready(fs.write(Path::new("/project/link.toml"), b"[workspace]")).unwrap();
-
-        assert!(fs.is_symlink("/project/link.toml"));
-        assert_eq!(
-            ready(fs.read_to_string(Path::new("/project/Cargo.toml"))).unwrap(),
-            "[workspace]"
-        );
-    }
-
-    #[test]
-    fn read_only_files_are_not_written() {
-        let fs = sample();
-        fs.set_read_only("/project/Cargo.toml", true);
-        assert!(ready(fs.write(Path::new("/project/Cargo.toml"), b"x")).is_err());
-    }
-
-    #[test]
-    fn canonicalize_detects_link_cycles() {
-        let fs = sample();
-        fs.insert_symlink("/project/a", "b");
-        fs.insert_symlink("/project/b", "a");
-        assert!(ready(fs.canonicalize(Path::new("/project/a"))).is_err());
-
-        fs.insert_symlink("/project/src/up", "..");
-        assert_eq!(
-            ready(fs.canonicalize(Path::new("/project/src/up"))).unwrap(),
-            PathBuf::from("/project")
-        );
-    }
-
-    #[test]
-    fn non_recursive_watches_see_direct_entries_only() {
-        let fs = sample();
-        let filter: Arc<dyn WatchFilter> = Arc::new(|_: &Path| false);
-        let mut watcher = fs
-            .watch(
-                Path::new("/project/target"),
-                WatchMode::NonRecursive,
-                filter,
-            )
-            .unwrap();
-        fs.insert_file("/project/target/debug/deep.o", "x");
-        fs.insert_file("/project/target/.rustc_info.json", "{}");
-        let batch = ready(watcher.events().next()).unwrap();
-        assert_eq!(
-            batch[0].path,
-            PathBuf::from("/project/target/.rustc_info.json")
-        );
-    }
-
-    #[test]
-    fn watchers_skip_ignored_paths() {
-        let fs = sample();
-        let filter: Arc<dyn WatchFilter> =
-            Arc::new(|path: &Path| path.starts_with("/project/target"));
-        let mut watcher = fs
-            .watch(Path::new("/project"), WatchMode::Recursive, filter)
-            .unwrap();
-
-        fs.insert_file("/project/target/debug/app.exe", "binary");
-        fs.insert_file("/project/src/main.rs", "fn main() { }");
-
-        let batch = ready(watcher.events().next()).unwrap();
-        assert_eq!(
-            batch,
-            vec![FsEvent {
-                path: PathBuf::from("/project/src/main.rs"),
-                kind: FsEventKind::Changed,
-            }]
-        );
     }
 }
