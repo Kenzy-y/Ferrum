@@ -35,7 +35,15 @@ plus two disabled buttons with a "later" tooltip, recent projects (or the
 empty "clean slate" card), Get started with live shortcut labels, and a
 documentation link (`app_identity::REPOSITORY_URL`). The Explorer view
 (`explorer.rs`) shows an empty state without a folder and the project card
-with the Files section with one. `path_prompt.rs` is the dialog for typing
+with the Files section with one. `file_tree_view.rs` is the tree: a `uniform_list` over
+`project::FileTree` rows (only visible rows are built), one tab stop with
+arrow keys (Up/Down/Home/End select, Right expands or enters, Left collapses
+or goes to the parent, Enter/Space toggle), a reserved slot for version
+control marks, tooltips for link cycles and unreadable folders. It watches
+the workspace and emits `WorkspaceSettingsChanged` when
+`.ferrum/settings.toml` changes. File icons come from the `FileIcons`
+registry (by name, then extension; generic icon otherwise), filled by
+contributors at startup. `path_prompt.rs` is the dialog for typing
 a folder path. The application passes the open folder (`set_workspace`), the
 recent list (`set_recent`) and an `OpenPath` callback.
 
