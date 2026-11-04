@@ -20,6 +20,7 @@ use crate::file::FileState;
 use crate::layout::LayoutSnapshot;
 use crate::mouse::Drag;
 use crate::settings::EditorSettings;
+use crate::syntax_state::SyntaxState;
 
 /// What an editor reports to its owner.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,6 +35,8 @@ pub enum EditorEvent {
     SaveFailed(String),
     /// The file changed on disk and was read again.
     Reloaded,
+    /// The outline was computed again ([`Editor::outline`]).
+    OutlineChanged,
 }
 
 /// What the status bar shows about an editor.
@@ -88,6 +91,8 @@ pub struct Editor {
     /// Geometry of the last frame, for mouse and input method positions.
     pub(crate) layout: Option<Rc<LayoutSnapshot>>,
     pub(crate) file: Option<FileState>,
+    /// Highlighting and outline, when the text has a grammar.
+    pub(crate) syntax: Option<SyntaxState>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -140,6 +145,7 @@ impl Editor {
             drag: None,
             layout: None,
             file: None,
+            syntax: None,
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
@@ -163,6 +169,21 @@ impl Editor {
         self.file
             .as_ref()
             .is_some_and(|file| file.saved_version() != self.document.version())
+    }
+
+    /// Changes the document as one edit: the view follows the cursor and
+    /// owners hear about it, as with typed text.
+    pub fn edit_document(&mut self, cx: &mut Context<Self>, change: impl FnOnce(&mut Document)) {
+        self.change(cx, change);
+    }
+
+    /// Puts a single cursor at `offset` and scrolls to it (going to an
+    /// outline item).
+    pub fn go_to(&mut self, offset: usize, cx: &mut Context<Self>) {
+        let offset = self.document.buffer().clamp(offset);
+        self.change(cx, |document| {
+            document.set_selections(&Selections::single(Selection::cursor(offset)));
+        });
     }
 
     /// Moves keyboard focus to the editor.
@@ -287,6 +308,7 @@ impl Editor {
         let edited = self.document.version() != version;
         if edited {
             self.marked = None;
+            self.follow_text_changes(cx);
             cx.emit(EditorEvent::Edited);
         }
         if edited || *self.document.selections() != selections {

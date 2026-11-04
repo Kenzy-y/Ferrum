@@ -55,6 +55,8 @@ open-folder-failed = Не удалось открыть { $path }: { $error }
 explorer-empty-title = Папка не открыта
 explorer-empty-text = Откройте папку, чтобы увидеть файлы проекта.
 explorer-files = Файлы
+explorer-outline = Структура
+outline-empty = В активном редакторе нет символов
 file-tree-cycle = Ссылка на одну из родительских папок; не раскрывается
 file-tree-failed = Не удалось прочитать папку
 
@@ -180,6 +182,8 @@ command-editor-line-endings-crlf = Привести окончания стро�
 command-workbench-close-tab = Закрыть вкладку
 command-workbench-next-tab = Следующая вкладка
 command-workbench-previous-tab = Предыдущая вкладка
+command-workbench-focus-outline = Перейти к структуре
+command-workbench-toggle-outline = Свернуть или развернуть структуру
 editor-close-unsaved = Сохранить изменения в { $name }?
 editor-close-unsaved-detail = Если не сохранить, изменения пропадут.
 editor-untitled = Без имени

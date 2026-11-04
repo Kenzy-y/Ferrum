@@ -6,8 +6,7 @@ use std::rc::Rc;
 use gpui::{
     App, Bounds, ContentMask, Element, ElementId, ElementInputHandler, Entity, Font,
     GlobalElementId, Hsla, InspectorElementId, IntoElement, LayoutId, PaintQuad, Pixels,
-    ShapedLine, SharedString, Style, TextAlign, TextRun, UnderlineStyle, Window, fill, point, px,
-    relative, size,
+    ShapedLine, SharedString, Style, TextAlign, TextRun, Window, fill, point, px, relative, size,
 };
 use text::Buffer;
 use theme::{ActiveTheme as _, Theme};
@@ -15,6 +14,7 @@ use theme::{ActiveTheme as _, Theme};
 use crate::display::DisplayLine;
 use crate::editor::Editor;
 use crate::layout::{LayoutSnapshot, ShapedRow};
+use crate::runs::{RunStyle, text_runs};
 use crate::scene::{Scene, near_rows};
 use crate::viewport::{
     LONG_LINE_CHARS, column_window, follow_row, follow_x, max_scroll_y, to_f32, visible_rows,
@@ -285,7 +285,23 @@ impl Frame {
             metrics.line_height,
             buffer.line_count(),
         );
-        let text_color = Hsla::from(theme.syntax.plain);
+        let colors = editor
+            .syntax
+            .as_ref()
+            .map(|syntax| {
+                if !rows.is_empty() {
+                    let visible =
+                        buffer.line_range(rows.start).start..buffer.line_range(rows.end - 1).end;
+                    syntax.prepare(buffer, visible);
+                }
+                syntax.colors(&theme.syntax)
+            })
+            .unwrap_or_default();
+        let style = RunStyle {
+            font: &metrics.font,
+            plain: Hsla::from(theme.syntax.plain),
+            colors: &colors,
+        };
         let shaped: Vec<ShapedRow> = rows
             .clone()
             .map(|row| {
@@ -295,7 +311,7 @@ impl Frame {
                     editor,
                     self.text_width,
                     metrics,
-                    text_color,
+                    &style,
                     window,
                 )
             })
@@ -393,7 +409,7 @@ fn shape_row(
     editor: &Editor,
     text_width: f32,
     metrics: &Metrics,
-    color: Hsla,
+    style: &RunStyle<'_>,
     window: &Window,
 ) -> ShapedRow {
     let line = buffer.line(row);
@@ -404,7 +420,12 @@ fn shape_row(
     let end = line_start + line.char_to_byte(columns.end);
     let source = line.slice(columns.clone()).to_string();
     let display = DisplayLine::new(&source, editor.settings.tab_size, columns.start);
-    let runs = runs(&display, start, end, editor.marked.as_ref(), metrics, color);
+    let spans = editor
+        .syntax
+        .as_ref()
+        .map(|syntax| syntax.highlights(buffer, row, start..end))
+        .unwrap_or_default();
+    let runs = text_runs(&display, start..end, &spans, editor.marked.as_ref(), style);
     let shaped = window.text_system().shape_line(
         SharedString::from(display.text.clone()),
         metrics.font_size,
@@ -425,41 +446,6 @@ fn shape_row(
         display,
         shaped,
     }
-}
-
-/// Text runs of a row: plain text, with the input method's composition
-/// underlined.
-fn runs(
-    display: &DisplayLine,
-    start: usize,
-    end: usize,
-    marked: Option<&std::ops::Range<usize>>,
-    metrics: &Metrics,
-    color: Hsla,
-) -> Vec<TextRun> {
-    let run = |len: usize, underline: bool| TextRun {
-        len,
-        font: metrics.font.clone(),
-        color,
-        background_color: None,
-        underline: underline.then_some(UnderlineStyle {
-            color: Some(color),
-            thickness: px(1.0),
-            wavy: false,
-        }),
-        strikethrough: None,
-    };
-    let total = display.text.len();
-    let Some(marked) = marked.filter(|marked| marked.start < end && marked.end > start) else {
-        return vec![run(total, false)];
-    };
-    let from = display.to_display(marked.start.max(start) - start);
-    let to = display.to_display(marked.end.min(end) - start);
-    [(from, false), (to - from, true), (total - to, false)]
-        .into_iter()
-        .filter(|(len, _)| *len > 0)
-        .map(|(len, underline)| run(len, underline))
-        .collect()
 }
 
 /// x of the primary cursor from the text start, for scrolling to it: exact

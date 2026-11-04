@@ -30,10 +30,17 @@ impl Shell {
             let _ = shell.update_in(cx, |shell, window, cx| match loaded {
                 Ok(buffer) => {
                     tracing::info!(path = %path.display(), "opened file");
-                    let settings = shell.settings.get::<editor::EditorSettings>(None);
+                    let grammar = shell.grammars.for_path(&path);
+                    let language = grammar.as_ref().map(|grammar| grammar.id().to_owned());
+                    let language = language.as_deref();
+                    let settings = shell.settings.get::<editor::EditorSettings>(language);
+                    let syntax_settings = shell.settings.get::<syntax::SyntaxSettings>(language);
                     let file = Some((fs, path));
                     let editor = cx.new(|cx| {
-                        editor::Editor::new(Document::new(buffer), file, settings, window, cx)
+                        let mut editor =
+                            editor::Editor::new(Document::new(buffer), file, settings, window, cx);
+                        editor.set_grammar(grammar, syntax_settings, cx);
+                        editor
                     });
                     shell.workbench.update(cx, |workbench, cx| {
                         workbench.open_editor(editor, window, cx);

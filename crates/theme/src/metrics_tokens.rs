@@ -60,6 +60,10 @@ token_struct! {
         tab_marker_height = "tab.marker.height",
         panel_tab_underline = "panel_tab.underline",
         list_row_height = "list_row.height",
+        /// Rows of the Outline section (code font).
+        outline_row_height = "outline.row_height",
+        /// Tallest the Outline list grows before it scrolls.
+        outline_max_height = "outline.max_height",
         button_small_height = "button.small.height",
         button_medium_height = "button.medium.height",
         input_height = "input.height",

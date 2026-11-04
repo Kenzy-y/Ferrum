@@ -18,6 +18,7 @@ gpui-component.workspace = true
 i18n.workspace = true
 project.workspace = true
 text.workspace = true
+syntax.workspace = true
 theme.workspace = true
 tracing.workspace = true
 ui.workspace = true

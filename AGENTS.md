@@ -33,7 +33,7 @@ Ferrum is a native IDE for Rust, written in Rust. The goal is to do what VS Code
 |---|---|
 | UI | GPUI (the exact `gpui-pre` snapshot version on crates.io that gpui-component is built against, see ADR 0001) + gpui-component |
 | Text buffer | `ropey` |
-| Highlighting, outline | `tree-sitter` (incremental parsing); grammars from plugins — tree-sitter wasm grammars |
+| Highlighting, outline | `tree-sitter` (incremental parsing); built-in packs link native grammar crates, plugins bring tree-sitter wasm grammars (ADR 0003) |
 | Language servers | `lsp-types` + own LSP client |
 | Debugging | own DAP client (own serde types); Rust adapter — CodeLLDB |
 | Git | `gix` |
@@ -90,6 +90,7 @@ ferrum/
 │   ├── language/            # LanguageService trait, language registry
 │   ├── lsp/                 # generic LSP client
 │   ├── lang_rust/           # built-in Rust language pack
+│   ├── lang_toml/           # built-in TOML language pack (declarative)
 │   ├── project/             # workspace, file tree, recent projects
 │   ├── fs/                  # Fs trait, real and fake implementations
 │   ├── process/             # process spawning trait
@@ -206,6 +207,7 @@ Goal: very detailed settings in the future without rewriting the system.
 | `bg.list.selected` | `#292522` | selected file, selected result |
 | `bg.tab.active` | `#282629` | active tab |
 | `bg.diff.added` / `bg.diff.removed` | `#21332B` / `#382427` | changed lines in diffs |
+| `bg.selection` / `.inactive` | `#3C2F2A` / `#292221` | selected text (focused / unfocused editor); not in the mockups, approved by the owner |
 | `border.panel` / `border.input` | `#2A2D33` / `#303339` | panel and input borders |
 | `border.focus` | `#A57961` | keyboard focus ring |
 | `accent` | `#D69272` | primary buttons, active markers |
@@ -292,6 +294,8 @@ There are no intermediaries between the owner and the agent. Stages and tasks li
 3. Read only the `docs/architecture/` documents relevant to the task. Do not re-read the whole repository.
 
 **Before large changes, stop and ask the owner** (briefly, one message with options): a new crate not listed in section 4.1; a new dependency; a change to WIT interfaces or the public API of a core crate; a deviation from the architecture or design. Record the decision in `docs/decisions/NNNN-title.md` (context, decision, consequences — up to 20 lines, in Russian).
+
+**Every decision the owner makes in chat is written down in the same session**: in an ADR (`docs/decisions/`) or, if it is a project-wide rule, in this file. The next session must find it there and not ask again. Before asking the owner, check the ADRs and this file.
 
 **While working:**
 

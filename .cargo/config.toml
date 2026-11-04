@@ -1,0 +1,7 @@
+[env]
+# Tree-sitter grammars (C code built by the grammar crates) export their
+# language function from the executable unless told otherwise; on Windows
+# the linker then writes an import library and reports it, which `-D
+# warnings` turns into an error. The grammars are linked statically and
+# nothing needs the export. Applied only if CFLAGS is not set already.
+CFLAGS = "-DTREE_SITTER_HIDE_SYMBOLS"

@@ -118,6 +118,11 @@ impl RenderOnce for SectionHeader {
         let metrics = &theme.metrics;
         let (font_size, color) = match self.level {
             HeaderLevel::Panel => (metrics.font_size.sm, colors.text_subtle),
+            // A collapsible group reads brighter than a plain one (OUTLINE
+            // and FILES in the editor mockup).
+            HeaderLevel::Group if self.expanded.is_some() => {
+                (metrics.font_size.xs, colors.text_subtle)
+            }
             HeaderLevel::Group => (metrics.font_size.xs, colors.text_muted),
         };
         let chevron = self.expanded.map(|expanded| {

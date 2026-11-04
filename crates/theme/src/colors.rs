@@ -110,6 +110,9 @@ token_struct! {
         /// Window controls.
         icon_strong = "icon.strong",
         icon_file_rust = "icon.file.rust",
+        /// Function glyph in the Outline and the breadcrumbs (other symbol
+        /// kinds use syntax colors).
+        icon_symbol_function = "icon.symbol.function",
         /// Unsaved-changes dot on a tab.
         marker_dirty = "marker.dirty",
         marker_breakpoint = "marker.breakpoint",

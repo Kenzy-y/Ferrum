@@ -139,6 +139,7 @@ impl Editor {
             let _ = editor.update(cx, |editor, cx| match loaded {
                 Ok(Some(buffer)) if editor.document.version() == version => {
                     editor.document.reload(buffer);
+                    editor.follow_text_changes(cx);
                     if let Some(file) = &mut editor.file {
                         file.saved_version = editor.document.version();
                     }

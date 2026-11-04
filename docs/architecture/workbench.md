@@ -59,6 +59,16 @@ contributors at startup. `path_prompt.rs` is the dialog for typing
 a folder path. The application passes the open folder (`set_workspace`), the
 recent list (`set_recent`) and an `OpenPath` callback.
 
+**Outline** (`outline.rs`, `outline_view.rs`). The Outline section sits at
+the bottom of the Explorer, as in `editor.svg`: a divider, a collapsible
+header, and a virtualized list (`ui::ListRow::code`) of the active
+editor's `OutlineItem`s, indented by depth. Each item has a kind glyph
+(`symbol_icons.rs`). The list grows with its items up to
+`outline.max_height`. A click goes to the item, Enter also focuses the
+editor. The commands are `workbench.focusOutline` and
+`workbench.toggleOutline`. The breadcrumbs end with the items around the
+cursor (`ƒ main`).
+
 **Window chrome.** `Workbench::window_options()` hides the platform title
 bar. Windows: drag and min/max/close use native hit-test areas
 (`window_control_area`), so Snap layouts work. Interactive elements in the

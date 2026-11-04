@@ -24,6 +24,16 @@ pub struct ListRow {
     ignored: bool,
     highlights: Vec<Range<usize>>,
     disclosure_slot: bool,
+    font: RowFont,
+}
+
+/// The font of a row's label.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RowFont {
+    /// The interface font (files, results).
+    Interface,
+    /// The code font in shorter rows (symbols).
+    Code,
 }
 
 impl ListRow {
@@ -40,6 +50,7 @@ impl ListRow {
             ignored: false,
             highlights: Vec::new(),
             disclosure_slot: true,
+            font: RowFont::Interface,
         }
     }
 
@@ -48,6 +59,14 @@ impl ListRow {
     #[must_use]
     pub fn flat(mut self) -> Self {
         self.disclosure_slot = false;
+        self
+    }
+
+    /// Shows the label in the code font, in shorter rows: code symbols
+    /// (Outline).
+    #[must_use]
+    pub fn code(mut self) -> Self {
+        self.font = RowFont::Code;
         self
     }
 
@@ -126,6 +145,8 @@ impl RenderOnce for ListRow {
             colors.text_selected.into()
         } else if self.ignored {
             colors.text_ignored.into()
+        } else if self.font == RowFont::Code {
+            colors.text_subtle.into()
         } else {
             colors.text_secondary.into()
         };
@@ -156,12 +177,15 @@ impl RenderOnce for ListRow {
         let label = StyledText::new(self.label)
             .with_highlights(self.highlights.into_iter().map(|range| (range, highlight)));
         let indent = metrics.space.md + metrics.size.tree_indent * depth_factor(self.depth);
-        let (height, radius, gap, right) = (
-            metrics.size.list_row_height,
-            metrics.radius.md,
-            metrics.space.sm,
-            metrics.space.xl,
-        );
+        let code = self.font == RowFont::Code;
+        let height = if code {
+            metrics.size.outline_row_height
+        } else {
+            metrics.size.list_row_height
+        };
+        let mono = gpui::SharedString::from(theme.fonts.mono.clone());
+        let code_size = metrics.font_size.md;
+        let (radius, gap, right) = (metrics.radius.md, metrics.space.sm, metrics.space.xl);
 
         self.interactivity
             .root(background, window, cx)
@@ -175,13 +199,15 @@ impl RenderOnce for ListRow {
             .children(marker)
             .children(chevron_slot)
             .children(self.leading)
-            .child(
-                div()
-                    .flex_1()
-                    .truncate()
-                    .text_color(label_color)
-                    .child(label),
-            )
+            .child({
+                let text = div().flex_1().truncate().text_color(label_color);
+                let text = if code {
+                    text.font_family(mono).text_size(px(code_size))
+                } else {
+                    text
+                };
+                text.child(label)
+            })
             .children(self.trailing)
     }
 }

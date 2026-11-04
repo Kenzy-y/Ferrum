@@ -41,6 +41,8 @@
 "tab.marker.height" = 16
 "panel_tab.underline" = 2
 "list_row.height" = 34
+"outline.row_height" = 30            # rows of the Outline section
+"outline.max_height" = 300           # tallest the Outline list grows before scrolling
 "button.small.height" = 34
 "button.medium.height" = 40
 "input.height" = 35

@@ -55,6 +55,8 @@ open-folder-failed = Cannot open { $path }: { $error }
 explorer-empty-title = No folder opened
 explorer-empty-text = Open a folder to explore your project files.
 explorer-files = Files
+explorer-outline = Outline
+outline-empty = No symbols in the active editor
 file-tree-cycle = Links to one of its parent folders; not expanded
 file-tree-failed = Cannot read this folder
 
@@ -180,6 +182,8 @@ command-editor-line-endings-crlf = Convert line endings to CRLF
 command-workbench-close-tab = Close tab
 command-workbench-next-tab = Next tab
 command-workbench-previous-tab = Previous tab
+command-workbench-focus-outline = Focus outline
+command-workbench-toggle-outline = Toggle outline
 editor-close-unsaved = Save changes to { $name }?
 editor-close-unsaved-detail = Your changes will be lost if you don't save them.
 editor-untitled = Untitled

@@ -15,9 +15,14 @@ gpui.workspace = true
 schemars.workspace = true
 serde.workspace = true
 settings.workspace = true
+syntax.workspace = true
 text.workspace = true
 theme.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
+lang_rust.workspace = true
 
 [lints]
 workspace = true

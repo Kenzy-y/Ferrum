@@ -5,6 +5,8 @@
 //! - [`Document`] — a buffer with [`Selections`] and a [`History`]: every
 //!   edit applies at all cursors at once, is recorded as one transaction and
 //!   can be undone and redone with the selections it had.
+//! - [`TextEdit`] / [`TextChanges`] — the edits of a document in the order
+//!   they were applied, for incremental consumers such as syntax trees.
 //! - [`load`] / [`save`] read and write UTF-8 files through `fs::Fs`.
 //!
 //! Every operation on a keystroke is logarithmic in the document size; only
@@ -12,6 +14,7 @@
 
 mod boundaries;
 mod buffer;
+mod changes;
 mod document;
 mod history;
 mod io;
@@ -21,6 +24,7 @@ pub use boundaries::{
     next_grapheme, next_word_end, previous_grapheme, previous_word_start, word_range,
 };
 pub use buffer::{Buffer, LineEnding, LineEndings, Point};
+pub use changes::{TextChanges, TextEdit};
 pub use document::{Clock, CopiedText, Document, Indent, Movement};
 pub use history::{EditKind, History, UNDO_GROUP_PAUSE};
 pub use io::{TextError, load, save};

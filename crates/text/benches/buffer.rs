@@ -65,6 +65,16 @@ fn benches(criterion: &mut Criterion) {
             let mut document = document_with_cursor_in_middle(&text);
             bencher.iter(|| document.insert(black_box("x")));
         });
+        // With changes tracked, as in an editor with a grammar: each edit
+        // also logs its points, and the editor takes them after it.
+        group.bench_function("type_character_tracked", |bencher| {
+            let mut document = document_with_cursor_in_middle(&text);
+            document.track_changes();
+            bencher.iter(|| {
+                document.insert(black_box("x"));
+                black_box(document.take_changes())
+            });
+        });
         group.bench_function("backspace", |bencher| {
             bencher.iter_batched_ref(
                 || document_with_cursor_in_middle(&text),
@@ -129,6 +139,20 @@ fn many_cursors(criterion: &mut Criterion) {
             bencher.iter_batched_ref(
                 || document_with_cursors(&text, count),
                 |document| document.insert("x"),
+                BatchSize::LargeInput,
+            );
+        });
+        group.bench_function(format!("type_character_{count}_tracked"), |bencher| {
+            bencher.iter_batched_ref(
+                || {
+                    let mut document = document_with_cursors(&text, count);
+                    document.track_changes();
+                    document
+                },
+                |document| {
+                    document.insert("x");
+                    black_box(document.take_changes())
+                },
                 BatchSize::LargeInput,
             );
         });

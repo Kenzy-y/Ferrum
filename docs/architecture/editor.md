@@ -50,7 +50,14 @@ line. With as many lines as cursors, each cursor gets one.
 `editor.active_line.*`, `cursor.*`, `scrollbar.*`; line numbers are at
 least four digits wide (`MIN_LINE_NUMBER_DIGITS`).
 
-**Extending.** Syntax highlighting (part 3) adds text runs per row from the
-`syntax` crate; decorations (diagnostics, inlay hints) become further
+**Highlighting and outline** (`syntax_state.rs`, see
+`docs/architecture/syntax.md`). `Editor::set_grammar` gives the editor a
+grammar. The tree follows every edit, parsing runs in the background, and
+`runs.rs` turns the highlights of a shaped row into text runs (colors from
+the theme's `[syntax]` tokens, the input method underline on top).
+`outline()`, `symbols_at_cursor()` and `go_to()` serve the Outline section
+and the breadcrumbs. `language_id()` selects `[lang.<id>]` settings.
+
+**Extending.** Decorations (diagnostics, inlay hints) become further
 layers in `scene.rs`. New commands: a row in `actions::COMMANDS`, a title
 in every locale, a binding in the default keymaps.

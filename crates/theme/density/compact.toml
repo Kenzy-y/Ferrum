@@ -41,6 +41,8 @@
 "tab.marker.height" = 16
 "panel_tab.underline" = 2
 "list_row.height" = 26
+"outline.row_height" = 24
+"outline.max_height" = 240
 "button.small.height" = 28
 "button.medium.height" = 32
 "input.height" = 28

@@ -49,6 +49,8 @@ pub(crate) struct Shell {
     recent: project::RecentProjects,
     /// Icons of the file tree, registered by contributors at startup.
     file_icons: Arc<workbench::FileIcons>,
+    /// Grammars of the language packs, by file.
+    grammars: Arc<syntax::GrammarRegistry>,
     /// The file tree of the open folder.
     file_tree: Option<Entity<workbench::FileTreeView>>,
     /// `[files] hidden` the tree was last given.
@@ -71,6 +73,13 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let grammars = match crate::languages::grammar_registry() {
+            Ok(registry) => Arc::new(registry),
+            Err(error) => {
+                tracing::error!("{error:#}");
+                Arc::new(syntax::GrammarRegistry::new())
+            }
+        };
         let LoadedConfig {
             settings,
             keymap,
@@ -135,6 +144,7 @@ impl Shell {
             workspace: None,
             recent,
             file_icons,
+            grammars,
             workspace_watch: None,
             file_tree: None,
             hidden: Vec::new(),
@@ -180,11 +190,14 @@ impl Shell {
         config::report_settings(&self.settings);
         self.chord_timeout = config::chord_timeout(&self.settings);
         self.apply_language(window, cx);
-        let editor_settings = self.settings.get::<editor::EditorSettings>(None);
         let editors: Vec<_> = self.workbench.read(cx).editors().cloned().collect();
         for editor in editors {
             editor.update(cx, |editor, cx| {
-                editor.set_settings(editor_settings.clone(), cx);
+                // `[lang.<id>]` overrides apply to files of that language.
+                let language = editor.language_id().map(str::to_owned);
+                let language = language.as_deref();
+                editor.set_settings(self.settings.get::<editor::EditorSettings>(language), cx);
+                editor.set_syntax_settings(self.settings.get::<syntax::SyntaxSettings>(language));
             });
         }
         let hidden = self.settings.get::<project::FilesSettings>(None).hidden;

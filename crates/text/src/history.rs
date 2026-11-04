@@ -4,6 +4,7 @@ use std::collections::VecDeque;
 use std::ops::Range;
 use std::time::{Duration, Instant};
 
+use crate::changes::ChangeLog;
 use crate::{Buffer, Selections};
 
 /// One replacement, with its range before and after the change.
@@ -134,13 +135,14 @@ impl History {
     }
 
     /// Reverts the last transaction; returns the selections it had before.
-    pub(crate) fn undo(&mut self, buffer: &mut Buffer) -> Option<Selections> {
+    pub(crate) fn undo(&mut self, buffer: &mut Buffer, log: &mut ChangeLog) -> Option<Selections> {
         let transaction = self.undo.pop_back()?;
         for step in transaction.steps.iter().rev() {
-            // Later edits first, so earlier ranges stay valid.
-            for edit in step.iter().rev() {
-                buffer.replace(edit.new_range.clone(), &edit.old_text);
-            }
+            log.replace_step(
+                buffer,
+                step.iter()
+                    .map(|edit| (edit.new_range.clone(), edit.old_text.as_str())),
+            );
         }
         let selections = transaction.selections_before.clone();
         self.redo.push(transaction);
@@ -149,12 +151,14 @@ impl History {
 
     /// Re-applies the last undone transaction; returns the selections it had
     /// after.
-    pub(crate) fn redo(&mut self, buffer: &mut Buffer) -> Option<Selections> {
+    pub(crate) fn redo(&mut self, buffer: &mut Buffer, log: &mut ChangeLog) -> Option<Selections> {
         let transaction = self.redo.pop()?;
         for step in &transaction.steps {
-            for edit in step.iter().rev() {
-                buffer.replace(edit.old_range.clone(), &edit.new_text);
-            }
+            log.replace_step(
+                buffer,
+                step.iter()
+                    .map(|edit| (edit.old_range.clone(), edit.new_text.as_str())),
+            );
         }
         let selections = transaction.selections_after.clone();
         self.undo.push_back(transaction);

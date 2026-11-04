@@ -128,5 +128,6 @@ pub(crate) fn render(
                 .action(IconButton::new("explorer-files-more", IconName::Ellipsis)),
         )
         .children(workbench.file_tree.clone())
+        .child(workbench.render_outline(cx))
         .into_any_element()
 }

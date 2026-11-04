@@ -29,6 +29,11 @@ pub const NEXT_TAB: &str = "workbench.nextTab";
 /// Activates the previous tab.
 pub const PREVIOUS_TAB: &str = "workbench.previousTab";
 
+/// Shows the Explorer and moves the focus to its Outline section.
+pub const FOCUS_OUTLINE: &str = "workbench.focusOutline";
+/// Expands or collapses the Outline section of the Explorer.
+pub const TOGGLE_OUTLINE: &str = "workbench.toggleOutline";
+
 /// Opens a folder with the system folder picker. Owned by the
 /// application (it knows projects); the workbench shows buttons for it.
 pub const OPEN_FOLDER: &str = "workspace.openFolder";
@@ -52,6 +57,8 @@ pub(crate) const ALL: &[(&str, &str)] = &[
     (CLOSE_TAB, "command-workbench-close-tab"),
     (NEXT_TAB, "command-workbench-next-tab"),
     (PREVIOUS_TAB, "command-workbench-previous-tab"),
+    (FOCUS_OUTLINE, "command-workbench-focus-outline"),
+    (TOGGLE_OUTLINE, "command-workbench-toggle-outline"),
 ];
 
 /// The command that shows `view`.

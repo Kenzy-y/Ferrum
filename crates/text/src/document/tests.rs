@@ -324,3 +324,37 @@ fn replace_and_primary_selection() {
     assert_eq!(document.buffer().offset_to_utf16(4), 2);
     assert_eq!(document.buffer().utf16_to_offset(2), 4);
 }
+
+#[test]
+fn tracked_changes_list_edits_in_the_order_applied() {
+    let mut document = document("a|b\nc|d");
+    document.insert("x");
+    assert!(
+        document.take_changes().is_empty(),
+        "nothing is logged until tracking starts"
+    );
+
+    document.track_changes();
+    document.insert("y");
+    let changes = document.take_changes();
+    // The later cursor is edited first, so earlier offsets stay valid.
+    let starts: Vec<usize> = changes.edits.iter().map(|edit| edit.start).collect();
+    assert_eq!(starts, vec![6, 2]);
+    assert_eq!(changes.edits[0].start_point, crate::Point::new(1, 2));
+
+    // Replaying lengths through every edit, undo and redo included, ends at
+    // the length of the text.
+    let mut length = document.buffer().len();
+    document.undo();
+    document.redo();
+    document.delete_backward();
+    for edit in document.take_changes().edits {
+        assert!(edit.start <= edit.old_end && edit.old_end <= length);
+        length = length - (edit.old_end - edit.start) + (edit.new_end - edit.start);
+    }
+    assert_eq!(length, document.buffer().len());
+
+    document.reload(crate::Buffer::from_text("new"));
+    let changes = document.take_changes();
+    assert!(changes.replaced && changes.edits.is_empty());
+}

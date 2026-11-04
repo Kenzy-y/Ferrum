@@ -40,6 +40,7 @@ impl Document {
         self.buffer = buffer;
         self.selections = super::clamp_selections(&self.selections, &self.buffer);
         self.history = crate::History::default();
+        self.changes.replaced();
         self.version += 1;
     }
 

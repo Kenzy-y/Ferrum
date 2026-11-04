@@ -59,8 +59,8 @@ mono = "JetBrains Mono"
 "bg.diff.added" = "#21332B"
 "bg.diff.removed" = "#382427"
 "bg.scrollbar.thumb" = "#30353D"
-"bg.selection" = "#3C2F2A"            # not in the mockups: accent at 22% over bg.editor
-"bg.selection.inactive" = "#292221"   # not in the mockups: accent at 12% over bg.editor
+"bg.selection" = "#3C2F2A"            # not in the mockups: accent at 22% over bg.editor; approved 2026-11-04
+"bg.selection.inactive" = "#292221"   # not in the mockups: accent at 12% over bg.editor; approved 2026-11-04
 "cursor" = "#E0B69D"
 
 # Borders and lines.
@@ -100,6 +100,7 @@ mono = "JetBrains Mono"
 "icon.active" = "#E0B19B"             # selected activity bar item
 "icon.strong" = "#9BA2AD"             # window controls
 "icon.file.rust" = "#D49C7D"
+"icon.symbol.function" = "#D6B482"     # outline and breadcrumbs (#D7B887 merged)
 "marker.dirty" = "#D6AC7E"            # unsaved-changes dot on a tab
 "marker.breakpoint" = "#D28B7F"
 "marker.debug_line" = "#E0BD82"       # paused line number and arrow

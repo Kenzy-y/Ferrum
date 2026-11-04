@@ -106,12 +106,15 @@ impl Workbench {
         let title = path
             .as_deref()
             .map_or_else(|| self.text("editor-untitled"), file_title);
-        let subscription = cx.subscribe(&editor, |_, _, event: &EditorEvent, cx| match event {
-            EditorEvent::SaveFailed(message) => {
-                tracing::error!(%message, "saving failed");
-                cx.notify();
+        let subscription = cx.subscribe(&editor, |workbench, editor, event: &EditorEvent, cx| {
+            match event {
+                EditorEvent::SaveFailed(message) => tracing::error!(%message, "saving failed"),
+                EditorEvent::OutlineChanged if workbench.active_editor() == Some(editor) => {
+                    workbench.sync_outline(cx);
+                }
+                _ => {}
             }
-            _ => cx.notify(),
+            cx.notify();
         });
         self.tabs.push(Tab {
             title,
@@ -170,6 +173,7 @@ impl Workbench {
             let focus = editor.read(cx).focus_handle(cx);
             focus.focus(window, cx);
         }
+        self.sync_outline(cx);
         cx.notify();
     }
 
@@ -261,6 +265,8 @@ impl Workbench {
         };
         if let Some(active) = self.active_tab {
             self.activate_tab(active, window, cx);
+        } else {
+            self.sync_outline(cx);
         }
         cx.notify();
     }

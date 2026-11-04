@@ -8,8 +8,9 @@ use std::time::Instant;
 use unicode_segmentation::UnicodeSegmentation as _;
 
 use crate::boundaries::{next_grapheme, next_word_end, previous_grapheme, previous_word_start};
+use crate::changes::ChangeLog;
 use crate::history::Edit;
-use crate::{Buffer, EditKind, History, LineEnding, Selection, Selections};
+use crate::{Buffer, EditKind, History, LineEnding, Selection, Selections, TextChanges};
 
 /// Where a cursor moves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +79,8 @@ pub struct Document {
     clock: Clock,
     /// Increases with every change of the text; for caches.
     version: u64,
+    /// Edits for consumers that follow the text incrementally.
+    changes: ChangeLog,
 }
 
 /// How the selections after an edit are made.
@@ -100,6 +103,7 @@ impl Document {
             history: History::default(),
             clock: Clock::default(),
             version: 0,
+            changes: ChangeLog::default(),
         }
     }
 
@@ -133,6 +137,19 @@ impl Document {
     /// Changes with every edit of the text.
     pub fn version(&self) -> u64 {
         self.version
+    }
+
+    /// Starts logging every edit for [`Self::take_changes`] (syntax trees
+    /// follow the text with them). Off by default, because each logged
+    /// edit costs a few extra lookups.
+    pub fn track_changes(&mut self) {
+        self.changes.enable();
+    }
+
+    /// The edits since the last call (none unless [`Self::track_changes`]
+    /// was called).
+    pub fn take_changes(&mut self) -> TextChanges {
+        self.changes.take()
     }
 
     /// Replaces the selections (mouse clicks, select all). Ends the current
@@ -334,7 +351,7 @@ impl Document {
 
     /// Reverts the last undo step and restores the selections it had.
     pub fn undo(&mut self) -> bool {
-        match self.history.undo(&mut self.buffer) {
+        match self.history.undo(&mut self.buffer, &mut self.changes) {
             Some(selections) => {
                 self.selections = selections;
                 self.version += 1;
@@ -346,7 +363,7 @@ impl Document {
 
     /// Re-applies the last undone step and its selections.
     pub fn redo(&mut self) -> bool {
-        match self.history.redo(&mut self.buffer) {
+        match self.history.redo(&mut self.buffer, &mut self.changes) {
             Some(selections) => {
                 self.selections = selections;
                 self.version += 1;
@@ -415,9 +432,12 @@ impl Document {
                 new_text: text,
             });
         }
-        for edit in edits.iter().rev() {
-            self.buffer.replace(edit.old_range.clone(), &edit.new_text);
-        }
+        self.changes.replace_step(
+            &mut self.buffer,
+            edits
+                .iter()
+                .map(|edit| (edit.old_range.clone(), edit.new_text.as_str())),
+        );
         let before = self.selections.clone();
         let after = match placement {
             Placement::PerEdit(place) => Selections::from_vec(edits.iter().map(place).collect()),

@@ -30,6 +30,7 @@ pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
         .register::<ProjectSettings>()?
         .register::<FilesSettings>()?
         .register::<editor::EditorSettings>()?
+        .register::<syntax::SyntaxSettings>()?
         .build())
 }
 

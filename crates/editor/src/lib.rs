@@ -4,6 +4,8 @@
 //!
 //! - [`Editor`] — the view entity: document, scroll, cursor blink, file.
 //! - [`EditorSettings`] — the `[editor]` settings.
+//! - [`Editor::set_grammar`] — highlighting and the outline from a
+//!   `syntax` grammar; the tree follows every edit in the background.
 //! - [`register_commands`] — the editor commands for the registry; the
 //!   application routes them to the focused editor with
 //!   [`Editor::run_command`].
@@ -16,8 +18,10 @@ mod file;
 mod input;
 mod layout;
 mod mouse;
+mod runs;
 mod scene;
 mod settings;
+mod syntax_state;
 mod viewport;
 
 pub use actions::{CONTEXT, SAVE, is_editor_command, register_commands};

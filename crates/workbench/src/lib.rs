@@ -14,10 +14,13 @@ mod explorer;
 mod file_icons;
 mod file_tree_view;
 mod message_view;
+mod outline;
+mod outline_view;
 mod path_prompt;
 mod quick_open;
 mod sidebar;
 mod status_bar;
+mod symbol_icons;
 mod tabs;
 mod title_bar;
 mod welcome;
@@ -138,6 +141,7 @@ pub struct Workbench {
     tabs: Vec<tabs::Tab>,
     active_tab: Option<usize>,
     file_icons: Arc<FileIcons>,
+    outline: outline::OutlineSection,
 }
 
 impl Workbench {
@@ -174,6 +178,7 @@ impl Workbench {
             tabs: Vec::new(),
             active_tab: None,
             file_icons: Arc::new(FileIcons::new()),
+            outline: outline::OutlineSection::default(),
         }
     }
 
@@ -208,6 +213,14 @@ impl Workbench {
         match id.as_str() {
             command_ids::CLOSE_TAB => {
                 self.close_active_tab(window, cx);
+                return true;
+            }
+            command_ids::FOCUS_OUTLINE => {
+                self.focus_outline(window, cx);
+                return true;
+            }
+            command_ids::TOGGLE_OUTLINE => {
+                self.toggle_outline(cx);
                 return true;
             }
             command_ids::NEXT_TAB | command_ids::PREVIOUS_TAB => {
@@ -263,6 +276,7 @@ impl Workbench {
     pub fn set_i18n(&mut self, i18n: Arc<I18n>, cx: &mut Context<Self>) {
         self.quick_open_context.i18n = i18n.clone();
         self.i18n = i18n;
+        self.sync_outline(cx);
         cx.notify();
     }
 
@@ -283,6 +297,7 @@ impl Workbench {
         let (workspace, file_tree) = workspace.unzip();
         self.workspace = workspace;
         self.file_tree = file_tree;
+        self.sync_outline(cx);
         cx.notify();
     }
 
@@ -429,6 +444,7 @@ pub fn register_commands(registry: &mut CommandRegistry) -> Result<(), RegistryE
 
 impl Render for Workbench {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.ensure_outline(window, cx);
         let title_bar = title_bar::render(self, window, cx);
         let activity_bar = activity_bar::render(self, cx);
         let sidebar = self.sidebar_visible.then(|| sidebar::render(self, cx));

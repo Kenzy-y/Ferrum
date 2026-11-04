@@ -6,11 +6,12 @@ use std::path::{Component, Path};
 use gpui::{
     AnyElement, Context, IntoElement, ParentElement as _, SharedString, Styled as _, div, px,
 };
+use syntax::OutlineItem;
 use theme::ActiveTheme as _;
 use ui::{EditorTab, Icon, IconName, Label, Panel, PanelSurface};
 
 use crate::tabs::TabContent;
-use crate::{Workbench, file_icons, welcome};
+use crate::{Workbench, file_icons, symbol_icons, welcome};
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -28,8 +29,10 @@ pub(crate) fn render(
     let (breadcrumbs, content): (Option<AnyElement>, AnyElement) = match &tab.content {
         TabContent::Editor(editor) => (
             Some({
-                let path = editor.read(cx).path().map(Path::to_path_buf);
-                breadcrumbs(workbench, path.as_deref(), cx)
+                let editor = editor.read(cx);
+                let path = editor.path().map(Path::to_path_buf);
+                let symbols = editor.symbols_at_cursor();
+                breadcrumbs(workbench, path.as_deref(), &symbols, cx)
             }),
             editor.clone().into_any_element(),
         ),
@@ -84,10 +87,12 @@ fn tab_strip(workbench: &Workbench, active: usize, cx: &mut Context<Workbench>) 
     strip.into_any_element()
 }
 
-/// Folders of the file from the workspace root, then the file.
+/// Folders of the file from the workspace root, the file, then the outline
+/// items around the cursor.
 fn breadcrumbs(
     workbench: &Workbench,
     path: Option<&Path>,
+    symbols: &[OutlineItem],
     cx: &mut Context<Workbench>,
 ) -> AnyElement {
     let theme = cx.theme();
@@ -155,6 +160,29 @@ fn breadcrumbs(
                     .color(cx.theme().colors.text_breadcrumb),
             );
         }
+    }
+    for symbol in symbols {
+        let glyph = symbol_icons::render(symbol.kind, cx.theme().metrics.font_size.base, cx);
+        let theme = cx.theme();
+        row = row
+            .child(
+                Icon::new(IconName::ChevronRight)
+                    .size(size.icon_tiny)
+                    .color(theme.colors.text_breadcrumb),
+            )
+            .child(
+                div()
+                    .flex()
+                    .flex_none()
+                    .items_center()
+                    .gap(px(theme.metrics.space.sm))
+                    .child(glyph)
+                    .child(
+                        Label::new(symbol.name.clone())
+                            .size(font_size)
+                            .color(theme.colors.text_breadcrumb_active),
+                    ),
+            );
     }
     row.into_any_element()
 }
