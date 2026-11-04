@@ -13,6 +13,7 @@ use theme::ActiveTheme as _;
 pub struct Kbd {
     keys: SharedString,
     plain: bool,
+    fill: bool,
 }
 
 impl Kbd {
@@ -21,7 +22,16 @@ impl Kbd {
         Self {
             keys: keys.into(),
             plain: false,
+            fill: false,
         }
+    }
+
+    /// Takes the full width of its parent (fixed-width columns of
+    /// shortcuts).
+    #[must_use]
+    pub fn fill(mut self) -> Self {
+        self.fill = true;
+        self
     }
 
     /// Without the background box.
@@ -45,6 +55,7 @@ impl RenderOnce for Kbd {
         if self.plain {
             return text;
         }
+        let text = if self.fill { text.w_full() } else { text };
         text.flex()
             .items_center()
             .flex_none()

@@ -18,6 +18,19 @@ pub(crate) const DEBUG_KEYMAP: &str = r#"
 "mod-k mod-g" = "workbench.toggleComponentGallery"
 "#;
 
+/// Workspace commands owned by the shell (it knows projects); their ids
+/// live in `workbench::command_ids` because the layout shows them.
+const WORKSPACE_COMMANDS: &[(&str, &str)] = &[
+    (
+        workbench::command_ids::OPEN_FOLDER,
+        "command-workspace-open-folder",
+    ),
+    (
+        workbench::command_ids::OPEN_FOLDER_BY_PATH,
+        "command-workspace-open-folder-by-path",
+    ),
+];
+
 /// Commands of the shell with the ids of their localized titles.
 const SHELL_COMMANDS: &[(&str, &str)] = &[
     (QUIT, "command-app-quit"),
@@ -32,6 +45,9 @@ const SHELL_COMMANDS: &[(&str, &str)] = &[
 pub(crate) fn registry() -> anyhow::Result<CommandRegistry> {
     let mut registry = CommandRegistry::new();
     for (id, title) in SHELL_COMMANDS {
+        registry.register(CommandDescriptor::new(CommandId::new(id)?, *title))?;
+    }
+    for (id, title) in WORKSPACE_COMMANDS {
         registry.register(CommandDescriptor::new(CommandId::new(id)?, *title))?;
     }
     workbench::register_commands(&mut registry)?;

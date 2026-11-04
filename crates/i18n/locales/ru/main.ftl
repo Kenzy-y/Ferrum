@@ -39,6 +39,43 @@ quick-open-commands-placeholder = Введите название команды
 quick-open-no-results = Ничего не найдено
 command-workbench-toggle-component-gallery = Показать или скрыть витрину компонентов
 
+## Рабочая папка
+
+window-title-workspace = { $name } — { -product-name }
+command-workspace-open-folder = Открыть папку
+command-workspace-open-folder-by-path = Открыть папку по пути
+path-prompt-title = Открыть папку
+path-prompt-placeholder = Путь к папке
+path-prompt-open = Открыть
+path-prompt-cancel = Отмена
+open-folder-picker-unavailable = Системный диалог выбора папки недоступен ({ $error }). Введите путь к папке вручную.
+open-folder-not-found = Папка { $path } не существует.
+open-folder-not-a-folder = { $path } — это не папка.
+open-folder-failed = Не удалось открыть { $path }: { $error }
+explorer-empty-title = Папка не открыта
+explorer-empty-text = Откройте папку, чтобы увидеть файлы проекта.
+explorer-files = Файлы
+
+## Экран приветствия
+
+welcome-tab = Добро пожаловать
+welcome-title = Немного фокуса. Много Rust.
+welcome-subtitle = Ваш следующий отличный проект начинается здесь.
+welcome-new-project = Новый проект Rust
+welcome-clone = Клонировать репозиторий
+welcome-later = Появится в одной из следующих версий
+welcome-recent = Недавние проекты
+welcome-recent-empty-title = С чистого листа
+welcome-recent-empty-text = Здесь появятся недавно открытые проекты.
+welcome-get-started = Начало работы
+welcome-start-palette = Палитра команд
+welcome-start-search = Поиск файлов и команд
+welcome-start-open-folder = Открыть папку
+welcome-start-panel = Нижняя панель
+welcome-workflow-title = Создано для вашей работы
+welcome-workflow-text = Rust-analyzer, Cargo и Git. Готовы, когда готовы вы.
+welcome-docs-link = Читать документацию
+
 ## Витрина компонентов (временная, этап 1)
 
 gallery-title = Витрина компонентов

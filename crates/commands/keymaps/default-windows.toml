@@ -10,6 +10,9 @@
 "mod-shift-p" = "workbench.showCommandPalette"
 "f1" = "workbench.showCommandPalette"
 
+# Workspace.
+"mod-k mod-o" = "workspace.openFolder"
+
 # Layout.
 "mod-b" = "workbench.toggleSidebar"
 "mod-j" = "workbench.togglePanel"

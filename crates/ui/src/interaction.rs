@@ -3,7 +3,7 @@
 use std::rc::Rc;
 
 use gpui::{
-    App, Div, ElementId, Hsla, InteractiveElement as _, KeyDownEvent, Stateful,
+    App, Div, ElementId, Hsla, InteractiveElement as _, KeyDownEvent, SharedString, Stateful,
     StatefulInteractiveElement as _, Styled as _, Window, div, transparent_black,
 };
 use theme::ActiveTheme as _;
@@ -82,6 +82,8 @@ pub(crate) struct Interactivity {
     /// Focus ring color when the default one does not contrast with the
     /// background (accent buttons).
     pub(crate) focus_ring: Option<Hsla>,
+    /// Text shown on hover, also when disabled (it can explain why).
+    pub(crate) tooltip: Option<SharedString>,
 }
 
 impl Interactivity {
@@ -93,6 +95,7 @@ impl Interactivity {
             on_activate: None,
             hover_text: None,
             focus_ring: None,
+            tooltip: None,
         }
     }
 
@@ -153,6 +156,9 @@ impl Interactivity {
             })
             .bg(background.for_state(state));
 
+        if let Some(text) = self.tooltip {
+            element = element.tooltip(crate::tooltip::Tooltip::builder(text));
+        }
         if state == InteractionState::Disabled {
             return element.opacity(disabled_opacity);
         }
@@ -214,6 +220,13 @@ macro_rules! interactive_builders {
             #[must_use]
             pub fn force_state(mut self, state: $crate::InteractionState) -> Self {
                 self.interactivity.forced = Some(state);
+                self
+            }
+
+            /// Shows `text` when hovered, also when disabled.
+            #[must_use]
+            pub fn tooltip(mut self, text: impl Into<gpui::SharedString>) -> Self {
+                self.interactivity.tooltip = Some(text.into());
                 self
             }
 

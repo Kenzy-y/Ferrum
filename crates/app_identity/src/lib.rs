@@ -40,6 +40,9 @@ pub const WIT_NAMESPACE: &str = "ferrum";
 /// URL scheme the application registers for deep links (`<scheme>://...`).
 pub const URL_SCHEME: &str = "ferrum";
 
+/// Home of the project; the Welcome page links to its documentation.
+pub const REPOSITORY_URL: &str = "https://github.com/Kenzy-y/Ferrum";
+
 /// Name of the environment variable prefix used for overrides
 /// (for example `FERRUM_LOG`).
 pub const ENV_PREFIX: &str = "FERRUM";

@@ -5,7 +5,7 @@ use gpui::{Context, IntoElement, ParentElement as _, Styled as _, div, px};
 use theme::ActiveTheme as _;
 use ui::{EditorTab, Panel, PanelSurface};
 
-use crate::Workbench;
+use crate::{Workbench, welcome};
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -29,6 +29,8 @@ pub(crate) fn render(
         panel = panel
             .child(strip)
             .child(div().flex_1().min_h_0().child(content.view.clone()));
+    } else {
+        panel = panel.child(welcome::render(workbench, cx));
     }
     panel
 }

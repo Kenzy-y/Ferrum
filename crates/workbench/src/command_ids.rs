@@ -22,6 +22,12 @@ pub const QUICK_OPEN: &str = "workbench.quickOpen";
 /// Opens the command palette.
 pub const SHOW_COMMAND_PALETTE: &str = "workbench.showCommandPalette";
 
+/// Opens a folder with the system folder picker. Owned by the
+/// application (it knows projects); the workbench shows buttons for it.
+pub const OPEN_FOLDER: &str = "workspace.openFolder";
+/// Opens a folder by typing its path. Owned by the application.
+pub const OPEN_FOLDER_BY_PATH: &str = "workspace.openFolderByPath";
+
 /// Every workbench command with the id of its localized title.
 pub(crate) const ALL: &[(&str, &str)] = &[
     (QUICK_OPEN, "command-workbench-quick-open"),

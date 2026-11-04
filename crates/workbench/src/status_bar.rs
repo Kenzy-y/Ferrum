@@ -21,5 +21,8 @@ pub(crate) fn render(
         .gap(px(metrics.space.xl))
         .text_size(px(metrics.font_size.sm))
         .text_color(theme.colors.text_secondary)
-        .child(workbench.text("status-no-folder"))
+        .child(match &workbench.workspace {
+            Some(workspace) => workspace.path.clone(),
+            None => workbench.text("status-no-folder"),
+        })
 }

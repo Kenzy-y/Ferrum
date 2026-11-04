@@ -20,9 +20,6 @@ const MACOS_TRAFFIC_LIGHTS_WIDTH: f32 = 72.0;
 /// title bar of the mockups.
 const MACOS_TRAFFIC_LIGHTS_POSITION: (f32, f32) = (20.0, 26.0);
 
-/// Command of the "Open folder" button; implemented in stage 2.
-const OPEN_FOLDER_COMMAND: &str = "workspace.openFolder";
-
 /// Menu buttons: message ids of their labels.
 const MENUS: [&str; 4] = ["menu-file", "menu-edit", "menu-view", "menu-go"];
 
@@ -138,7 +135,7 @@ fn actions(workbench: &Workbench, cx: &App) -> AnyElement {
     let gap = cx.theme().metrics.space.lg;
     let open_folder = Button::new("open-folder", workbench.text("titlebar-open-folder"))
         .icon(IconName::Folder)
-        .on_activate(run(&workbench.dispatch, OPEN_FOLDER_COMMAND));
+        .on_activate(run(&workbench.dispatch, command_ids::OPEN_FOLDER));
     let toggle_sidebar = IconButton::new("toggle-sidebar", IconName::Columns)
         .on_activate(run(&workbench.dispatch, command_ids::TOGGLE_SIDEBAR));
     div()

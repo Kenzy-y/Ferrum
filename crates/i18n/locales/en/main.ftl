@@ -39,6 +39,43 @@ quick-open-commands-placeholder = Type the name of a command
 quick-open-no-results = Nothing found
 command-workbench-toggle-component-gallery = Toggle component gallery
 
+## Workspace
+
+window-title-workspace = { $name } — { -product-name }
+command-workspace-open-folder = Open folder
+command-workspace-open-folder-by-path = Open folder by path
+path-prompt-title = Open folder
+path-prompt-placeholder = Folder path
+path-prompt-open = Open
+path-prompt-cancel = Cancel
+open-folder-picker-unavailable = The system folder picker is not available ({ $error }). Type the folder path instead.
+open-folder-not-found = The folder { $path } does not exist.
+open-folder-not-a-folder = { $path } is not a folder.
+open-folder-failed = Cannot open { $path }: { $error }
+explorer-empty-title = No folder opened
+explorer-empty-text = Open a folder to explore your project files.
+explorer-files = Files
+
+## Welcome
+
+welcome-tab = Welcome
+welcome-title = A little focus. A lot of Rust.
+welcome-subtitle = Your next great project starts here.
+welcome-new-project = New Rust project
+welcome-clone = Clone repository
+welcome-later = Coming in a later version
+welcome-recent = Recent projects
+welcome-recent-empty-title = A clean slate
+welcome-recent-empty-text = Your recently opened projects will appear here.
+welcome-get-started = Get started
+welcome-start-palette = Command palette
+welcome-start-search = Search files and commands
+welcome-start-open-folder = Open a folder
+welcome-start-panel = Toggle panel
+welcome-workflow-title = Built for your workflow
+welcome-workflow-text = Rust-analyzer, Cargo and Git. Ready when you are.
+welcome-docs-link = Read the documentation
+
 ## Component gallery (temporary, stage 1)
 
 gallery-title = Component gallery

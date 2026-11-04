@@ -19,6 +19,7 @@ mod list;
 mod panel;
 mod tabs;
 mod text;
+mod tooltip;
 
 pub use assets::Assets;
 pub use button::{Button, ButtonSize, ButtonVariant, IconButton};

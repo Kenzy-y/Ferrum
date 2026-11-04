@@ -1,6 +1,7 @@
 //! Root view of the main window: routes keystrokes and button clicks to
 //! command owners and hosts the workbench.
 
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
@@ -13,9 +14,11 @@ use gpui::{
 use i18n::I18n;
 use settings::{LayerKind, SettingsStore};
 use theme::ActiveTheme as _;
-use workbench::{Dispatch, Workbench};
+use workbench::{Dispatch, Workbench, command_ids};
 
 use crate::app_commands;
+
+mod workspace;
 use crate::config::{self, LoadedConfig};
 #[cfg(debug_assertions)]
 use crate::gallery::Gallery;
@@ -33,6 +36,12 @@ pub(crate) struct Shell {
     chord_timeout: Duration,
     i18n: Arc<I18n>,
     settings: SettingsStore,
+    fs: Arc<dyn fs::Fs>,
+    /// Folder open in this window.
+    workspace: Option<project::Workspace>,
+    recent: project::RecentProjects,
+    /// Where `recent` is saved; `None` without a home directory.
+    recent_file: Option<PathBuf>,
     /// Re-reads the configuration files when they change.
     _config_watch: Option<Task<()>>,
     workbench: Entity<Workbench>,
@@ -53,11 +62,13 @@ impl Shell {
             commands: registry,
             fs,
             paths,
+            recent,
+            recent_file,
         } = config;
         let keymap = Arc::new(keymap);
         let chord_timeout = config::chord_timeout(&settings);
         let config_watch =
-            paths.map(|paths| live_config::start(fs, paths, registry.clone(), window, cx));
+            paths.map(|paths| live_config::start(fs.clone(), paths, registry.clone(), window, cx));
         let focus_handle = cx.focus_handle();
         focus_handle.focus(window, cx);
         let shell = cx.entity().downgrade();
@@ -65,10 +76,24 @@ impl Shell {
             let id = id.clone();
             let _ = shell.update(cx, |shell, cx| shell.run_command(&id, window, cx));
         });
+        let shell = cx.entity().downgrade();
+        let open_path: workbench::OpenPath = Rc::new(move |path, window, cx| {
+            let _ = shell.update(cx, |shell, cx| shell.open_folder(path, window, cx));
+        });
         let workbench_i18n = i18n.clone();
         let workbench_keymap = keymap.clone();
-        let workbench =
-            cx.new(|_| Workbench::new(workbench_i18n, dispatch, registry, workbench_keymap));
+        let entries = workspace::recent_entries(&recent);
+        let workbench = cx.new(|cx| {
+            let mut workbench = Workbench::new(
+                workbench_i18n,
+                dispatch,
+                registry,
+                workbench_keymap,
+                open_path,
+            );
+            workbench.set_recent(entries, cx);
+            workbench
+        });
         Self {
             focus_handle,
             keymap,
@@ -77,6 +102,10 @@ impl Shell {
             chord_timeout,
             i18n,
             settings,
+            fs,
+            workspace: None,
+            recent,
+            recent_file,
             _config_watch: config_watch,
             workbench,
             #[cfg(debug_assertions)]
@@ -100,9 +129,7 @@ impl Shell {
         if let Some(change) = change
             && !change.is_empty()
         {
-            config::report_settings(&self.settings);
-            self.chord_timeout = config::chord_timeout(&self.settings);
-            self.apply_language(window, cx);
+            self.settings_changed(window, cx);
         }
         if let Some(keymap) = reloaded.keymap {
             let keymap = Arc::new(keymap);
@@ -113,6 +140,13 @@ impl Shell {
                 .update(cx, |workbench, cx| workbench.set_keymap(keymap, cx));
             tracing::info!("applied keymap changes");
         }
+    }
+
+    /// Re-applies everything that depends on settings.
+    fn settings_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        config::report_settings(&self.settings);
+        self.chord_timeout = config::chord_timeout(&self.settings);
+        self.apply_language(window, cx);
     }
 
     fn apply_language(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -127,7 +161,7 @@ impl Shell {
             return;
         }
         let i18n = Arc::new(i18n);
-        window.set_window_title(&i18n.text("app-title"));
+        window.set_window_title(&window_title(&i18n, self.workspace.as_ref()));
         self.i18n = i18n.clone();
         self.workbench
             .update(cx, |workbench, cx| workbench.set_i18n(i18n, cx));
@@ -138,6 +172,8 @@ impl Shell {
         tracing::debug!(command = %id, "running command");
         match id.as_str() {
             app_commands::QUIT => cx.quit(),
+            command_ids::OPEN_FOLDER => self.prompt_for_folder(window, cx),
+            command_ids::OPEN_FOLDER_BY_PATH => self.show_path_prompt(None, None, window, cx),
             #[cfg(debug_assertions)]
             app_commands::TOGGLE_COMPONENT_GALLERY => self.toggle_gallery(window, cx),
             _ => {
@@ -239,6 +275,19 @@ impl Render for Shell {
         // Draws the resize frame and shadow when the window decorates itself
         // (Linux); a plain container elsewhere.
         gpui_component::window_border().child(content)
+    }
+}
+
+/// The window title: the folder name with the product name, or just the
+/// product name without a folder.
+pub(crate) fn window_title(i18n: &I18n, workspace: Option<&project::Workspace>) -> String {
+    match workspace {
+        Some(workspace) => {
+            let mut args = i18n::FluentArgs::new();
+            args.set("name", workspace.name().to_owned());
+            i18n.text_with("window-title-workspace", &args)
+        }
+        None => i18n.text("app-title"),
     }
 }
 

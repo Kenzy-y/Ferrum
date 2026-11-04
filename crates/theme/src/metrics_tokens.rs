@@ -22,6 +22,27 @@ token_struct! {
         activity_bar_top = "activity_bar.top",
         activity_bar_gap = "activity_bar.gap",
         bottom_panel_height = "bottom_panel.height",
+        /// Header of a page in the editor area (Welcome).
+        editor_header_height = "editor_header.height",
+        /// Content width of the Welcome page.
+        welcome_width = "welcome.width",
+        /// Left column of the Welcome page.
+        welcome_column = "welcome.column",
+        /// Space above the Welcome content.
+        welcome_top = "welcome.top",
+        welcome_logo = "welcome.logo",
+        welcome_button = "welcome.button",
+        /// Rows of the Get started list.
+        welcome_row = "welcome.row",
+        /// Recent projects card when empty.
+        welcome_recent_height = "welcome.recent.height",
+        /// Fixed-width shortcut badges.
+        kbd_width = "kbd.width",
+        /// Space above an empty state in a sidebar.
+        empty_state_top = "empty_state.top",
+        empty_state_icon = "empty_state.icon",
+        empty_state_button = "empty_state.button",
+        dialog_width = "dialog.width",
         activity_button_width = "activity_button.width",
         activity_button_height = "activity_button.height",
         sidebar_width = "sidebar.width",

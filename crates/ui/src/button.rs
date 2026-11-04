@@ -78,8 +78,8 @@ impl Button {
         self
     }
 
-    /// Fixed width in logical pixels; the label stays left-aligned as in
-    /// the mockups.
+    /// Minimum width in logical pixels (longer labels, e.g. in other
+    /// languages, widen the button); the label stays left-aligned as in the mockups.
     #[must_use]
     pub fn width(mut self, width: f32) -> Self {
         self.width = Some(width);
@@ -149,7 +149,7 @@ impl RenderOnce for Button {
             .children(icon)
             .child(self.label);
         if let Some(width) = self.width {
-            root = root.w(px(width));
+            root = root.min_w(px(width));
         }
         root
     }

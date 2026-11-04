@@ -5,7 +5,7 @@ use gpui::{Context, IntoElement, ParentElement as _, Styled as _, px};
 use theme::ActiveTheme as _;
 use ui::{IconButton, IconName, Panel, PanelSurface, SectionHeader};
 
-use crate::{SidebarView, Workbench};
+use crate::{SidebarView, Workbench, explorer};
 
 /// Message id of the title of `view`.
 pub(crate) fn title(view: SidebarView) -> &'static str {
@@ -30,8 +30,12 @@ pub(crate) fn render(
         .w(px(size.sidebar_width))
         .flex_none()
         .pt(px(header_top))
+        .gap(px(theme.metrics.space.lg))
         .child(
             SectionHeader::panel(workbench.text(title(workbench.view)))
                 .action(IconButton::new("sidebar-more", IconName::Ellipsis)),
+        )
+        .children(
+            (workbench.view == SidebarView::Explorer).then(|| explorer::render(workbench, cx)),
         )
 }

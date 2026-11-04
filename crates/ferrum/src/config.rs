@@ -1,11 +1,13 @@
 //! Loading settings and keymaps, at startup and when their files change.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
 use commands::{CommandRegistry, KeyboardSettings, Keymap, KeymapDiagnostic, Platform};
 use fs::Fs;
 use i18n::{I18n, LocalizationSettings};
+use project::{ProjectSettings, RECENT_PROJECTS_FILE_NAME, RecentProjects};
 use settings::paths::ConfigPaths;
 use settings::{LayerKind, SettingsLayer, SettingsRegistry, SettingsStore, load};
 
@@ -16,6 +18,8 @@ pub(crate) struct LoadedConfig {
     pub(crate) commands: Arc<CommandRegistry>,
     pub(crate) fs: Arc<dyn Fs>,
     pub(crate) paths: Option<ConfigPaths>,
+    pub(crate) recent: RecentProjects,
+    pub(crate) recent_file: Option<PathBuf>,
 }
 
 /// Registers the settings of every crate linked into the application.
@@ -23,6 +27,7 @@ pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
     Ok(SettingsRegistry::builder()
         .register::<LocalizationSettings>()?
         .register::<KeyboardSettings>()?
+        .register::<ProjectSettings>()?
         .build())
 }
 
@@ -44,12 +49,22 @@ pub(crate) async fn load(
     }
     report_settings(&settings);
     let keymap = read_keymap(fs.as_ref(), paths.as_ref(), &command_registry).await;
+    let limit = settings.get::<ProjectSettings>(None).recent_projects_limit;
+    let recent_file = paths
+        .as_ref()
+        .map(|paths| paths.data_dir().join(RECENT_PROJECTS_FILE_NAME));
+    let recent = match &recent_file {
+        Some(file) => RecentProjects::load(fs.as_ref(), file, limit).await,
+        None => RecentProjects::new(limit),
+    };
     LoadedConfig {
         settings,
         keymap,
         commands: command_registry,
         fs,
         paths,
+        recent,
+        recent_file,
     }
 }
 
@@ -112,6 +127,7 @@ pub(crate) fn report_settings(settings: &SettingsStore) {
         .into_iter()
         .chain(settings.check::<LocalizationSettings>())
         .chain(settings.check::<KeyboardSettings>())
+        .chain(settings.check::<ProjectSettings>())
     {
         tracing::warn!(?diagnostic, "settings problem");
     }

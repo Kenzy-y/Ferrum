@@ -10,12 +10,16 @@ mod activity_bar;
 mod bottom_panel;
 pub mod command_ids;
 mod editor_area;
+mod explorer;
+mod path_prompt;
 mod quick_open;
 mod sidebar;
 mod status_bar;
 mod title_bar;
+mod welcome;
 mod window_controls;
 
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -28,11 +32,35 @@ use gpui::{
 use i18n::I18n;
 use theme::ActiveTheme as _;
 
+use crate::path_prompt::{PathPrompt, PathPromptEvent, PathPromptTexts};
 use crate::quick_open::{Dismiss, QuickOpen, QuickOpenContext, QuickOpenMode};
 
 /// Runs a command by id. Provided by the application, which knows every
 /// command owner.
 pub type Dispatch = Rc<dyn Fn(&CommandId, &mut Window, &mut App)>;
+
+/// Opens a folder by path. Provided by the application.
+pub type OpenPath = Rc<dyn Fn(PathBuf, &mut Window, &mut App)>;
+
+/// The open folder, as shown in the layout.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorkspaceInfo {
+    /// Folder name.
+    pub name: SharedString,
+    /// Folder path for display.
+    pub path: SharedString,
+}
+
+/// A recently opened folder, as listed on the Welcome page.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RecentEntry {
+    /// Folder name.
+    pub name: SharedString,
+    /// Folder path for display.
+    pub path: SharedString,
+    /// The folder to open.
+    pub root: PathBuf,
+}
 
 /// What the sidebar shows; one per activity bar button.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -99,6 +127,10 @@ pub struct Workbench {
     keymap: Arc<Keymap>,
     quick_open_context: QuickOpenContext,
     quick_open: Option<OpenQuickOpen>,
+    open_path: OpenPath,
+    path_prompt: Option<OpenPathPrompt>,
+    workspace: Option<WorkspaceInfo>,
+    recent: Vec<RecentEntry>,
     view: SidebarView,
     sidebar_visible: bool,
     panel_visible: bool,
@@ -114,6 +146,7 @@ impl Workbench {
         dispatch: Dispatch,
         registry: Arc<CommandRegistry>,
         keymap: Arc<Keymap>,
+        open_path: OpenPath,
     ) -> Self {
         let quick_open_context = QuickOpenContext {
             i18n: i18n.clone(),
@@ -127,6 +160,10 @@ impl Workbench {
             keymap,
             quick_open_context,
             quick_open: None,
+            open_path,
+            path_prompt: None,
+            workspace: None,
+            recent: Vec::new(),
             view: SidebarView::Explorer,
             sidebar_visible: true,
             panel_visible: false,
@@ -214,6 +251,69 @@ impl Workbench {
         cx.notify();
     }
 
+    /// Shows `workspace` as the open folder (`None`: no folder).
+    pub fn set_workspace(&mut self, workspace: Option<WorkspaceInfo>, cx: &mut Context<Self>) {
+        self.workspace = workspace;
+        cx.notify();
+    }
+
+    /// Replaces the recent projects listed on the Welcome page.
+    pub fn set_recent(&mut self, recent: Vec<RecentEntry>, cx: &mut Context<Self>) {
+        self.recent = recent;
+        cx.notify();
+    }
+
+    /// Asks for a folder path, prefilled with `initial`, explaining `error`
+    /// if a previous attempt failed. Confirming calls the [`OpenPath`]
+    /// callback.
+    pub fn show_path_prompt(
+        &mut self,
+        initial: Option<String>,
+        error: Option<SharedString>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let previous_focus = match self.path_prompt.take() {
+            Some(open) => open.previous_focus,
+            None => window.focused(cx),
+        };
+        let texts = PathPromptTexts {
+            title: self.text("path-prompt-title"),
+            placeholder: self.text("path-prompt-placeholder"),
+            open: self.text("path-prompt-open"),
+            cancel: self.text("path-prompt-cancel"),
+        };
+        let view = cx.new(|cx| PathPrompt::new(texts, initial, error, window, cx));
+        let subscription = cx.subscribe_in(
+            &view,
+            window,
+            |this, _, event: &PathPromptEvent, window, cx| match event {
+                PathPromptEvent::Confirm(path) => {
+                    let path = PathBuf::from(path);
+                    this.close_path_prompt(window, cx);
+                    let open_path = this.open_path.clone();
+                    window.defer(cx, move |window, cx| open_path(path, window, cx));
+                }
+                PathPromptEvent::Dismiss => this.close_path_prompt(window, cx),
+            },
+        );
+        self.path_prompt = Some(OpenPathPrompt {
+            view,
+            previous_focus,
+            _subscription: subscription,
+        });
+        cx.notify();
+    }
+
+    fn close_path_prompt(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(open) = self.path_prompt.take() {
+            if let Some(focus) = open.previous_focus {
+                focus.focus(window, cx);
+            }
+            cx.notify();
+        }
+    }
+
     /// Whether the editor area shows something.
     pub fn has_editor_content(&self) -> bool {
         self.editor.is_some()
@@ -282,6 +382,13 @@ struct OpenQuickOpen {
     _subscription: Subscription,
 }
 
+/// An open path dialog and the focus to restore when it closes.
+struct OpenPathPrompt {
+    view: Entity<PathPrompt>,
+    previous_focus: Option<FocusHandle>,
+    _subscription: Subscription,
+}
+
 /// Registers the workbench commands.
 ///
 /// # Errors
@@ -304,6 +411,22 @@ impl Render for Workbench {
         let editor = editor_area::render(self, cx);
         let panel = self.panel_visible.then(|| bottom_panel::render(self, cx));
         let status_bar = status_bar::render(self, cx);
+        let dialog = self.path_prompt.as_ref().map(|open| {
+            let size = &cx.theme().metrics.size;
+            div()
+                .id("path-prompt-backdrop")
+                .absolute()
+                .inset_0()
+                .flex()
+                .flex_col()
+                .items_center()
+                .pt(px(size.titlebar_height * 2.0))
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(|this, _, window, cx| this.close_path_prompt(window, cx)),
+                )
+                .child(open.view.clone())
+        });
         // Catches clicks outside quick open; the box itself is drawn by the
         // title bar over its search field.
         let backdrop = self.quick_open.is_some().then(|| {
@@ -354,6 +477,7 @@ impl Render for Workbench {
             .child(body)
             .child(status_bar)
             .children(backdrop)
+            .children(dialog)
     }
 }
 
@@ -385,6 +509,7 @@ mod tests {
             Rc::new(|_, _, _| {}),
             Arc::new(CommandRegistry::new()),
             Arc::new(Keymap::default()),
+            Rc::new(|_, _, _| {}),
         )
     }
 
