@@ -41,6 +41,7 @@ Ferrum is a native IDE for Rust, written in Rust. The goal is to do what VS Code
 | Project search | `ignore`, `grep-searcher`, `grep-regex` |
 | File watching | `notify` |
 | Plugins | `wasmtime` (Component Model) + WIT; author SDK via `wit-bindgen` |
+| Async primitives | `futures` (traits, streams, channels; runtime-agnostic) |
 | Settings | `serde` + `toml` + `schemars` |
 | Localization | Fluent (`fluent-bundle`) |
 | Config paths | `directories` |
@@ -296,6 +297,7 @@ There are no intermediaries between the owner and the agent. Stages and tasks li
 
 - Small, coherent changes. Do not rewrite working code without a reason.
 - Before finishing: `cargo fmt`, `cargo clippy` with no warnings, `cargo test` for the affected crates.
+- When a stage is split into parts, push at the end of each part once the local checks pass (fmt, clippy, tests, `cargo deny`), then check CI.
 - No `TODO` without an entry in `ROADMAP.md`.
 - When you create a new subsystem, briefly describe it in `docs/architecture/<subsystem>.md` (purpose, key types, how to extend).
 
