@@ -9,9 +9,11 @@
 //!
 //! The workbench owns layout state only (which view is shown, which parts
 //! are visible). Every user action goes through a command id: buttons call
-//! the [`Dispatch`] callback, and the application routes the id back to
-//! [`Workbench::run_command`] or to whoever owns the command.
+//! the [`Dispatch`] callback, and the application looks the id up in the
+//! window's [`CommandHandlers`]. Each owner registers its own handlers
+//! ([`Workbench::register_handlers`] for the workbench and editor commands).
 
+mod command_handlers;
 pub mod command_ids;
 mod contrib;
 mod dialogs;
@@ -22,6 +24,7 @@ mod workbench;
 
 use commands::{CommandDescriptor, CommandId, CommandRegistry, RegistryError};
 
+pub use crate::command_handlers::{CommandHandler, CommandHandlers};
 pub use crate::contrib::explorer::file_icons::{FileIcon, FileIcons};
 pub use crate::contrib::explorer::file_tree_view::{
     FileTreeTexts, FileTreeView, OpenFile, WorkspaceSettingsChanged,
@@ -45,9 +48,25 @@ pub fn register_commands(registry: &mut CommandRegistry) -> Result<(), RegistryE
 
 #[cfg(test)]
 mod tests {
+    use gpui::WeakEntity;
     use i18n::I18n;
 
     use super::*;
+
+    #[test]
+    fn every_registered_command_has_a_handler() {
+        let mut registry = CommandRegistry::new();
+        register_commands(&mut registry).unwrap();
+        let mut handlers = CommandHandlers::new();
+        Workbench::register_handlers(&mut handlers, &WeakEntity::new_invalid()).unwrap();
+        for command in registry.iter() {
+            assert!(
+                handlers.contains(&command.id),
+                "{} has no handler",
+                command.id
+            );
+        }
+    }
 
     #[test]
     fn registers_every_command_with_a_localized_title() {

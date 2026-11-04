@@ -75,10 +75,3 @@ pub fn show_view(view: SidebarView) -> &'static str {
         SidebarView::Extensions => SHOW_EXTENSIONS,
     }
 }
-
-/// The view a show command opens.
-pub(crate) fn view_for(id: &str) -> Option<SidebarView> {
-    SidebarView::ALL
-        .into_iter()
-        .find(|view| show_view(*view) == id)
-}

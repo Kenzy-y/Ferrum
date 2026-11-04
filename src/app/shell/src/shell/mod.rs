@@ -10,15 +10,16 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use commands::CommandId;
+use commands::{CommandId, RegistryError};
 use gpui::{
     AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement,
-    KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Task, Window, div, px,
+    KeyDownEvent, ParentElement as _, Render, SharedString, Styled as _, Task, WeakEntity, Window,
+    div, px,
 };
 use i18n::I18n;
 use settings::SettingsStore;
 use theme::ActiveTheme as _;
-use workbench::{Dispatch, Workbench, command_ids};
+use workbench::{CommandHandlers, Dispatch, Workbench, command_ids};
 
 use self::keyboard::{KeyOutcome, KeyboardDispatcher};
 use crate::app_commands;
@@ -31,6 +32,8 @@ pub(crate) struct Shell {
     focus_handle: FocusHandle,
     /// Keymap, pending key sequence and keyboard layout.
     keyboard: KeyboardDispatcher,
+    /// What runs for each command id in this window.
+    handlers: Rc<CommandHandlers>,
     /// Tells `keyboard` when the keyboard layout changes.
     _layout_watch: Option<gpui::Subscription>,
     /// Reacts to files activated in the file tree.
@@ -122,6 +125,10 @@ impl Shell {
                 .update(cx, |workbench, cx| workbench.should_close(window, cx))
                 .unwrap_or(true)
         });
+        let handlers = Rc::new(command_handlers(
+            &cx.entity().downgrade(),
+            &workbench.downgrade(),
+        ));
         let shell = cx.entity().downgrade();
         let layout_watch = cx.on_keyboard_layout_change(move |cx| {
             let _ = shell.update(cx, |shell, cx| {
@@ -132,6 +139,7 @@ impl Shell {
         Self {
             focus_handle,
             keyboard: KeyboardDispatcher::new(keymap, chord_timeout, cx),
+            handlers,
             _layout_watch: Some(layout_watch),
             open_file_watch: None,
             i18n,
@@ -152,26 +160,43 @@ impl Shell {
         }
     }
 
-    /// Runs a command by id, whoever owns it.
+    /// Registers the handlers of the commands the shell owns.
+    pub(crate) fn register_handlers(
+        handlers: &mut CommandHandlers,
+        this: &WeakEntity<Self>,
+    ) -> Result<(), RegistryError> {
+        handlers.register_entity(app_commands::QUIT, this, |this, window, cx| {
+            this.workbench
+                .update(cx, |workbench, cx| workbench.quit(window, cx));
+        })?;
+        handlers.register_entity(command_ids::OPEN_FOLDER, this, Self::prompt_for_folder)?;
+        handlers.register_entity(
+            command_ids::OPEN_FOLDER_BY_PATH,
+            this,
+            |this, window, cx| {
+                this.show_path_prompt(None, None, window, cx);
+            },
+        )?;
+        #[cfg(debug_assertions)]
+        handlers.register_entity(
+            app_commands::TOGGLE_COMPONENT_GALLERY,
+            this,
+            Self::toggle_gallery,
+        )?;
+        Ok(())
+    }
+
+    /// Runs a command by id, whoever owns it. Handlers run right after the
+    /// current update, because some of them update the shell itself.
     fn run_command(&mut self, id: &CommandId, window: &mut Window, cx: &mut Context<Self>) {
         tracing::debug!(command = %id, "running command");
-        match id.as_str() {
-            app_commands::QUIT => self
-                .workbench
-                .update(cx, |workbench, cx| workbench.quit(window, cx)),
-            command_ids::OPEN_FOLDER => self.prompt_for_folder(window, cx),
-            command_ids::OPEN_FOLDER_BY_PATH => self.show_path_prompt(None, None, window, cx),
-            #[cfg(debug_assertions)]
-            app_commands::TOGGLE_COMPONENT_GALLERY => self.toggle_gallery(window, cx),
-            _ => {
-                let handled = self
-                    .workbench
-                    .update(cx, |workbench, cx| workbench.run_command(id, window, cx));
-                if !handled {
-                    tracing::debug!(command = %id, "command is not implemented yet");
-                }
+        let handlers = self.handlers.clone();
+        let id = id.clone();
+        window.defer(cx, move |window, cx| {
+            if !handlers.run(&id, window, cx) {
+                tracing::debug!(command = %id, "command has no handler");
             }
-        }
+        });
     }
 
     #[cfg(debug_assertions)]
@@ -246,6 +271,21 @@ impl Render for Shell {
         // (Linux); a plain container elsewhere.
         gpui_component::window_border().child(content)
     }
+}
+
+/// The handlers of every command in a window: the shell's own and the
+/// workbench's (which include the editor commands).
+fn command_handlers(
+    shell: &WeakEntity<Shell>,
+    workbench: &WeakEntity<Workbench>,
+) -> CommandHandlers {
+    let mut handlers = CommandHandlers::new();
+    let registered = Shell::register_handlers(&mut handlers, shell)
+        .and_then(|()| Workbench::register_handlers(&mut handlers, workbench));
+    if let Err(error) = registered {
+        tracing::error!("{error}");
+    }
+    handlers
 }
 
 /// The window title: the folder name with the product name, or just the

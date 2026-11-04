@@ -4,14 +4,16 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use commands::{CommandId, CommandRegistry, Keymap, Platform};
+use commands::{CommandId, CommandRegistry, Keymap, Platform, RegistryError};
 use gpui::{
     App, Context, Entity, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
-    Render, SharedString, Styled as _, Window, WindowDecorations, WindowOptions, div, px,
+    Render, SharedString, Styled as _, WeakEntity, Window, WindowDecorations, WindowOptions, div,
+    px,
 };
 use i18n::I18n;
 use theme::ActiveTheme as _;
 
+use crate::command_handlers::CommandHandlers;
 use crate::command_ids;
 use crate::contrib::explorer::file_icons::FileIcons;
 use crate::contrib::explorer::file_tree_view::FileTreeView;
@@ -124,63 +126,67 @@ impl Workbench {
         }
     }
 
-    /// Runs a workbench command. Returns `false` if `id` is not one of
-    /// [`command_ids`].
-    pub fn run_command(
-        &mut self,
-        id: &CommandId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        let mode = match id.as_str() {
-            command_ids::QUICK_OPEN => Some(QuickOpenMode::Everything),
-            command_ids::SHOW_COMMAND_PALETTE => Some(QuickOpenMode::Commands),
-            _ => None,
-        };
-        if let Some(mode) = mode {
-            self.open_quick_open(mode, window, cx);
-            return true;
-        }
-        match id.as_str() {
-            command_ids::CLOSE_TAB => {
-                self.close_active_tab(window, cx);
-                return true;
-            }
-            command_ids::CLOSE_WINDOW => {
-                self.close(closing::AfterClose::CloseWindow, window, cx);
-                return true;
-            }
-            editor::SAVE => {
-                if let Some(editor) = self.active_editor() {
-                    self.save_editor(&editor, window, cx).detach();
-                }
-                return true;
-            }
-            command_ids::FOCUS_OUTLINE => {
-                self.focus_outline(window, cx);
-                return true;
-            }
-            command_ids::TOGGLE_OUTLINE => {
-                self.toggle_outline(cx);
-                return true;
-            }
-            command_ids::NEXT_TAB | command_ids::PREVIOUS_TAB => {
-                self.cycle_tab(id.as_str() == command_ids::NEXT_TAB, window, cx);
-                return true;
-            }
-            other if editor::is_editor_command(other) => {
-                if let Some(editor) = self.active_editor() {
-                    editor.update(cx, |editor, cx| editor.run_command(other, window, cx));
-                }
-                return true;
-            }
-            _ => {}
-        }
-        let handled = self.apply_command(id.as_str());
-        if handled {
+    /// Registers the handlers of the workbench commands, and of every
+    /// editor command, which runs on the active editor.
+    ///
+    /// # Errors
+    ///
+    /// Fails if one of these commands already has a handler.
+    pub fn register_handlers(
+        handlers: &mut CommandHandlers,
+        this: &WeakEntity<Self>,
+    ) -> Result<(), RegistryError> {
+        handlers.register_entity(command_ids::QUICK_OPEN, this, |this, window, cx| {
+            this.open_quick_open(QuickOpenMode::Everything, window, cx);
+        })?;
+        handlers.register_entity(
+            command_ids::SHOW_COMMAND_PALETTE,
+            this,
+            |this, window, cx| {
+                this.open_quick_open(QuickOpenMode::Commands, window, cx);
+            },
+        )?;
+        handlers.register_entity(command_ids::TOGGLE_SIDEBAR, this, |this, _, cx| {
+            this.toggle_sidebar();
             cx.notify();
+        })?;
+        handlers.register_entity(command_ids::TOGGLE_PANEL, this, |this, _, cx| {
+            this.toggle_panel();
+            cx.notify();
+        })?;
+        for view in SidebarView::ALL {
+            handlers.register_entity(command_ids::show_view(view), this, move |this, _, cx| {
+                this.show_view(view);
+                cx.notify();
+            })?;
         }
-        handled
+        handlers.register_entity(command_ids::CLOSE_TAB, this, Self::close_active_tab)?;
+        handlers.register_entity(command_ids::NEXT_TAB, this, |this, window, cx| {
+            this.cycle_tab(true, window, cx);
+        })?;
+        handlers.register_entity(command_ids::PREVIOUS_TAB, this, |this, window, cx| {
+            this.cycle_tab(false, window, cx);
+        })?;
+        handlers.register_entity(command_ids::CLOSE_WINDOW, this, |this, window, cx| {
+            this.close(closing::AfterClose::CloseWindow, window, cx);
+        })?;
+        handlers.register_entity(command_ids::FOCUS_OUTLINE, this, Self::focus_outline)?;
+        handlers.register_entity(command_ids::TOGGLE_OUTLINE, this, |this, _, cx| {
+            this.toggle_outline(cx);
+        })?;
+        handlers.register_entity(editor::SAVE, this, |this, window, cx| {
+            if let Some(editor) = this.active_editor() {
+                this.save_editor(&editor, window, cx).detach();
+            }
+        })?;
+        for id in editor::command_ids().filter(|id| *id != editor::SAVE) {
+            handlers.register_entity(id, this, move |this, window, cx| {
+                if let Some(editor) = this.active_editor() {
+                    editor.update(cx, |editor, cx| editor.run_command(id, window, cx));
+                }
+            })?;
+        }
+        Ok(())
     }
 
     /// Icons of files in tabs and breadcrumbs.

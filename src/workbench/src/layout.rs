@@ -2,7 +2,7 @@
 
 use gpui::Context;
 
-use crate::{Workbench, command_ids};
+use crate::Workbench;
 
 /// What the sidebar shows; one per activity bar button.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -54,17 +54,14 @@ impl PanelKind {
 }
 
 impl Workbench {
-    /// Changes the layout state for a command; `false` if it is not ours.
-    pub(crate) fn apply_command(&mut self, id: &str) -> bool {
-        match id {
-            command_ids::TOGGLE_SIDEBAR => self.sidebar_visible = !self.sidebar_visible,
-            command_ids::TOGGLE_PANEL => self.panel_visible = !self.panel_visible,
-            other => match command_ids::view_for(other) {
-                Some(view) => self.show_view(view),
-                None => return false,
-            },
-        }
-        true
+    /// Shows or hides the sidebar.
+    pub(crate) fn toggle_sidebar(&mut self) {
+        self.sidebar_visible = !self.sidebar_visible;
+    }
+
+    /// Shows or hides the bottom panel.
+    pub(crate) fn toggle_panel(&mut self) {
+        self.panel_visible = !self.panel_visible;
     }
 
     /// Shows `view` in the sidebar; activating the visible view hides the
@@ -110,32 +107,32 @@ mod tests {
     fn toggles_sidebar_and_panel() {
         let mut workbench = workbench();
         assert!(workbench.sidebar_visible && !workbench.panel_visible);
-        assert!(workbench.apply_command(command_ids::TOGGLE_SIDEBAR));
-        assert!(workbench.apply_command(command_ids::TOGGLE_PANEL));
+        workbench.toggle_sidebar();
+        workbench.toggle_panel();
         assert!(!workbench.sidebar_visible && workbench.panel_visible);
-        assert!(!workbench.apply_command("editor.save"));
     }
 
     #[test]
     fn showing_the_visible_view_hides_the_sidebar() {
         let mut workbench = workbench();
-        workbench.apply_command(command_ids::SHOW_SEARCH);
+        workbench.show_view(SidebarView::Search);
         assert_eq!(workbench.view, SidebarView::Search);
         assert!(workbench.sidebar_visible);
 
-        workbench.apply_command(command_ids::SHOW_SEARCH);
+        workbench.show_view(SidebarView::Search);
         assert!(!workbench.sidebar_visible);
 
-        workbench.apply_command(command_ids::SHOW_EXPLORER);
+        workbench.show_view(SidebarView::Explorer);
         assert_eq!(workbench.view, SidebarView::Explorer);
         assert!(workbench.sidebar_visible);
     }
 
     #[test]
-    fn every_view_has_a_command() {
-        for view in SidebarView::ALL {
-            let id = command_ids::show_view(view);
-            assert_eq!(command_ids::view_for(id), Some(view));
-        }
+    fn every_view_has_its_own_command() {
+        let ids: std::collections::HashSet<_> = SidebarView::ALL
+            .into_iter()
+            .map(command_ids::show_view)
+            .collect();
+        assert_eq!(ids.len(), SidebarView::ALL.len());
     }
 }

@@ -299,6 +299,11 @@ pub fn is_editor_command(id: &str) -> bool {
     action_for(id).is_some()
 }
 
+/// Ids of every editor command, in registration order.
+pub fn command_ids() -> impl Iterator<Item = &'static str> {
+    COMMANDS.iter().map(|(id, _, _)| *id)
+}
+
 /// Registers the editor commands.
 ///
 /// # Errors

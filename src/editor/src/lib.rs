@@ -6,9 +6,9 @@
 //! - [`EditorSettings`] — the `[editor]` settings.
 //! - [`Editor::set_grammar`] — highlighting and the outline from a
 //!   `syntax` grammar; the tree follows every edit in the background.
-//! - [`register_commands`] — the editor commands for the registry; the
-//!   application routes them to the focused editor with
-//!   [`Editor::run_command`].
+//! - [`register_commands`] — the editor commands for the registry;
+//!   [`command_ids`] lists them so the workbench can route each one to
+//!   the active editor with [`Editor::run_command`].
 
 mod actions;
 mod decorations;
@@ -20,7 +20,8 @@ mod render;
 mod settings;
 
 pub use actions::{
-    CONTEXT, KEEP_LOCAL_CHANGES, RELOAD_FROM_DISK, SAVE, init, is_editor_command, register_commands,
+    CONTEXT, KEEP_LOCAL_CHANGES, RELOAD_FROM_DISK, SAVE, command_ids, init, is_editor_command,
+    register_commands,
 };
 pub use editor::{Editor, EditorEvent, EditorStatus};
 pub use file::DiskState;

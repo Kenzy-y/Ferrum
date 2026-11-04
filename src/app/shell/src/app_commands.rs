@@ -56,7 +56,26 @@ pub(crate) fn registry() -> anyhow::Result<CommandRegistry> {
 
 #[cfg(test)]
 mod tests {
+    use gpui::WeakEntity;
+    use workbench::{CommandHandlers, Workbench};
+
     use super::*;
+    use crate::shell::Shell;
+
+    #[test]
+    fn every_command_has_a_handler() {
+        let registry = registry().unwrap();
+        let mut handlers = CommandHandlers::new();
+        Shell::register_handlers(&mut handlers, &WeakEntity::new_invalid()).unwrap();
+        Workbench::register_handlers(&mut handlers, &WeakEntity::new_invalid()).unwrap();
+        for command in registry.iter() {
+            assert!(
+                handlers.contains(&command.id),
+                "{} has no handler",
+                command.id
+            );
+        }
+    }
 
     #[test]
     fn every_command_has_a_title_in_every_locale() {
