@@ -17,14 +17,20 @@ mod element;
 mod file;
 mod input;
 mod layout;
+mod minimap;
 mod mouse;
 mod runs;
 mod scene;
+mod scrollbar;
 mod settings;
+mod shaping;
 mod syntax_patch;
 mod syntax_state;
 mod viewport;
 
-pub use actions::{CONTEXT, SAVE, init, is_editor_command, register_commands};
+pub use actions::{
+    CONTEXT, KEEP_LOCAL_CHANGES, RELOAD_FROM_DISK, SAVE, init, is_editor_command, register_commands,
+};
 pub use editor::{Editor, EditorEvent, EditorStatus};
+pub use file::DiskState;
 pub use settings::{EditorSettings, MultiCursorModifier};

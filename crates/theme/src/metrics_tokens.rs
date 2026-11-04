@@ -94,6 +94,18 @@ token_struct! {
         scrollbar_width = "scrollbar.width",
         /// Gap between the scrollbar and the panel edge.
         scrollbar_inset = "scrollbar.inset",
+        minimap_width = "minimap.width",
+        /// Space between the minimap and the panel edge.
+        minimap_right = "minimap.right",
+        minimap_bottom = "minimap.bottom",
+        /// Space between the bars and the minimap edge.
+        minimap_inset = "minimap.inset",
+        minimap_radius = "minimap.radius",
+        /// Height of a text line on the minimap.
+        minimap_line_height = "minimap.line_height",
+        minimap_bar_height = "minimap.bar_height",
+        /// Width of a character on the minimap.
+        minimap_char_width = "minimap.char_width",
     }
 }
 

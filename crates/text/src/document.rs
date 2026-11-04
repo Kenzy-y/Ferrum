@@ -139,6 +139,20 @@ impl Document {
         self.version
     }
 
+    /// Identifies the text for comparing with a saved state: changes with
+    /// every edit and returns to an earlier value when undo or redo bring
+    /// that text back (see [`History::state_id`]).
+    pub fn state_id(&self) -> u64 {
+        self.history.state_id()
+    }
+
+    /// The text was saved: the next edit starts a new undo step, so the
+    /// returned [`Self::state_id`] stays the saved text's value.
+    pub fn mark_saved(&mut self) -> u64 {
+        self.history.break_group();
+        self.history.state_id()
+    }
+
     /// Starts logging every edit for [`Self::take_changes`] (syntax trees
     /// follow the text with them). Off by default, because each logged
     /// edit costs a few extra lookups.

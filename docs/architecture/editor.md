@@ -40,6 +40,16 @@ Crate `editor` (UI layer): the view that shows and edits a `text::Document`.
   `EditorEvent::Renamed`. Renames are atomic, so the new name exists
   when the old one is reported gone. Moves to another folder are not
   followed.
+  **Disk state** (`DiskState`, `EditorEvent::DiskStateChanged`): a change
+  on disk while there are unsaved edits is `Changed`. Then
+  `editor.reloadFromDisk` replaces the text as one undoable edit
+  (`Document::replace_all`) and `editor.keepLocalChanges` keeps the edits
+  (the file's text becomes the saved text; nothing in the history matches
+  it). A gone file that was not renamed is `Deleted`. Saving resolves
+  both; `save` returns a task that tells whether it worked.
+  **Unsaved edits** are `Document::state_id` differing from the saved
+  state, so undo back to the saved text clears the dot. `mark_saved`
+  ends the undo group, so typing after a save is a new step.
 
 **Cursor blink.** A timer flips the cursor every
 `cursor_blink_interval_ms`; it runs only while the editor is focused in an
@@ -57,8 +67,38 @@ line. With as many lines as cursors, each cursor gets one.
 
 **Geometry** comes from theme tokens taken from `editor.svg`: line height
 `code.line_height`, `editor.inset`, `editor.gutter_gap`, `editor.top`,
-`editor.active_line.*`, `cursor.*`, `scrollbar.*`; line numbers are at
-least four digits wide (`MIN_LINE_NUMBER_DIGITS`).
+`editor.active_line.*`, `cursor.*`, `scrollbar.*`, `minimap.*`; line
+numbers are at least four digits wide (`MIN_LINE_NUMBER_DIGITS`).
+`shaping.rs` shapes the visible rows.
+
+**Scrollbar** (`scrollbar.rs`, pure geometry). Dragging the thumb keeps it
+where it was grabbed. A click on the track jumps there, holding the thumb
+by its middle. Hovered or dragged, it uses `bg.scrollbar.thumb.hover`. The
+strip around it shows the arrow cursor.
+
+**Minimap** (`minimap.rs`, `[editor] minimap`, on by default; ADR 0004).
+It is drawn right of the text: one bar per run of a syntax color (spaces
+included), dimmed by `opacity.minimap`, and the visible part in
+`bg.minimap.viewport`. While the whole text fits, it does not scroll;
+otherwise it scrolls with the view, so its marked part moves like a
+thumb. A click or drag scrolls there. Only the lines it shows are read,
+at most the columns that fit, with one highlight query for all of them.
+The bars are cached until the text, the highlights, the shown lines or
+the colors change. It is hidden when the editor is too narrow.
+
+**Benchmarks** (`cargo bench -p editor --bench frame`; a whole prepaint and
+paint on GPUI's test platform, which does not rasterize glyphs; release,
+Windows 11, i5-13600K, 2026-11-05; budget for a frame: 8 ms):
+
+| Frame | 100 000 lines | one 4 MB line |
+|---|---|---|
+| repaint, nothing changed | 1.78 ms | 33 µs |
+| after typing a character | 1.75 ms | 55 µs |
+| after Page Down / Page Up | 1.79 ms | 33 µs |
+
+About 1.1 ms of a 100 000-line frame is painting the minimap's bars, on
+every repaint including cursor blinks. ROADMAP stage 10 tracks drawing
+the minimap once per change.
 
 **Highlighting and outline** (`syntax_state.rs`, see
 `docs/architecture/syntax.md`). `Editor::set_grammar` gives the editor a

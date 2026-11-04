@@ -53,6 +53,7 @@ icon_names! {
     Eye => "eye",
     File => "file",
     FileText => "file-text",
+    FileX => "file-x",
     Files => "files",
     Folder => "folder",
     FolderOpen => "folder-open",
@@ -72,6 +73,7 @@ icon_names! {
     Square => "square",
     Terminal => "terminal",
     Trash => "trash",
+    TriangleAlert => "triangle-alert",
     WholeWord => "whole-word",
     X => "x",
 }

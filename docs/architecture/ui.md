@@ -5,8 +5,10 @@ these components.
 
 **Components.** `Button` (primary / secondary / ghost, small / medium),
 `IconButton`, `Kbd`, `CountBadge`, `StatusLetter`, `EditorTab`, `PanelTab`,
-`SegmentedTab`, `Panel`, `SectionHeader`, `Card`, `ListRow`, `ActivityButton`,
-`SearchField`, `TextField`, `TextArea`, `Icon`, `Label`.
+`SegmentedTab`, `Panel`, `SectionHeader`, `Card`, `ListRow` (`code()`: code
+font in shorter rows, for symbols), `NoticeBar` (a message with actions
+above content, on `bg.notice`), `ActivityButton`, `SearchField`,
+`TextField`, `TextArea`, `Icon`, `Label`.
 
 **How they work.**
 - Stateless `RenderOnce` elements; all values come from `cx.theme()`.

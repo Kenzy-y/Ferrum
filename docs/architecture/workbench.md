@@ -24,6 +24,15 @@ the breadcrumbs of the file from the workspace root, and the tab. The
 status bar shows the active editor's position, indentation, encoding and
 line endings (LF, CRLF or Mixed).
 
+**Closing** (`closing.rs`). `workbench.closeWindow`, the platform's
+close (`Workbench::should_close`, registered by the application), our
+Linux close button and `app.quit` ask first when files are unsaved:
+Save all / Don't save / Cancel. The window closes only once every
+chosen save worked. `save_editor` asks before overwriting a file that
+changed on disk. Closing a tab with Save waits for the save too. Above
+an editor whose file changed or was deleted on disk, a `ui::NoticeBar`
+offers its commands (ADR 0004).
+
 **Commands.** Every action is a command (`command_ids`):
 `workbench.toggleSidebar`, `workbench.togglePanel`, `workbench.show*`.
 `register_commands` adds them to the registry. Buttons call the `Dispatch`

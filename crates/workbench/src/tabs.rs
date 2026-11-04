@@ -246,11 +246,28 @@ impl Workbench {
                 };
                 match answer {
                     0 => {
-                        if let TabContent::Editor(editor) = &content {
-                            // The write keeps running after the editor is gone.
-                            editor.update(cx, Editor::save);
-                        }
-                        workbench.remove_tab(index, window, cx);
+                        let TabContent::Editor(editor) = &content else {
+                            workbench.remove_tab(index, window, cx);
+                            return;
+                        };
+                        // The tab closes only if the file was saved.
+                        let save = workbench.save_editor(editor, window, cx);
+                        let content = content.clone();
+                        cx.spawn_in(window, async move |workbench, cx| {
+                            if !save.await {
+                                return;
+                            }
+                            let _ = workbench.update_in(cx, |workbench, window, cx| {
+                                if let Some(index) = workbench
+                                    .tabs
+                                    .iter()
+                                    .position(|tab| same_content(&tab.content, &content))
+                                {
+                                    workbench.remove_tab(index, window, cx);
+                                }
+                            });
+                        })
+                        .detach();
                     }
                     1 => workbench.remove_tab(index, window, cx),
                     _ => {}

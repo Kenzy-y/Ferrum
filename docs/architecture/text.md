@@ -25,7 +25,9 @@ Crate `text` (core layer, no GPUI): what the editor edits.
   `delete_word_*`, `delete_selections`, `move_cursors(Movement, extend)`,
   `add_cursor_vertically`, `select_all`, `set_line_endings` (one undo step,
   cursors keep their places). `version()` changes with the text.
-- `History` — each transaction stores its edits and the selections before
+- `History` — each transaction has an id (`state_id`: the text right
+  after it, back to an earlier value after undo); each transaction stores
+  its edits and the selections before
   and after, so undo and redo put the cursors back where they were.
   Consecutive typing, or consecutive deleting, is one undo step until the
   cursors move, typing pauses for `UNDO_GROUP_PAUSE` (1 s) or a new word

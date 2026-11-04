@@ -1,4 +1,6 @@
-//! Mouse input: clicks place cursors, drags select, the wheel scrolls.
+//! Mouse input: clicks place cursors, drags select, the wheel scrolls; the
+//! scrollbar thumb and the minimap are dragged to scroll, a click on the
+//! track or the minimap jumps there.
 
 use std::ops::Range;
 
@@ -18,11 +20,19 @@ pub(crate) enum Granularity {
 }
 
 /// A drag in progress.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Drag {
-    granularity: Granularity,
-    /// What the click itself selected (the word or line clicked).
-    origin: Range<usize>,
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum Drag {
+    /// Selecting text.
+    Select {
+        granularity: Granularity,
+        /// What the click itself selected (the word or line clicked).
+        origin: Range<usize>,
+    },
+    /// Moving the scrollbar thumb, held `grab` pixels below its top.
+    Thumb { grab: f32 },
+    /// Moving over the minimap, holding its marked part `grab` pixels below
+    /// its top.
+    Minimap { grab: f32 },
 }
 
 impl Editor {
@@ -36,6 +46,32 @@ impl Editor {
         let Some(layout) = self.layout.clone() else {
             return;
         };
+        let (x, y) = (event.position.x.as_f32(), event.position.y.as_f32());
+        if let Some(scrollbar) = layout.scrollbar.filter(|bar| bar.contains(x, y)) {
+            // On the thumb it is held where it was grabbed; on the track the
+            // thumb jumps there, held by its middle.
+            let grab = if scrollbar.on_thumb(y) {
+                y - scrollbar.thumb_top
+            } else {
+                scrollbar.thumb_height / 2.0
+            };
+            self.drag = Some(Drag::Thumb { grab });
+            self.set_scroll_y(scrollbar.scroll_for(y - grab), cx);
+            cx.stop_propagation();
+            return;
+        }
+        if let Some(minimap) = layout.minimap.filter(|map| map.contains(x, y)) {
+            let (top, height) = minimap.viewport();
+            let grab = if (top..=top + height).contains(&y) {
+                y - top
+            } else {
+                height / 2.0
+            };
+            self.drag = Some(Drag::Minimap { grab });
+            self.set_scroll_y(minimap.scroll_for(y, grab), cx);
+            cx.stop_propagation();
+            return;
+        }
         let buffer = self.document.buffer();
         let offset = layout.offset_at(buffer, event.position);
         let add = match self.settings.multi_cursor_modifier {
@@ -60,7 +96,7 @@ impl Editor {
                     .set_selections(&Selections::single(Selection::new(range.start, range.end)));
             }
         });
-        self.drag = Some(Drag {
+        self.drag = Some(Drag::Select {
             granularity,
             origin: if extend {
                 let anchor = self.document.selections().primary().anchor;
@@ -78,22 +114,48 @@ impl Editor {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let (Some(drag), Some(layout)) = (self.drag.clone(), self.layout.clone()) else {
+        let Some(layout) = self.layout.clone() else {
+            return;
+        };
+        let (x, y) = (event.position.x.as_f32(), event.position.y.as_f32());
+        let hovered = layout.scrollbar.is_some_and(|bar| bar.contains(x, y));
+        if hovered != self.scrollbar_hovered {
+            self.scrollbar_hovered = hovered;
+            cx.notify();
+        }
+        let Some(drag) = self.drag.clone() else {
             return;
         };
         if event.pressed_button != Some(gpui::MouseButton::Left) {
-            self.drag = None;
+            self.end_drag(cx);
             return;
         }
-        let offset = layout.offset_at(self.document.buffer(), event.position);
-        let unit = self.unit_at(drag.granularity, offset);
-        let selection = if unit.start < drag.origin.start {
-            Selection::new(drag.origin.end, unit.start)
-        } else {
-            Selection::new(drag.origin.start, unit.end.max(drag.origin.end))
-        };
-        if selection != self.document.selections().primary() {
-            self.change(cx, |document| document.set_primary_selection(selection));
+        match drag {
+            Drag::Thumb { grab } => {
+                if let Some(scrollbar) = layout.scrollbar {
+                    self.set_scroll_y(scrollbar.scroll_for(y - grab), cx);
+                }
+            }
+            Drag::Minimap { grab } => {
+                if let Some(minimap) = layout.minimap {
+                    self.set_scroll_y(minimap.scroll_for(y, grab), cx);
+                }
+            }
+            Drag::Select {
+                granularity,
+                origin,
+            } => {
+                let offset = layout.offset_at(self.document.buffer(), event.position);
+                let unit = self.unit_at(granularity, offset);
+                let selection = if unit.start < origin.start {
+                    Selection::new(origin.end, unit.start)
+                } else {
+                    Selection::new(origin.start, unit.end.max(origin.end))
+                };
+                if selection != self.document.selections().primary() {
+                    self.change(cx, |document| document.set_primary_selection(selection));
+                }
+            }
         }
     }
 
@@ -101,9 +163,27 @@ impl Editor {
         &mut self,
         _event: &MouseUpEvent,
         _window: &mut Window,
-        _cx: &mut Context<Self>,
+        cx: &mut Context<Self>,
     ) {
-        self.drag = None;
+        self.end_drag(cx);
+    }
+
+    fn end_drag(&mut self, cx: &mut Context<Self>) {
+        if matches!(self.drag.take(), Some(Drag::Thumb { .. })) {
+            cx.notify();
+        }
+    }
+
+    /// Whether the thumb is hovered or dragged (drawn brighter).
+    pub(crate) fn scrollbar_active(&self) -> bool {
+        self.scrollbar_hovered || matches!(self.drag, Some(Drag::Thumb { .. }))
+    }
+
+    fn set_scroll_y(&mut self, scroll_y: f32, cx: &mut Context<Self>) {
+        if (scroll_y - self.scroll_y).abs() > f32::EPSILON {
+            self.scroll_y = scroll_y;
+        }
+        cx.notify();
     }
 
     pub(crate) fn on_scroll(

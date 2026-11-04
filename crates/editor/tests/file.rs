@@ -1,4 +1,5 @@
-//! The editor follows its file on disk: renames, deletions.
+//! The editor follows its file on disk: changes, conflicts with unsaved
+//! edits, renames, deletions; and knows when the text is the saved one.
 
 #[cfg(test)]
 mod tests {
@@ -6,7 +7,7 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use editor::{Editor, EditorSettings};
+    use editor::{DiskState, Editor, EditorSettings};
     use fs::{FakeFs, Fs};
     use gpui::{TestAppContext, WindowHandle};
     use text::Document;
@@ -51,6 +52,40 @@ mod tests {
             .unwrap();
     }
 
+    fn save(window: WindowHandle<Editor>, cx: &mut TestAppContext) {
+        window
+            .update(cx, |editor, _, cx| editor.save(cx).detach())
+            .unwrap();
+    }
+
+    fn command(window: WindowHandle<Editor>, id: &str, cx: &mut TestAppContext) {
+        window
+            .update(cx, |editor, window, cx| {
+                assert!(editor.run_command(id, window, cx));
+            })
+            .unwrap();
+    }
+
+    fn disk_state(window: WindowHandle<Editor>, cx: &mut TestAppContext) -> DiskState {
+        window
+            .update(cx, |editor, _, _| editor.disk_state())
+            .unwrap()
+    }
+
+    fn dirty(window: WindowHandle<Editor>, cx: &mut TestAppContext) -> bool {
+        window.update(cx, |editor, _, _| editor.is_dirty()).unwrap()
+    }
+
+    fn text_of(window: WindowHandle<Editor>, cx: &mut TestAppContext) -> String {
+        window
+            .update(cx, |editor, _, _| editor.document().buffer().to_text())
+            .unwrap()
+    }
+
+    fn read(fs: &FakeFs, path: &str) -> String {
+        String::from_utf8(futures::executor::block_on(fs.read(Path::new(path))).unwrap()).unwrap()
+    }
+
     /// Name of the editor's file (fake paths are joined with the platform
     /// separator, so whole paths differ in spelling).
     fn file_name(window: WindowHandle<Editor>, cx: &mut TestAppContext) -> String {
@@ -75,7 +110,7 @@ mod tests {
         settle(cx);
         assert_eq!(file_name(window, cx), "b.rs");
 
-        window.update(cx, |editor, _, cx| editor.save(cx)).unwrap();
+        save(window, cx);
         settle(cx);
         let saved = futures::executor::block_on(fs.read(Path::new("/project/b.rs"))).unwrap();
         assert_eq!(saved, b"// edited\nfn a() {}\n");
@@ -92,5 +127,132 @@ mod tests {
         fs.remove("/project/a.rs");
         settle(cx);
         assert_eq!(file_name(window, cx), "a.rs");
+        assert_eq!(disk_state(window, cx), DiskState::Deleted);
+
+        // Saving again recreates it.
+        save(window, cx);
+        settle(cx);
+        assert_eq!(
+            read(&fs, "/project/a.rs"),
+            "fn a() {}
+"
+        );
+        assert_eq!(disk_state(window, cx), DiskState::InSync);
+    }
+
+    #[gpui::test]
+    fn a_change_on_disk_over_unsaved_edits_is_a_conflict(cx: &mut TestAppContext) {
+        let fs = Arc::new(FakeFs::new());
+        fs.insert_file(
+            "/project/a.rs",
+            "one
+",
+        );
+        let window = open(&fs, "/project/a.rs", cx);
+        type_text(window, "mine ", cx);
+        fs.insert_file(
+            "/project/a.rs",
+            "disk
+",
+        );
+        settle(cx);
+        assert_eq!(disk_state(window, cx), DiskState::Changed);
+        assert_eq!(
+            text_of(window, cx),
+            "mine one
+",
+            "the edits are kept"
+        );
+
+        // Loading from disk replaces them, and undo brings them back.
+        command(window, editor::RELOAD_FROM_DISK, cx);
+        assert_eq!(
+            text_of(window, cx),
+            "disk
+"
+        );
+        assert_eq!(disk_state(window, cx), DiskState::InSync);
+        assert!(!dirty(window, cx));
+        command(window, "editor.undo", cx);
+        assert_eq!(
+            text_of(window, cx),
+            "mine one
+"
+        );
+        assert!(dirty(window, cx));
+    }
+
+    #[gpui::test]
+    fn keeping_local_changes_overwrites_the_file_on_save(cx: &mut TestAppContext) {
+        let fs = Arc::new(FakeFs::new());
+        fs.insert_file(
+            "/project/a.rs",
+            "one
+",
+        );
+        let window = open(&fs, "/project/a.rs", cx);
+        type_text(window, "mine ", cx);
+        fs.insert_file(
+            "/project/a.rs",
+            "disk
+",
+        );
+        settle(cx);
+        command(window, editor::KEEP_LOCAL_CHANGES, cx);
+        assert_eq!(disk_state(window, cx), DiskState::InSync);
+        assert!(dirty(window, cx));
+        // Undoing everything is not the file either: it has the disk text.
+        command(window, "editor.undo", cx);
+        assert!(dirty(window, cx));
+        command(window, "editor.redo", cx);
+        save(window, cx);
+        settle(cx);
+        assert_eq!(
+            read(&fs, "/project/a.rs"),
+            "mine one
+"
+        );
+        assert!(!dirty(window, cx));
+    }
+
+    #[gpui::test]
+    fn undo_back_to_the_saved_text_is_not_dirty(cx: &mut TestAppContext) {
+        let fs = Arc::new(FakeFs::new());
+        fs.insert_file(
+            "/project/a.rs",
+            "one
+",
+        );
+        let window = open(&fs, "/project/a.rs", cx);
+        type_text(window, "x", cx);
+        assert!(dirty(window, cx));
+        command(window, "editor.undo", cx);
+        assert!(!dirty(window, cx));
+        command(window, "editor.redo", cx);
+        assert!(dirty(window, cx));
+    }
+
+    #[gpui::test]
+    fn a_change_on_disk_without_edits_is_read_again(cx: &mut TestAppContext) {
+        let fs = Arc::new(FakeFs::new());
+        fs.insert_file(
+            "/project/a.rs",
+            "one
+",
+        );
+        let window = open(&fs, "/project/a.rs", cx);
+        fs.insert_file(
+            "/project/a.rs",
+            "two
+",
+        );
+        settle(cx);
+        assert_eq!(
+            text_of(window, cx),
+            "two
+"
+        );
+        assert_eq!(disk_state(window, cx), DiskState::InSync);
+        assert!(!dirty(window, cx));
     }
 }

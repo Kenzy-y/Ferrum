@@ -178,11 +178,14 @@ command-editor-newline = Новая строка
 command-editor-indent = Увеличить отступ
 command-editor-outdent = Уменьшить отступ
 command-editor-save = Сохранить
+command-editor-reload-from-disk = Загрузить с диска
+command-editor-keep-local-changes = Оставить мои изменения
 command-editor-line-endings-lf = Привести окончания строк к LF
 command-editor-line-endings-crlf = Привести окончания строк к CRLF
 command-workbench-close-tab = Закрыть вкладку
 command-workbench-next-tab = Следующая вкладка
 command-workbench-previous-tab = Предыдущая вкладка
+command-workbench-close-window = Закрыть окно
 command-workbench-focus-outline = Перейти к структуре
 command-workbench-toggle-outline = Свернуть или развернуть структуру
 editor-close-unsaved = Сохранить изменения в { $name }?
@@ -191,6 +194,20 @@ editor-untitled = Без имени
 editor-close-save = Сохранить
 editor-close-discard = Не сохранять
 editor-close-cancel = Отмена
+editor-overwrite = { $name } изменён на диске. Перезаписать его вашей версией?
+editor-overwrite-detail = Изменения на диске пропадут.
+editor-overwrite-confirm = Перезаписать
+window-close-unsaved = { $count ->
+    [one] Сохранить изменения в { $count } файле?
+   *[other] Сохранить изменения в { $count } файлах?
+}
+window-close-save-all = Сохранить всё
+editor-disk-changed = Файл изменён на диске.
+editor-disk-deleted = Файл удалён на диске.
+editor-disk-reload = Загрузить с диска
+editor-disk-keep = Оставить мои
+editor-disk-save-again = Сохранить заново
+editor-disk-close = Закрыть
 editor-open-binary = { $name } — двоичный файл, его нельзя открыть как текст.
 editor-open-not-utf8 = { $name } не в кодировке UTF-8. Другие кодировки пока не поддерживаются.
 editor-open-failed = Не удалось открыть { $name }: { $error }

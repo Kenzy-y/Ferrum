@@ -5,9 +5,23 @@
 //! logic over offsets.
 
 use std::ops::Range;
+use std::sync::atomic::AtomicBool;
+use std::time::Duration;
 
-use syntax::HighlightSpan;
+use gpui::Context;
+use syntax::{HighlightSpan, SyntaxTree};
 use text::TextEdit;
+
+use crate::editor::Editor;
+
+/// Full parses slower than this get patches.
+const SLOW_PARSE: Duration = Duration::from_millis(8);
+
+/// Largest text a patch parses; wider edits wait for the full parse.
+const MAX_PATCH_BYTES: usize = 64 * 1024;
+
+/// Batches with more edits than this (many cursors) get no patch.
+const MAX_PATCH_EDITS: usize = 8;
 
 /// Highlights of `range`, from a parse of just that text.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -107,6 +121,68 @@ fn map_offset(offset: usize, edit: &TextEdit, start_side: bool) -> usize {
         edit.start
     } else {
         edit.new_end
+    }
+}
+
+impl Editor {
+    /// When full parses of this text are slow, parses just the items
+    /// around `edits` in the background, so the edited text is colored
+    /// within milliseconds while the full parse runs.
+    pub(crate) fn start_patch(&mut self, edits: &[TextEdit], cx: &mut Context<Self>) {
+        let rope = self.document.buffer().rope().clone();
+        let Some(syntax) = &mut self.syntax else {
+            return;
+        };
+        let (Some(grammar), Some(tree)) = (syntax.grammar.clone(), syntax.tree.clone()) else {
+            return;
+        };
+        if syntax.job.is_none() || syntax.parse_time < SLOW_PARSE || edits.len() > MAX_PATCH_EDITS {
+            return;
+        }
+        let Some(edited) = edited_range(edits) else {
+            return;
+        };
+        // Keep covering earlier edits the full parse has not caught up with.
+        let region = syntax.patch.as_ref().map_or(edited.clone(), |patch| {
+            edited.start.min(patch.range.start)..edited.end.max(patch.range.end)
+        });
+        let generation = syntax.generation;
+        let timeout = syntax.settings.parse_timeout();
+        let task = cx.spawn(async move |editor, cx| {
+            let patch = cx
+                .background_executor()
+                .spawn(async move {
+                    let mut range = tree.top_level_span(region);
+                    if range.len() > MAX_PATCH_BYTES {
+                        range = tree.top_level_span(edited);
+                    }
+                    if range.len() > MAX_PATCH_BYTES {
+                        return None;
+                    }
+                    let part = SyntaxTree::parse_range(
+                        &grammar,
+                        &rope,
+                        range.clone(),
+                        timeout,
+                        &AtomicBool::new(false),
+                    )
+                    .ok()?;
+                    let spans = syntax::highlights(&grammar, &part, &rope, range.clone());
+                    Some(Patch { range, spans })
+                })
+                .await;
+            let _ = editor.update(cx, |editor, cx| {
+                if let Some(syntax) = &mut editor.syntax
+                    && syntax.generation == generation
+                    && syntax.job.is_some()
+                {
+                    syntax.patch = patch;
+                    syntax.patch_revision += 1;
+                    cx.notify();
+                }
+            });
+        });
+        syntax.patch_task = Some(task);
     }
 }
 

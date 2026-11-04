@@ -59,6 +59,8 @@ mono = "JetBrains Mono"
 "bg.diff.added" = "#21332B"
 "bg.diff.removed" = "#382427"
 "bg.scrollbar.thumb" = "#30353D"
+"bg.scrollbar.thumb.hover" = "#3D434C"  # not in the mockups: hovered or dragged thumb
+"bg.minimap.viewport" = "#FFFFFF09"   # the visible part: white at 3.5%
 "bg.selection" = "#3C2F2A"            # not in the mockups: accent at 22% over bg.editor; approved 2026-11-04
 "bg.selection.inactive" = "#292221"   # not in the mockups: accent at 12% over bg.editor; approved 2026-11-04
 "cursor" = "#E0B69D"
@@ -123,3 +125,4 @@ inlay_hint = "#56616F"
 
 [opacity]
 disabled = 0.45
+minimap = 0.4                         # syntax colors of minimap bars

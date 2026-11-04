@@ -204,6 +204,10 @@ impl Buffer {
         end..next
     }
 
+    pub(crate) fn set_bom(&mut self, bom: bool) {
+        self.bom = bom;
+    }
+
     /// Whether the file had a UTF-8 BOM.
     pub fn has_bom(&self) -> bool {
         self.bom

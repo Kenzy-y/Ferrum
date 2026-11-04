@@ -8,6 +8,7 @@
 
 mod activity_bar;
 mod bottom_panel;
+mod closing;
 pub mod command_ids;
 mod editor_area;
 mod explorer;
@@ -142,6 +143,7 @@ pub struct Workbench {
     active_tab: Option<usize>,
     file_icons: Arc<FileIcons>,
     outline: outline::OutlineSection,
+    closing: closing::Closing,
 }
 
 impl Workbench {
@@ -179,6 +181,7 @@ impl Workbench {
             active_tab: None,
             file_icons: Arc::new(FileIcons::new()),
             outline: outline::OutlineSection::default(),
+            closing: closing::Closing::default(),
         }
     }
 
@@ -213,6 +216,16 @@ impl Workbench {
         match id.as_str() {
             command_ids::CLOSE_TAB => {
                 self.close_active_tab(window, cx);
+                return true;
+            }
+            command_ids::CLOSE_WINDOW => {
+                self.close(closing::AfterClose::CloseWindow, window, cx);
+                return true;
+            }
+            editor::SAVE => {
+                if let Some(editor) = self.active_editor() {
+                    self.save_editor(&editor, window, cx).detach();
+                }
                 return true;
             }
             command_ids::FOCUS_OUTLINE => {

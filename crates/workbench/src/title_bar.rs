@@ -159,7 +159,7 @@ pub(crate) fn render(
     let leading = leading(workbench, cx);
     let search = search(workbench, cx);
     let actions = actions(workbench, cx);
-    let controls = window_controls::render(window, cx);
+    let controls = window_controls::render(window, &workbench.dispatch, cx);
 
     let theme = cx.theme();
     let size = &theme.metrics.size;

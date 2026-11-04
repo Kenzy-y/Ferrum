@@ -39,9 +39,25 @@ impl Document {
     pub fn reload(&mut self, buffer: Buffer) {
         self.buffer = buffer;
         self.selections = super::clamp_selections(&self.selections, &self.buffer);
-        self.history = crate::History::default();
+        self.history.clear();
         self.changes.replaced();
         self.version += 1;
+    }
+
+    /// Replaces the whole text with `buffer` as one undoable edit (the file
+    /// was loaded again on purpose): undo brings the previous text back.
+    /// Selections are kept where they fit.
+    pub fn replace_all(&mut self, buffer: &Buffer) {
+        let before = self.selections.clone();
+        let text = buffer.rope().to_string();
+        self.apply(
+            vec![(0..self.buffer.len(), text)],
+            EditKind::Other,
+            None,
+            &Placement::Keep,
+        );
+        self.buffer.set_bom(buffer.has_bom());
+        self.selections = super::clamp_selections(&before, &self.buffer);
     }
 
     /// Replaces the primary selection (and keeps the others).

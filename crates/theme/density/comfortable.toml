@@ -65,6 +65,14 @@
 "cursor.height" = 19
 "scrollbar.width" = 4
 "scrollbar.inset" = 5
+"minimap.width" = 100
+"minimap.right" = 26                # minimap to the panel edge (the scrollbar sits there)
+"minimap.bottom" = 32
+"minimap.inset" = 4                 # bars to the minimap edge
+"minimap.radius" = 6
+"minimap.line_height" = 4
+"minimap.bar_height" = 1.5
+"minimap.char_width" = 1.25
 
 [space]
 "xxs" = 2

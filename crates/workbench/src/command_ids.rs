@@ -29,6 +29,9 @@ pub const NEXT_TAB: &str = "workbench.nextTab";
 /// Activates the previous tab.
 pub const PREVIOUS_TAB: &str = "workbench.previousTab";
 
+/// Closes the window, asking about unsaved files.
+pub const CLOSE_WINDOW: &str = "workbench.closeWindow";
+
 /// Shows the Explorer and moves the focus to its Outline section.
 pub const FOCUS_OUTLINE: &str = "workbench.focusOutline";
 /// Expands or collapses the Outline section of the Explorer.
@@ -57,6 +60,7 @@ pub(crate) const ALL: &[(&str, &str)] = &[
     (CLOSE_TAB, "command-workbench-close-tab"),
     (NEXT_TAB, "command-workbench-next-tab"),
     (PREVIOUS_TAB, "command-workbench-previous-tab"),
+    (CLOSE_WINDOW, "command-workbench-close-window"),
     (FOCUS_OUTLINE, "command-workbench-focus-outline"),
     (TOGGLE_OUTLINE, "command-workbench-toggle-outline"),
 ];

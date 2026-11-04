@@ -358,3 +358,42 @@ fn tracked_changes_list_edits_in_the_order_applied() {
     let changes = document.take_changes();
     assert!(changes.replaced && changes.edits.is_empty());
 }
+
+#[test]
+fn undo_back_to_the_saved_text_restores_its_state_id() {
+    let mut document = document("|");
+    let saved = document.mark_saved();
+    document.insert("a");
+    assert_ne!(document.state_id(), saved);
+    document.undo();
+    assert_eq!(
+        document.state_id(),
+        saved,
+        "undo brought the saved text back"
+    );
+    document.redo();
+    let typed = document.mark_saved();
+    // Typing right after a save does not join the saved step.
+    document.insert("b");
+    assert_ne!(document.state_id(), typed);
+    document.undo();
+    assert_eq!(document.state_id(), typed);
+
+    document.reload(crate::Buffer::from_text("new"));
+    assert_ne!(document.state_id(), saved);
+    assert_ne!(document.state_id(), typed);
+}
+
+#[test]
+fn replacing_the_whole_text_can_be_undone() {
+    let mut document = document("mine|");
+    document.replace_all(&crate::Buffer::from_text("\u{feff}disk\r\n"));
+    assert_eq!(document.buffer().to_text(), "\u{feff}disk\r\n");
+    assert_eq!(
+        document.selections().primary().head,
+        4,
+        "the cursor stays where it fits"
+    );
+    document.undo();
+    assert_eq!(document.buffer().rope().to_string(), "mine");
+}

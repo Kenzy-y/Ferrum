@@ -75,6 +75,8 @@ pub struct Fonts {
 pub struct OpacityTokens {
     /// Applied to disabled controls.
     pub disabled: f32,
+    /// Applied to the syntax colors of minimap bars.
+    pub minimap: f32,
 }
 
 #[derive(Debug, Deserialize)]

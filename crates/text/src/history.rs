@@ -39,6 +39,8 @@ type Step = Vec<Edit>;
 /// One undo step: the steps it groups and the selections around it.
 #[derive(Debug, Clone)]
 struct Transaction {
+    /// Identifies the text right after this transaction.
+    id: u64,
     steps: Vec<Step>,
     kind: EditKind,
     selections_before: Selections,
@@ -55,6 +57,9 @@ pub struct History {
     undo: VecDeque<Transaction>,
     redo: Vec<Transaction>,
     limit: usize,
+    /// Identifies the text before the oldest transaction kept.
+    base_id: u64,
+    next_id: u64,
 }
 
 /// Undo steps kept by default.
@@ -73,7 +78,26 @@ impl History {
             undo: VecDeque::new(),
             redo: Vec::new(),
             limit,
+            base_id: 0,
+            next_id: 1,
         }
+    }
+
+    /// Identifies the current text: a new value after every new edit, an
+    /// earlier value again when undo or redo bring that text back. Edits
+    /// that join a transaction keep its value, so whoever compares values
+    /// (the saved state) calls [`Self::break_group`] when taking one.
+    pub fn state_id(&self) -> u64 {
+        self.undo.back().map_or(self.base_id, |last| last.id)
+    }
+
+    /// Forgets every step (the text was replaced); the text gets a value
+    /// never used before.
+    pub(crate) fn clear(&mut self) {
+        self.undo.clear();
+        self.redo.clear();
+        self.base_id = self.next_id;
+        self.next_id += 1;
     }
 
     /// Whether there is something to undo.
@@ -113,7 +137,10 @@ impl History {
             last.last_typed = typed;
             return;
         }
+        let id = self.next_id;
+        self.next_id += 1;
         self.undo.push_back(Transaction {
+            id,
             steps: vec![step],
             kind,
             selections_before: before,
@@ -121,8 +148,10 @@ impl History {
             last_edit: at,
             last_typed: typed,
         });
-        if self.undo.len() > self.limit {
-            self.undo.pop_front();
+        if self.undo.len() > self.limit
+            && let Some(oldest) = self.undo.pop_front()
+        {
+            self.base_id = oldest.id;
         }
     }
 

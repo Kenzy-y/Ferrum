@@ -178,11 +178,14 @@ command-editor-newline = New line
 command-editor-indent = Indent
 command-editor-outdent = Outdent
 command-editor-save = Save
+command-editor-reload-from-disk = Reload from disk
+command-editor-keep-local-changes = Keep my changes
 command-editor-line-endings-lf = Convert line endings to LF
 command-editor-line-endings-crlf = Convert line endings to CRLF
 command-workbench-close-tab = Close tab
 command-workbench-next-tab = Next tab
 command-workbench-previous-tab = Previous tab
+command-workbench-close-window = Close window
 command-workbench-focus-outline = Focus outline
 command-workbench-toggle-outline = Toggle outline
 editor-close-unsaved = Save changes to { $name }?
@@ -191,6 +194,20 @@ editor-untitled = Untitled
 editor-close-save = Save
 editor-close-discard = Don't save
 editor-close-cancel = Cancel
+editor-overwrite = { $name } changed on disk. Overwrite it with your version?
+editor-overwrite-detail = The changes on disk will be lost.
+editor-overwrite-confirm = Overwrite
+window-close-unsaved = { $count ->
+    [one] Save changes to { $count } file?
+   *[other] Save changes to { $count } files?
+}
+window-close-save-all = Save all
+editor-disk-changed = The file changed on disk.
+editor-disk-deleted = The file was deleted on disk.
+editor-disk-reload = Reload from disk
+editor-disk-keep = Keep mine
+editor-disk-save-again = Save again
+editor-disk-close = Close
 editor-open-binary = { $name } is a binary file and cannot be opened as text.
 editor-open-not-utf8 = { $name } is not UTF-8 text. Other encodings are not supported yet.
 editor-open-failed = Cannot open { $name }: { $error }

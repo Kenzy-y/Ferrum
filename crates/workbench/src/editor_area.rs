@@ -3,15 +3,17 @@
 
 use std::path::{Component, Path};
 
+use commands::CommandId;
+use editor::DiskState;
 use gpui::{
     AnyElement, Context, IntoElement, ParentElement as _, SharedString, Styled as _, div, px,
 };
 use syntax::OutlineItem;
 use theme::ActiveTheme as _;
-use ui::{EditorTab, Icon, IconName, Label, Panel, PanelSurface};
+use ui::{Button, ButtonVariant, EditorTab, Icon, IconName, Label, NoticeBar, Panel, PanelSurface};
 
 use crate::tabs::TabContent;
-use crate::{Workbench, file_icons, symbol_icons, welcome};
+use crate::{Workbench, command_ids, file_icons, symbol_icons, welcome};
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -26,6 +28,10 @@ pub(crate) fn render(
     };
     let strip = tab_strip(workbench, active, cx);
     let tab = &workbench.tabs[active];
+    let notice = match &tab.content {
+        TabContent::Editor(editor) => disk_notice(workbench, editor.read(cx).disk_state()),
+        TabContent::View { .. } => None,
+    };
     let (breadcrumbs, content): (Option<AnyElement>, AnyElement) = match &tab.content {
         TabContent::Editor(editor) => (
             Some({
@@ -41,7 +47,54 @@ pub(crate) fn render(
     panel
         .child(strip)
         .children(breadcrumbs)
+        .children(notice)
         .child(div().flex_1().min_h_0().child(content))
+}
+
+/// The bar above an editor whose file changed or was deleted on disk;
+/// every button is a command.
+fn disk_notice(workbench: &Workbench, state: DiskState) -> Option<AnyElement> {
+    let button = |id: &'static str, label: &str, command: &'static str| {
+        let dispatch = workbench.dispatch.clone();
+        Button::new(id, workbench.text(label))
+            .variant(ButtonVariant::Secondary)
+            .on_activate(move |window, cx| {
+                if let Ok(id) = CommandId::new(command) {
+                    dispatch(&id, window, cx);
+                }
+            })
+    };
+    let bar = match state {
+        DiskState::InSync => return None,
+        DiskState::Changed => NoticeBar::new(
+            IconName::TriangleAlert,
+            workbench.text("editor-disk-changed"),
+        )
+        .action(button(
+            "disk-reload",
+            "editor-disk-reload",
+            editor::RELOAD_FROM_DISK,
+        ))
+        .action(button(
+            "disk-keep",
+            "editor-disk-keep",
+            editor::KEEP_LOCAL_CHANGES,
+        )),
+        DiskState::Deleted => {
+            NoticeBar::new(IconName::FileX, workbench.text("editor-disk-deleted"))
+                .action(button(
+                    "disk-save-again",
+                    "editor-disk-save-again",
+                    editor::SAVE,
+                ))
+                .action(button(
+                    "disk-close",
+                    "editor-disk-close",
+                    command_ids::CLOSE_TAB,
+                ))
+        }
+    };
+    Some(bar.into_any_element())
 }
 
 fn tab_strip(workbench: &Workbench, active: usize, cx: &mut Context<Workbench>) -> AnyElement {

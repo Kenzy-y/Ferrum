@@ -4,28 +4,25 @@
 use std::rc::Rc;
 
 use gpui::{
-    App, Bounds, ContentMask, Element, ElementId, ElementInputHandler, Entity, Font,
-    GlobalElementId, Hsla, InspectorElementId, IntoElement, LayoutId, PaintQuad, Pixels,
-    ShapedLine, SharedString, Style, TextAlign, TextRun, Window, fill, point, px, relative, size,
+    App, Bounds, ContentMask, CursorStyle, Element, ElementId, ElementInputHandler, Entity,
+    GlobalElementId, Hitbox, HitboxBehavior, Hsla, InspectorElementId, IntoElement, LayoutId,
+    PaintQuad, Pixels, ShapedLine, Style, TextAlign, Window, point, px, relative, size,
 };
 use text::Buffer;
 use theme::{ActiveTheme as _, Theme};
 
-use crate::display::DisplayLine;
 use crate::editor::Editor;
 use crate::layout::{LayoutSnapshot, ShapedRow};
-use crate::runs::{RunStyle, text_runs};
+use crate::minimap::{Minimap, MinimapView};
+use crate::runs::RunStyle;
 use crate::scene::{Scene, near_rows};
-use crate::viewport::{
-    LONG_LINE_CHARS, column_window, follow_row, follow_x, max_scroll_y, to_f32, visible_rows,
-};
+use crate::scrollbar::{Scrollbar, ScrollbarFrame};
+use crate::shaping::{Metrics, head_x, shape_row};
+use crate::viewport::{follow_row, follow_x, max_scroll_y, to_f32, visible_rows};
 
 /// The fewest digits the line number column is wide for, so the text does
 /// not move while a short file grows (four in the mockups).
 const MIN_LINE_NUMBER_DIGITS: usize = 4;
-
-/// Smallest scrollbar thumb, in pixels, so it stays easy to see.
-const MIN_THUMB_HEIGHT: f32 = 24.0;
 
 /// Columns kept visible right of the cursor when scrolling follows it.
 const AUTOSCROLL_MARGIN_COLUMNS: f32 = 4.0;
@@ -48,46 +45,6 @@ impl IntoElement for EditorElement {
     }
 }
 
-/// Fonts and measures of the text, from the theme.
-struct Metrics {
-    font: Font,
-    font_size: Pixels,
-    number_size: Pixels,
-    line_height: f32,
-    char_width: f32,
-    number_char_width: f32,
-    /// Height of a line number glyph box: numbers sit at the top of the
-    /// row, as in the mockups.
-    number_height: f32,
-}
-
-impl Metrics {
-    fn new(theme: &Theme, window: &Window) -> Self {
-        let font = gpui::font(SharedString::from(theme.fonts.mono.clone()));
-        let font_size = px(theme.metrics.font_size.code);
-        let number_size = px(theme.metrics.font_size.code_small);
-        let text_system = window.text_system();
-        let font_id = text_system.resolve_font(&font);
-        let width = |size: Pixels| {
-            text_system
-                .advance(font_id, size, 'm')
-                .map_or(size.as_f32() * 0.6, |advance| advance.width.as_f32())
-        };
-        let number_height = (text_system.ascent(font_id, number_size)
-            + text_system.descent(font_id, number_size))
-        .as_f32();
-        Self {
-            char_width: width(font_size),
-            number_char_width: width(number_size),
-            font,
-            font_size,
-            number_size,
-            line_height: theme.metrics.size.code_line_height,
-            number_height,
-        }
-    }
-}
-
 /// Everything prepared for painting.
 pub(crate) struct Prepaint {
     /// Clip of the text area (text must not cover the line numbers).
@@ -99,6 +56,10 @@ pub(crate) struct Prepaint {
     number_height: f32,
     cursors: Vec<PaintQuad>,
     scrollbar: Option<PaintQuad>,
+    /// Background, bars and visible part of the minimap.
+    minimap: Vec<PaintQuad>,
+    /// Areas with the arrow cursor (scrollbar, minimap).
+    arrow_areas: Vec<Hitbox>,
     /// Text origins of the visible rows (same order as the snapshot rows).
     origins: Vec<gpui::Point<Pixels>>,
     snapshot: Option<LayoutSnapshot>,
@@ -141,17 +102,36 @@ impl Element for EditorElement {
         let _span = tracing::trace_span!("editor.prepaint").entered();
         let theme = cx.theme().clone();
         let metrics = Metrics::new(&theme, window);
+        let editor = self.editor.read(cx);
         let frame = Frame::new(
             &theme,
             &metrics,
             bounds,
-            self.editor.read(cx).document.buffer(),
+            editor.document.buffer(),
+            editor.settings.minimap,
         );
         self.editor.update(cx, |editor, _| {
             frame.follow_cursor(editor, &metrics, window);
         });
         let editor = self.editor.read(cx);
-        frame.prepaint(editor, &theme, &metrics, window)
+        let mut prepaint = frame.prepaint(editor, &theme, &metrics, window);
+        if let Some(snapshot) = &prepaint.snapshot {
+            let areas = [
+                snapshot.scrollbar.map(|scrollbar| scrollbar.hit_bounds()),
+                snapshot.minimap.map(|minimap| {
+                    Bounds::new(
+                        point(px(minimap.left), px(minimap.top)),
+                        size(px(minimap.width), px(minimap.height)),
+                    )
+                }),
+            ];
+            prepaint.arrow_areas = areas
+                .into_iter()
+                .flatten()
+                .map(|area| window.insert_hitbox(area, HitboxBehavior::Normal))
+                .collect();
+        }
+        prepaint
     }
 
     fn paint(
@@ -208,8 +188,14 @@ impl Element for EditorElement {
                 cx,
             );
         }
+        for quad in prepaint.minimap.drain(..) {
+            window.paint_quad(quad);
+        }
         if let Some(thumb) = prepaint.scrollbar.take() {
             window.paint_quad(thumb);
+        }
+        for area in &prepaint.arrow_areas {
+            window.set_cursor_style(CursorStyle::Arrow, area);
         }
         if let Some(snapshot) = snapshot {
             self.editor.update(cx, |editor, _| {
@@ -231,10 +217,21 @@ struct Frame {
     text_y: f32,
     text_width: f32,
     text_height: f32,
+    /// Window x of the right edge of the text area: the minimap's left
+    /// edge less the margin, or the editor's right edge less it.
+    text_right: f32,
+    /// Window x of the minimap's right edge, if it is shown.
+    minimap_right: Option<f32>,
 }
 
 impl Frame {
-    fn new(theme: &Theme, metrics: &Metrics, bounds: Bounds<Pixels>, buffer: &Buffer) -> Self {
+    fn new(
+        theme: &Theme,
+        metrics: &Metrics,
+        bounds: Bounds<Pixels>,
+        buffer: &Buffer,
+        minimap: bool,
+    ) -> Self {
         let size = &theme.metrics.size;
         let digits = buffer
             .line_count()
@@ -243,14 +240,106 @@ impl Frame {
             .max(MIN_LINE_NUMBER_DIGITS);
         let numbers_end = size.editor_inset + to_f32(digits) * metrics.number_char_width;
         let text_x = numbers_end + size.editor_gutter_gap;
+        let right = bounds.right().as_f32();
+        // The minimap only while the text keeps a usable width beside it.
+        let room = bounds.size.width.as_f32() - text_x;
+        let needed = size.minimap_width + size.minimap_right + size.editor_right * 2.0;
+        let minimap_right = (minimap && room > needed).then_some(right - size.minimap_right);
+        let text_right =
+            minimap_right.map_or(right, |edge| edge - size.minimap_width) - size.editor_right;
         Self {
             bounds,
             numbers_end,
             text_x,
             text_y: size.editor_top,
-            text_width: (bounds.size.width.as_f32() - text_x - size.editor_right).max(0.0),
+            text_width: (text_right - bounds.left().as_f32() - text_x).max(0.0),
             text_height: (bounds.size.height.as_f32() - size.editor_top).max(0.0),
+            text_right,
+            minimap_right,
         }
+    }
+
+    /// Shapes the visible rows with their highlights.
+    fn shape_rows(
+        &self,
+        editor: &Editor,
+        theme: &Theme,
+        metrics: &Metrics,
+        rows: std::ops::Range<usize>,
+        window: &Window,
+    ) -> Vec<ShapedRow> {
+        let buffer = editor.document.buffer();
+        let colors = editor
+            .syntax
+            .as_ref()
+            .map(|syntax| {
+                if !rows.is_empty() {
+                    let visible =
+                        buffer.line_range(rows.start).start..buffer.line_range(rows.end - 1).end;
+                    syntax.prepare(buffer, visible);
+                }
+                syntax.colors(&theme.syntax)
+            })
+            .unwrap_or_default();
+        let style = RunStyle {
+            font: &metrics.font,
+            plain: Hsla::from(theme.syntax.plain),
+            colors: &colors,
+        };
+        rows.map(|row| {
+            shape_row(
+                buffer,
+                row,
+                editor,
+                self.text_width,
+                metrics,
+                &style,
+                window,
+            )
+        })
+        .collect()
+    }
+
+    /// The scrollbar and the minimap for the editor's scroll position.
+    fn scroll_parts(
+        &self,
+        editor: &Editor,
+        theme: &Theme,
+        metrics: &Metrics,
+    ) -> (Option<Scrollbar>, Option<Minimap>) {
+        let buffer = editor.document.buffer();
+        let tokens = &theme.metrics.size;
+        let top = self.bounds.top().as_f32();
+        let max_y = max_scroll_y(buffer.line_count(), metrics.line_height);
+        let scrollbar = Scrollbar::new(
+            &ScrollbarFrame {
+                right: self.bounds.right().as_f32(),
+                top,
+                height: self.bounds.size.height.as_f32(),
+                text_height: self.text_height,
+                width: tokens.scrollbar_width,
+                inset: tokens.scrollbar_inset,
+            },
+            to_f32(buffer.line_count()) * metrics.line_height,
+            editor.scroll_y,
+            max_y,
+        );
+        let minimap = self.minimap_right.and_then(|right| {
+            Minimap::new(
+                right,
+                top + self.text_y,
+                self.bounds.size.height.as_f32() - self.text_y - tokens.minimap_bottom,
+                &MinimapView {
+                    line_count: buffer.line_count(),
+                    scroll_y: editor.scroll_y,
+                    max_scroll_y: max_y,
+                    line_height: metrics.line_height,
+                    text_height: self.text_height,
+                },
+                theme,
+            )
+        });
+        (scrollbar, minimap)
     }
 
     /// Scrolls so the primary cursor is visible, if the editor asked for it.
@@ -285,40 +374,11 @@ impl Frame {
             metrics.line_height,
             buffer.line_count(),
         );
-        let colors = editor
-            .syntax
-            .as_ref()
-            .map(|syntax| {
-                if !rows.is_empty() {
-                    let visible =
-                        buffer.line_range(rows.start).start..buffer.line_range(rows.end - 1).end;
-                    syntax.prepare(buffer, visible);
-                }
-                syntax.colors(&theme.syntax)
-            })
-            .unwrap_or_default();
-        let style = RunStyle {
-            font: &metrics.font,
-            plain: Hsla::from(theme.syntax.plain),
-            colors: &colors,
-        };
-        let shaped: Vec<ShapedRow> = rows
-            .clone()
-            .map(|row| {
-                shape_row(
-                    buffer,
-                    row,
-                    editor,
-                    self.text_width,
-                    metrics,
-                    &style,
-                    window,
-                )
-            })
-            .collect();
+        let shaped = self.shape_rows(editor, theme, metrics, rows.clone(), window);
         let widest = shaped.iter().map(|row| row.width).fold(0.0_f32, f32::max);
         let max_scroll_x = (widest + metrics.char_width * 2.0 - self.text_width).max(0.0);
         let scroll_x = editor.scroll_x.clamp(0.0, max_scroll_x);
+        let (scrollbar, minimap) = self.scroll_parts(editor, theme, metrics);
         let snapshot = LayoutSnapshot {
             scroll_x,
             max_scroll_x,
@@ -328,6 +388,8 @@ impl Frame {
             char_width: metrics.char_width,
             text_height: self.text_height,
             rows: shaped,
+            scrollbar,
+            minimap,
         };
         let selections: Vec<text::Selection> =
             editor.document.selections().iter().copied().collect();
@@ -338,7 +400,7 @@ impl Frame {
             near: near_rows(&selections, buffer, &rows),
             rows,
             numbers_end: left + self.numbers_end,
-            highlight_right: self.bounds.right().as_f32() - theme.metrics.size.editor_right,
+            highlight_right: self.text_right,
         };
         let mut backgrounds = scene.current_lines();
         backgrounds.extend(scene.selections());
@@ -357,7 +419,7 @@ impl Frame {
             text_area: Bounds::new(
                 point(px(left + self.text_x), self.bounds.top()),
                 size(
-                    px(self.text_width + theme.metrics.size.editor_right),
+                    px(self.text_right - left - self.text_x + theme.metrics.size.editor_right),
                     self.bounds.size.height,
                 ),
             ),
@@ -365,119 +427,21 @@ impl Frame {
             numbers,
             number_height: metrics.number_height,
             cursors,
-            scrollbar: self.thumb(editor, buffer, theme, metrics),
+            scrollbar: snapshot.scrollbar.map(|scrollbar| {
+                let color = if editor.scrollbar_active() {
+                    theme.colors.bg_scrollbar_thumb_hover
+                } else {
+                    theme.colors.bg_scrollbar_thumb
+                };
+                scrollbar.quad(Hsla::from(color))
+            }),
+            minimap: snapshot
+                .minimap
+                .map(|minimap| editor.minimap_quads(&minimap, theme))
+                .unwrap_or_default(),
+            arrow_areas: Vec::new(),
             origins,
             snapshot: Some(snapshot),
         }
     }
-
-    /// The vertical scrollbar thumb, if the text is taller than the view.
-    fn thumb(
-        &self,
-        editor: &Editor,
-        buffer: &Buffer,
-        theme: &Theme,
-        metrics: &Metrics,
-    ) -> Option<PaintQuad> {
-        let size = &theme.metrics.size;
-        let max_y = max_scroll_y(buffer.line_count(), metrics.line_height);
-        let content = to_f32(buffer.line_count()) * metrics.line_height;
-        if content <= self.text_height || max_y <= 0.0 {
-            return None;
-        }
-        let track = self.bounds.size.height.as_f32();
-        let thumb = (track * self.text_height / (max_y + self.text_height)).max(MIN_THUMB_HEIGHT);
-        let y = self.bounds.top().as_f32() + (track - thumb) * (editor.scroll_y / max_y);
-        let x = self.bounds.right().as_f32() - size.scrollbar_inset - size.scrollbar_width;
-        Some(
-            fill(
-                Bounds::new(
-                    point(px(x), px(y)),
-                    gpui::size(px(size.scrollbar_width), px(thumb)),
-                ),
-                Hsla::from(theme.colors.bg_scrollbar_thumb),
-            )
-            .corner_radii(px(size.scrollbar_width / 2.0)),
-        )
-    }
-}
-
-/// Shapes the visible part of `row`.
-fn shape_row(
-    buffer: &Buffer,
-    row: usize,
-    editor: &Editor,
-    text_width: f32,
-    metrics: &Metrics,
-    style: &RunStyle<'_>,
-    window: &Window,
-) -> ShapedRow {
-    let line = buffer.line(row);
-    let line_start = buffer.line_range(row).start;
-    let chars = line.len_chars();
-    let columns = column_window(chars, editor.scroll_x, text_width, metrics.char_width);
-    let start = line_start + line.char_to_byte(columns.start);
-    let end = line_start + line.char_to_byte(columns.end);
-    let source = line.slice(columns.clone()).to_string();
-    let display = DisplayLine::new(&source, editor.settings.tab_size, columns.start);
-    let spans = editor
-        .syntax
-        .as_ref()
-        .map(|syntax| syntax.highlights(buffer, row, start..end))
-        .unwrap_or_default();
-    let runs = text_runs(&display, start..end, &spans, editor.marked.as_ref(), style);
-    let shaped = window.text_system().shape_line(
-        SharedString::from(display.text.clone()),
-        metrics.font_size,
-        &runs,
-        None,
-    );
-    let width = if columns.len() < chars {
-        to_f32(chars) * metrics.char_width
-    } else {
-        shaped.width().as_f32()
-    };
-    ShapedRow {
-        row,
-        start,
-        end,
-        x: to_f32(columns.start) * metrics.char_width,
-        width,
-        display,
-        shaped,
-    }
-}
-
-/// x of the primary cursor from the text start, for scrolling to it: exact
-/// for normal lines, from the column for long lines.
-fn head_x(
-    buffer: &Buffer,
-    head: usize,
-    tab_size: usize,
-    metrics: &Metrics,
-    window: &Window,
-) -> f32 {
-    let row = buffer.offset_to_point(head).row;
-    let line = buffer.line(row);
-    if line.len_chars() > LONG_LINE_CHARS {
-        return to_f32(buffer.char_column(head)) * metrics.char_width;
-    }
-    let start = buffer.line_range(row).start;
-    let display = DisplayLine::new(&line.to_string(), tab_size, 0);
-    let run = TextRun {
-        len: display.text.len(),
-        font: metrics.font.clone(),
-        color: Hsla::default(),
-        background_color: None,
-        underline: None,
-        strikethrough: None,
-    };
-    let index = display.to_display(head - start);
-    let shaped = window.text_system().shape_line(
-        SharedString::from(display.text.clone()),
-        metrics.font_size,
-        &[run],
-        None,
-    );
-    shaped.x_for_index(index).as_f32()
 }

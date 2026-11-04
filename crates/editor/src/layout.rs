@@ -5,6 +5,8 @@ use gpui::{Bounds, Pixels, Point, ShapedLine, point, px, size};
 use text::Buffer;
 
 use crate::display::DisplayLine;
+use crate::minimap::Minimap;
+use crate::scrollbar::Scrollbar;
 use crate::viewport::{to_f32, to_index};
 
 /// A visible row as it was shaped.
@@ -48,6 +50,10 @@ pub(crate) struct LayoutSnapshot {
     pub(crate) text_height: f32,
     /// The visible rows, in order.
     pub(crate) rows: Vec<ShapedRow>,
+    /// The scrollbar, if the text is taller than the view.
+    pub(crate) scrollbar: Option<Scrollbar>,
+    /// The minimap, if it is shown.
+    pub(crate) minimap: Option<Minimap>,
 }
 
 impl LayoutSnapshot {

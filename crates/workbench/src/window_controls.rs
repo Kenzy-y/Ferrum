@@ -10,6 +10,10 @@ use gpui::{
 use theme::ActiveTheme as _;
 use ui::{Icon, IconName};
 
+use commands::CommandId;
+
+use crate::{Dispatch, command_ids};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Control {
     Minimize,
@@ -17,7 +21,8 @@ enum Control {
     Close,
 }
 
-pub(crate) fn render(window: &mut Window, cx: &mut App) -> AnyElement {
+/// The buttons; Close runs `close` (which asks about unsaved files).
+pub(crate) fn render(window: &mut Window, close: &Dispatch, cx: &mut App) -> AnyElement {
     // The window manager draws its own buttons with server-side decorations.
     let server_decorated =
         cfg!(target_os = "linux") && matches!(window.window_decorations(), Decorations::Server);
@@ -31,12 +36,17 @@ pub(crate) fn render(window: &mut Window, cx: &mut App) -> AnyElement {
         .children(
             [Control::Minimize, Control::Maximize, Control::Close]
                 .into_iter()
-                .map(|control| button(control, maximized, cx)),
+                .map(|control| button(control, maximized, close.clone(), cx)),
         )
         .into_any_element()
 }
 
-fn button(control: Control, maximized: bool, cx: &App) -> impl IntoElement + use<> {
+fn button(
+    control: Control,
+    maximized: bool,
+    close: Dispatch,
+    cx: &App,
+) -> impl IntoElement + use<> {
     let theme = cx.theme();
     let colors = &theme.colors;
     let (id, icon, area) = match control {
@@ -80,7 +90,11 @@ fn button(control: Control, maximized: bool, cx: &App) -> impl IntoElement + use
                     match control {
                         Control::Minimize => window.minimize_window(),
                         Control::Maximize => window.zoom_window(),
-                        Control::Close => window.remove_window(),
+                        Control::Close => {
+                            if let Ok(id) = CommandId::new(command_ids::CLOSE_WINDOW) {
+                                close(&id, window, cx);
+                            }
+                        }
                     }
                 })
         })

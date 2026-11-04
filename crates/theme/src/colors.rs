@@ -56,6 +56,10 @@ token_struct! {
         bg_diff_added = "bg.diff.added",
         bg_diff_removed = "bg.diff.removed",
         bg_scrollbar_thumb = "bg.scrollbar.thumb",
+        /// Hovered or dragged scrollbar thumb.
+        bg_scrollbar_thumb_hover = "bg.scrollbar.thumb.hover",
+        /// The visible part of the text on the minimap.
+        bg_minimap_viewport = "bg.minimap.viewport",
         /// Selected text in a focused editor.
         bg_selection = "bg.selection",
         /// Selected text in an editor without focus.

@@ -23,6 +23,10 @@ pub fn init(cx: &mut gpui::App) {
 
 /// Saves the file of the active editor.
 pub const SAVE: &str = "editor.save";
+/// Replaces unsaved edits with the file changed on disk (undoable).
+pub const RELOAD_FROM_DISK: &str = "editor.reloadFromDisk";
+/// Keeps unsaved edits over a file changed on disk.
+pub const KEEP_LOCAL_CHANGES: &str = "editor.keepLocalChanges";
 
 /// What an editor command does.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,6 +51,8 @@ pub(crate) enum Action {
     Indent,
     Outdent,
     Save,
+    ReloadFromDisk,
+    KeepLocalChanges,
     LineEndings(LineEnding),
 }
 
@@ -258,6 +264,16 @@ pub(crate) const COMMANDS: &[(&str, &str, Action)] = &[
     ("editor.indent", "command-editor-indent", Action::Indent),
     ("editor.outdent", "command-editor-outdent", Action::Outdent),
     (SAVE, "command-editor-save", Action::Save),
+    (
+        RELOAD_FROM_DISK,
+        "command-editor-reload-from-disk",
+        Action::ReloadFromDisk,
+    ),
+    (
+        KEEP_LOCAL_CHANGES,
+        "command-editor-keep-local-changes",
+        Action::KeepLocalChanges,
+    ),
     (
         "editor.convertLineEndingsToLf",
         "command-editor-line-endings-lf",

@@ -121,6 +121,13 @@ impl Shell {
             workbench.set_file_icons(workbench_icons, cx);
             workbench
         });
+        // Closing the window asks about unsaved files first.
+        let closing = workbench.downgrade();
+        window.on_window_should_close(cx, move |window, cx| {
+            closing
+                .update(cx, |workbench, cx| workbench.should_close(window, cx))
+                .unwrap_or(true)
+        });
         let shell = cx.entity().downgrade();
         let layout_watch = cx.on_keyboard_layout_change(move |cx| {
             let _ = shell.update(cx, |shell, cx| {
@@ -231,7 +238,9 @@ impl Shell {
     fn run_command(&mut self, id: &CommandId, window: &mut Window, cx: &mut Context<Self>) {
         tracing::debug!(command = %id, "running command");
         match id.as_str() {
-            app_commands::QUIT => cx.quit(),
+            app_commands::QUIT => self
+                .workbench
+                .update(cx, |workbench, cx| workbench.quit(window, cx)),
             command_ids::OPEN_FOLDER => self.prompt_for_folder(window, cx),
             command_ids::OPEN_FOLDER_BY_PATH => self.show_path_prompt(None, None, window, cx),
             #[cfg(debug_assertions)]

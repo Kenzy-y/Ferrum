@@ -1540,6 +1540,7 @@ name = "editor"
 version = "0.0.0"
 dependencies = [
  "commands",
+ "criterion",
  "fs",
  "futures",
  "gpui-pre",

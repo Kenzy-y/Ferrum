@@ -32,6 +32,8 @@ pub struct EditorSettings {
     pub multi_cursor_modifier: MultiCursorModifier,
     /// Multiplier of mouse wheel scrolling.
     pub scroll_sensitivity: f32,
+    /// Shows the minimap at the right of the text.
+    pub minimap: bool,
 }
 
 impl Default for EditorSettings {
@@ -43,6 +45,7 @@ impl Default for EditorSettings {
             cursor_blink_interval_ms: 530,
             multi_cursor_modifier: MultiCursorModifier::Alt,
             scroll_sensitivity: 1.0,
+            minimap: true,
         }
     }
 }

@@ -21,8 +21,13 @@ theme.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
 lang_rust.workspace = true
+
+[[bench]]
+name = "frame"
+harness = false
 
 [lints]
 workspace = true

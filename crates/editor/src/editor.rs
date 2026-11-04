@@ -18,6 +18,7 @@ use crate::actions::{self, Action};
 use crate::element::EditorElement;
 use crate::file::FileState;
 use crate::layout::LayoutSnapshot;
+use crate::minimap::MinimapCache;
 use crate::mouse::Drag;
 use crate::settings::EditorSettings;
 use crate::syntax_state::SyntaxState;
@@ -35,6 +36,9 @@ pub enum EditorEvent {
     SaveFailed(String),
     /// The file changed on disk and was read again.
     Reloaded,
+    /// The file changed or was deleted on disk, or that was resolved
+    /// ([`Editor::disk_state`]).
+    DiskStateChanged,
     /// The file was renamed on disk; the editor now saves to the new name
     /// ([`Editor::path`]).
     Renamed,
@@ -96,6 +100,10 @@ pub struct Editor {
     pub(crate) file: Option<FileState>,
     /// Highlighting and outline, when the text has a grammar.
     pub(crate) syntax: Option<SyntaxState>,
+    /// Bars of the minimap lines shown last.
+    pub(crate) minimap_cache: MinimapCache,
+    /// The pointer is over the scrollbar (the thumb is drawn brighter).
+    pub(crate) scrollbar_hovered: bool,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -131,7 +139,6 @@ impl Editor {
                 editor.set_focused(focused, cx);
             }),
         ];
-        let version = document.version();
         let mut editor = Self {
             document,
             settings,
@@ -149,11 +156,14 @@ impl Editor {
             layout: None,
             file: None,
             syntax: None,
+            minimap_cache: MinimapCache::default(),
+            scrollbar_hovered: false,
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
             let saved = editor.document.buffer().clone();
-            editor.file = Some(FileState::new(fs, path, version, saved, cx));
+            let state = editor.document.mark_saved();
+            editor.file = Some(FileState::new(fs, path, state, saved, cx));
         }
         editor
     }
@@ -172,7 +182,7 @@ impl Editor {
     pub fn is_dirty(&self) -> bool {
         self.file
             .as_ref()
-            .is_some_and(|file| file.saved_version() != self.document.version())
+            .is_some_and(|file| file.saved_state() != self.document.state_id())
     }
 
     /// Changes the document as one edit: the view follows the cursor and
@@ -273,7 +283,9 @@ impl Editor {
             Action::Newline => self.change(cx, Document::newline),
             Action::Indent => self.change(cx, |document| document.indent(indent)),
             Action::Outdent => self.change(cx, |document| document.outdent(indent)),
-            Action::Save => self.save(cx),
+            Action::Save => self.save(cx).detach(),
+            Action::ReloadFromDisk => self.reload_from_disk(cx),
+            Action::KeepLocalChanges => self.keep_local_changes(cx),
             Action::LineEndings(ending) => {
                 self.change(cx, |document| document.set_line_endings(ending));
             }
