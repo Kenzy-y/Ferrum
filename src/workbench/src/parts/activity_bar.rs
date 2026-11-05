@@ -32,8 +32,15 @@ pub(crate) fn render(
                 }
             })
     });
-    // Settings open in stage 10; the button is part of the layout already.
-    let settings = ActivityButton::new("activity-settings", IconName::Settings);
+    // The settings file for now; a settings page arrives in stage 10.
+    let dispatch = workbench.dispatch.clone();
+    let settings = ActivityButton::new("activity-settings", IconName::Settings).on_activate(
+        move |window, cx| {
+            if let Ok(id) = CommandId::new(command_ids::OPEN_SETTINGS) {
+                dispatch(&id, window, cx);
+            }
+        },
+    );
 
     let theme = cx.theme();
     let size = &theme.metrics.size;

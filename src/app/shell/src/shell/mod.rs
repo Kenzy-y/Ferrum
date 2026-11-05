@@ -1,6 +1,7 @@
 //! Root view of the main window: routes keystrokes and button clicks to
 //! command owners and hosts the workbench.
 
+mod config_files;
 mod files;
 mod keyboard;
 mod settings_sync;
@@ -21,6 +22,7 @@ use settings::SettingsStore;
 use theme::ActiveTheme as _;
 use workbench::{CommandHandlers, Dispatch, Workbench, command_ids};
 
+use self::config_files::ConfigFile;
 use self::keyboard::{KeyOutcome, KeyboardDispatcher};
 use crate::app_commands;
 use crate::config::{self, LoadedConfig};
@@ -51,6 +53,8 @@ pub(crate) struct Shell {
     languages: Arc<language::LanguageRegistry>,
     /// Running language services of the open folder.
     language_servers: LanguageServers,
+    /// Where the user configuration lives; `None` without a home directory.
+    config_paths: Option<settings::paths::ConfigPaths>,
     /// The file tree of the open folder.
     file_tree: Option<Entity<workbench::FileTreeView>>,
     /// `[files] hidden` the tree was last given.
@@ -91,6 +95,7 @@ impl Shell {
         } = config;
         let keymap = Arc::new(keymap);
         let chord_timeout = config::chord_timeout(&settings);
+        let config_paths = paths.clone();
         let config_watch =
             paths.map(|paths| live_config::start(fs.clone(), paths, registry.clone(), window, cx));
         let focus_handle = cx.focus_handle();
@@ -152,6 +157,7 @@ impl Shell {
             recent,
             file_icons,
             languages,
+            config_paths,
             language_servers: LanguageServers::new(Arc::new(process::RealProcessRunner)),
             workspace_watch: None,
             file_tree: None,
@@ -181,6 +187,12 @@ impl Shell {
                 this.show_path_prompt(None, None, window, cx);
             },
         )?;
+        handlers.register_entity(command_ids::OPEN_SETTINGS, this, |this, window, cx| {
+            this.open_config_file(ConfigFile::Settings, window, cx);
+        })?;
+        handlers.register_entity(command_ids::OPEN_KEYMAP, this, |this, window, cx| {
+            this.open_config_file(ConfigFile::Keymap, window, cx);
+        })?;
         #[cfg(debug_assertions)]
         handlers.register_entity(
             app_commands::TOGGLE_COMPONENT_GALLERY,

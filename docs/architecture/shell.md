@@ -31,6 +31,11 @@ binary only sets up logging and calls `shell::run()`.
   go to every service with `configure`. The table belongs to the window
   for now; it moves to the application when there are several windows
   (ADR 0006: one server per folder).
+- `shell/config_files.rs`: `preferences.openSettings` (the settings
+  button, Ctrl+,) and `preferences.openKeymap` open the user
+  `settings.toml` and `keymap.toml` in an editor. A missing file is first
+  created, in the background, with a commented header from i18n; saving it
+  applies it through `live_config`.
 - `gallery/`: the component gallery, debug builds only.
 
 **Commands.** `Shell::new` builds the window's `workbench::CommandHandlers`

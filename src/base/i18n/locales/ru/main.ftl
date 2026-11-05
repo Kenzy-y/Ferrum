@@ -45,6 +45,18 @@ command-workbench-toggle-component-gallery = Показать или скрыт�
 window-title-workspace = { $name } — { -product-name }
 command-workspace-open-folder = Открыть папку
 command-workspace-open-folder-by-path = Открыть папку по пути
+command-preferences-open-settings = Открыть настройки
+command-preferences-open-keymap = Открыть сочетания клавиш
+config-settings-header =
+    Настройки. Применяются при сохранении файла.
+    Пример:
+    {"["}editor]
+    tab_size = 4
+config-keymap-header =
+    Сочетания клавиш. Применяются при сохранении файла.
+    Пример:
+    {"["}editor]
+    "ctrl-d" = "editor.addCursorBelow"
 path-prompt-title = Открыть папку
 path-prompt-placeholder = Путь к папке
 path-prompt-open = Открыть

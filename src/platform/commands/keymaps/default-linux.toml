@@ -1,6 +1,7 @@
 # Default keybindings on Linux. See default-windows.toml for the format.
 
 [global]
+"ctrl-," = "preferences.openSettings"
 "ctrl-q" = "app.quit"
 
 # Search and commands.

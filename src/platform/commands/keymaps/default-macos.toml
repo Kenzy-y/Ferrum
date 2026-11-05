@@ -1,6 +1,7 @@
 # Default keybindings on macOS. See default-windows.toml for the format.
 
 [global]
+"cmd-," = "preferences.openSettings"
 "cmd-q" = "app.quit"
 
 # Search and commands.

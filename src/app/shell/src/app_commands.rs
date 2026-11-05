@@ -29,6 +29,14 @@ const WORKSPACE_COMMANDS: &[(&str, &str)] = &[
         workbench::command_ids::OPEN_FOLDER_BY_PATH,
         "command-workspace-open-folder-by-path",
     ),
+    (
+        workbench::command_ids::OPEN_SETTINGS,
+        "command-preferences-open-settings",
+    ),
+    (
+        workbench::command_ids::OPEN_KEYMAP,
+        "command-preferences-open-keymap",
+    ),
 ];
 
 /// Commands of the shell with the ids of their localized titles.

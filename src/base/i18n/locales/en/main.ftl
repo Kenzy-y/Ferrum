@@ -45,6 +45,18 @@ command-workbench-toggle-component-gallery = Toggle component gallery
 window-title-workspace = { $name } — { -product-name }
 command-workspace-open-folder = Open folder
 command-workspace-open-folder-by-path = Open folder by path
+command-preferences-open-settings = Open Settings
+command-preferences-open-keymap = Open Keyboard Shortcuts
+config-settings-header =
+    Settings. They apply when the file is saved.
+    Example:
+    {"["}editor]
+    tab_size = 4
+config-keymap-header =
+    Keyboard shortcuts. They apply when the file is saved.
+    Example:
+    {"["}editor]
+    "ctrl-d" = "editor.addCursorBelow"
 path-prompt-title = Open folder
 path-prompt-placeholder = Folder path
 path-prompt-open = Open

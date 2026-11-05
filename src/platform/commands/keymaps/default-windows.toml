@@ -3,6 +3,7 @@
 # `mod` (Ctrl on Windows and Linux, Cmd on macOS).
 
 [global]
+"ctrl-," = "preferences.openSettings"
 "alt-f4" = "app.quit"
 
 # Search and commands.

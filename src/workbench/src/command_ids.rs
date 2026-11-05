@@ -43,6 +43,12 @@ pub const OPEN_FOLDER: &str = "workspace.openFolder";
 /// Opens a folder by typing its path. Owned by the application.
 pub const OPEN_FOLDER_BY_PATH: &str = "workspace.openFolderByPath";
 
+/// Opens the user `settings.toml` in an editor. Owned by the application
+/// (it knows where configuration lives); the activity bar shows it.
+pub const OPEN_SETTINGS: &str = "preferences.openSettings";
+/// Opens the user `keymap.toml` in an editor. Owned by the application.
+pub const OPEN_KEYMAP: &str = "preferences.openKeymap";
+
 /// Every workbench command with the id of its localized title.
 pub(crate) const ALL: &[(&str, &str)] = &[
     (QUICK_OPEN, "command-workbench-quick-open"),
