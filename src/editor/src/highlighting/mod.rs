@@ -321,7 +321,7 @@ impl Editor {
                 }
             }
             if syntax.job.is_some() {
-                syntax.pending.extend(changes.edits.iter().copied());
+                syntax.pending.extend(changes.edits.iter().cloned());
             }
         }
         syntax.generation += 1;

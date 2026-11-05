@@ -91,7 +91,8 @@ highlights in place and a patch colors the edited items.
 
 **Adding a language.** Create a crate with a `GrammarSpec`
 (`lang_toml` is the example), its `queries/highlights.scm` and
-`queries/outline.scm`, add one `register` line to
+`queries/outline.scm`, and a `pack()` returning a `language::LanguagePack`
+(see `docs/architecture/language.md`); add one `register` line to
 `src/app/shell/src/languages.rs`. Nothing in `syntax`, `editor` or `workbench`
 changes. Queries are our own: grammar crates' queries may be the starting
 point, never other editors' ones.

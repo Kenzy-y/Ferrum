@@ -1,7 +1,8 @@
 //! The built-in TOML language pack: file types, the tree-sitter grammar and
 //! the highlight and outline queries.
 
-use syntax::{GrammarRegistry, GrammarSpec, SyntaxError};
+use language::LanguagePack;
+use syntax::GrammarSpec;
 
 /// Language id.
 pub const ID: &str = "toml";
@@ -20,13 +21,9 @@ pub fn grammar() -> GrammarSpec {
     }
 }
 
-/// Registers the pack's grammar.
-///
-/// # Errors
-///
-/// Fails if a grammar with the same id is already registered.
-pub fn register(registry: &mut GrammarRegistry) -> Result<(), SyntaxError> {
-    registry.register(grammar())
+/// The language pack.
+pub fn pack() -> LanguagePack {
+    LanguagePack::new(grammar())
 }
 
 #[cfg(test)]

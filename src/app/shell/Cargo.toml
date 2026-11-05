@@ -21,6 +21,7 @@ gpui_platform.workspace = true
 i18n.workspace = true
 lang_rust.workspace = true
 lang_toml.workspace = true
+language.workspace = true
 project.workspace = true
 text.workspace = true
 settings.workspace = true

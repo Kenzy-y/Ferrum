@@ -5,14 +5,17 @@
 //! development (processes run on another machine) and for tests
 //! ([`FakeProcessRunner`]).
 
+mod child;
 mod fake;
+mod pipe;
 mod real;
 
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 
-pub use fake::FakeProcessRunner;
+pub use child::{ChildProcess, ProcessControl, SpawnOptions};
+pub use fake::{FakeProcessRunner, FakeServer, ServerSide};
 pub use real::RealProcessRunner;
 
 /// A boxed, sendable future, used so that [`ProcessRunner`] stays
@@ -85,6 +88,11 @@ impl CommandSpec {
     pub fn arguments(&self) -> &[OsString] {
         &self.args
     }
+
+    /// The working directory, if set.
+    pub fn working_directory(&self) -> Option<&Path> {
+        self.current_dir.as_deref()
+    }
 }
 
 /// Result of a finished process.
@@ -132,4 +140,18 @@ pub enum ProcessError {
 pub trait ProcessRunner: Send + Sync {
     /// Runs `command` to completion and collects its output.
     fn run<'a>(&'a self, command: &'a CommandSpec) -> BoxFuture<'a, Result<Output, ProcessError>>;
+
+    /// Starts a long-running process (a language server) with piped
+    /// standard streams. Looks the program up in `PATH`, so call it off
+    /// the UI thread.
+    ///
+    /// # Errors
+    ///
+    /// [`ProcessError::NotFound`] if the program does not exist,
+    /// [`ProcessError::Io`] if it cannot be started.
+    fn spawn(
+        &self,
+        command: &CommandSpec,
+        options: SpawnOptions,
+    ) -> Result<ChildProcess, ProcessError>;
 }

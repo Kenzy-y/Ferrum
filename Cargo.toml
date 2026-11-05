@@ -10,6 +10,8 @@ members = [
     "src/platform/commands",
     "src/platform/syntax",
     "src/platform/project",
+    "src/platform/language",
+    "src/platform/lsp",
     "src/languages/lang_rust",
     "src/languages/lang_toml",
     "src/design/theme",
@@ -40,6 +42,8 @@ fs = { path = "src/base/fs" }
 i18n = { path = "src/base/i18n" }
 lang_rust = { path = "src/languages/lang_rust" }
 lang_toml = { path = "src/languages/lang_toml" }
+language = { path = "src/platform/language" }
+lsp = { path = "src/platform/lsp" }
 process = { path = "src/base/process" }
 project = { path = "src/platform/project" }
 settings = { path = "src/platform/settings" }
@@ -66,10 +70,12 @@ directories = "6.0.0"
 fluent-bundle = "0.16.0"
 futures = "0.3.34"
 ignore = "0.4.34"
+lsp-types = "0.97.0"
 notify = "8.2.1"
 ropey = "1.6.1"
 schemars = "1.2.3"
 serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
 streaming-iterator = "0.1.9"
 sys-locale = "0.3.2"
 thiserror = "2.0.21"

@@ -1,0 +1,19 @@
+[package]
+name = "language"
+description = "Language packs, the language registry and the LanguageService trait the UI talks to."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+futures.workspace = true
+process.workspace = true
+settings.workspace = true
+syntax.workspace = true
+text.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

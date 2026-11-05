@@ -61,7 +61,7 @@ fn open(text: &str) -> (Entity<Editor>, &'static mut VisualTestContext) {
     });
     let mut registry = GrammarRegistry::new();
     assert!(
-        lang_rust::register(&mut registry).is_ok(),
+        registry.register(lang_rust::grammar()).is_ok(),
         "the Rust grammar does not register"
     );
     let entry = registry.for_path(Path::new("main.rs"));

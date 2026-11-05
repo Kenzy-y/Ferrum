@@ -2,12 +2,13 @@
 //! (syntax trees): every replacement in the order it was applied.
 
 use std::ops::Range;
+use std::sync::Arc;
 
 use crate::{Buffer, Point};
 
 /// One replacement, in the coordinates of the text right before it was
 /// applied. Edits must be replayed in the order they are listed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextEdit {
     /// Byte offset where the replaced text started.
     pub start: usize,
@@ -21,6 +22,9 @@ pub struct TextEdit {
     pub old_end_point: Point,
     /// `new_end` as a row and a byte column, after the edit.
     pub new_end_point: Point,
+    /// The inserted text, `start..new_end` right after the edit; language
+    /// servers are sent it.
+    pub inserted: Arc<str>,
 }
 
 /// Changes since they were last taken.
@@ -82,6 +86,7 @@ impl ChangeLog {
             start_point,
             old_end_point,
             new_end_point: buffer.offset_to_point(new_end),
+            inserted: Arc::from(text),
         });
         if self.changes.edits.len() > MAX_LOGGED_EDITS {
             self.replaced();
@@ -127,6 +132,7 @@ impl ChangeLog {
             start_point,
             old_end_point,
             new_end_point: buffer.offset_to_point(new_end),
+            inserted: Arc::from(buffer.slice(start..new_end).as_str()),
         });
     }
 
@@ -166,6 +172,7 @@ mod tests {
                 start_point: Point::new(1, 0),
                 old_end_point: Point::new(1, 1),
                 new_end_point: Point::new(2, 1),
+                inserted: Arc::from("1\n2"),
             }]
         );
         assert!(log.take().is_empty(), "taking empties the log");
@@ -190,6 +197,7 @@ mod tests {
                 start_point: Point::new(0, 1),
                 old_end_point: Point::new(1999, 1),
                 new_end_point: Point::new(1999, 2),
+                inserted: Arc::from(buffer.slice(1..7998).as_str()),
             }]
         );
 

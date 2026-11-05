@@ -30,8 +30,9 @@ impl Shell {
             let _ = shell.update_in(cx, |shell, window, cx| match loaded {
                 Ok(buffer) => {
                     tracing::info!(path = %path.display(), "opened file");
-                    let grammar = shell.grammars.for_path(&path);
-                    let language = grammar.as_ref().map(|grammar| grammar.id().to_owned());
+                    let entry = shell.languages.for_path(&path).cloned();
+                    let grammar = entry.as_ref().and_then(|entry| entry.grammar().cloned());
+                    let language = entry.as_ref().map(|entry| entry.id().to_owned());
                     let language = language.as_deref();
                     let settings = shell.settings.get::<editor::EditorSettings>(language);
                     let syntax_settings = shell.settings.get::<syntax::SyntaxSettings>(language);

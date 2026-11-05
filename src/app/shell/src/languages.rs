@@ -2,12 +2,12 @@
 //! language is one more line and one more dependency; nothing else
 //! changes.
 
-use syntax::GrammarRegistry;
+use language::LanguageRegistry;
 
-/// Grammars of every built-in language.
-pub(crate) fn grammar_registry() -> anyhow::Result<GrammarRegistry> {
-    let mut registry = GrammarRegistry::new();
-    lang_rust::register(&mut registry)?;
-    lang_toml::register(&mut registry)?;
+/// Every built-in language.
+pub(crate) fn language_registry() -> anyhow::Result<LanguageRegistry> {
+    let mut registry = LanguageRegistry::new();
+    registry.register(lang_rust::pack())?;
+    registry.register(lang_toml::pack())?;
     Ok(registry)
 }

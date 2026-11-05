@@ -341,6 +341,8 @@ fn tracked_changes_list_edits_in_the_order_applied() {
     let starts: Vec<usize> = changes.edits.iter().map(|edit| edit.start).collect();
     assert_eq!(starts, vec![6, 2]);
     assert_eq!(changes.edits[0].start_point, crate::Point::new(1, 2));
+    let inserted: Vec<&str> = changes.edits.iter().map(|edit| &*edit.inserted).collect();
+    assert_eq!(inserted, vec!["y", "y"], "every edit carries its text");
 
     // Replaying lengths through every edit, undo and redo included, ends at
     // the length of the text.

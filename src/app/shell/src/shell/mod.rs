@@ -47,7 +47,7 @@ pub(crate) struct Shell {
     /// Icons of the file tree, registered by contributors at startup.
     file_icons: Arc<workbench::FileIcons>,
     /// Grammars of the language packs, by file.
-    grammars: Arc<syntax::GrammarRegistry>,
+    languages: Arc<language::LanguageRegistry>,
     /// The file tree of the open folder.
     file_tree: Option<Entity<workbench::FileTreeView>>,
     /// `[files] hidden` the tree was last given.
@@ -70,11 +70,11 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let grammars = match crate::languages::grammar_registry() {
+        let languages = match crate::languages::language_registry() {
             Ok(registry) => Arc::new(registry),
             Err(error) => {
                 tracing::error!("{error:#}");
-                Arc::new(syntax::GrammarRegistry::new())
+                Arc::new(language::LanguageRegistry::new())
             }
         };
         let LoadedConfig {
@@ -148,7 +148,7 @@ impl Shell {
             workspace: None,
             recent,
             file_icons,
-            grammars,
+            languages,
             workspace_watch: None,
             file_tree: None,
             hidden: Vec::new(),

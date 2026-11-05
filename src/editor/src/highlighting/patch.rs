@@ -208,6 +208,7 @@ mod tests {
             start_point: Point::default(),
             old_end_point: Point::default(),
             new_end_point: Point::default(),
+            inserted: "x".repeat(len).into(),
         }
     }
 

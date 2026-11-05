@@ -2,10 +2,11 @@ use std::path::Path;
 use std::sync::atomic::AtomicBool;
 use std::time::Duration;
 
-use syntax::{Grammar, GrammarRegistry, SymbolKind, SyntaxTree};
+use language::LanguageRegistry;
+use syntax::{Grammar, SymbolKind, SyntaxTree};
 use text::ropey::Rope;
 
-use super::{ID, grammar, register};
+use super::{ID, grammar, pack};
 
 const CARGO_TOML: &str = r#"# The package
 [package]
@@ -35,8 +36,8 @@ fn parse(grammar: &Grammar, source: &str) -> (Rope, SyntaxTree) {
 
 #[test]
 fn registers_for_toml_files_and_lock_files() {
-    let mut registry = GrammarRegistry::new();
-    register(&mut registry).unwrap();
+    let mut registry = LanguageRegistry::new();
+    registry.register(pack()).unwrap();
     for path in ["Cargo.toml", "dir/config.TOML", "Cargo.lock"] {
         assert_eq!(
             registry
@@ -47,7 +48,12 @@ fn registers_for_toml_files_and_lock_files() {
         );
     }
     assert!(registry.for_path(Path::new("other.lock")).is_none());
-    assert!(register(&mut registry).is_err(), "ids are unique");
+    assert!(registry.register(pack()).is_err(), "ids are unique");
+    assert!(
+        registry
+            .get(ID)
+            .is_some_and(|entry| entry.grammar().is_some())
+    );
 }
 
 #[test]

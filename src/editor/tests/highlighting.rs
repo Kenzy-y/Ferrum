@@ -13,7 +13,7 @@ mod tests {
     /// An editor of `text` with the Rust grammar.
     fn rust_editor(text: &str, cx: &mut TestAppContext) -> WindowHandle<Editor> {
         let mut registry = GrammarRegistry::new();
-        lang_rust::register(&mut registry).unwrap();
+        registry.register(lang_rust::grammar()).unwrap();
         let entry = registry.for_path(Path::new("main.rs"));
         cx.update(|cx| {
             let theme =
