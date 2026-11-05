@@ -331,6 +331,9 @@ impl Editor {
             if syntax.job.is_some() {
                 syntax.pending.extend(changes.edits.iter().cloned());
             }
+            // Until the outline is computed again, its items move with the
+            // text, so the breadcrumbs keep the item around the cursor.
+            syntax.outline = move_outline(&syntax.outline, &changes.edits);
         }
         syntax.generation += 1;
         self.start_parse(cx);
@@ -450,10 +453,63 @@ impl Editor {
     }
 }
 
+/// `items` moved through `edits`: offsets after an edit shift with it, an
+/// item that contains an edit grows or shrinks with it.
+fn move_outline(items: &[OutlineItem], edits: &[TextEdit]) -> Arc<[OutlineItem]> {
+    items
+        .iter()
+        .map(|item| {
+            let mut item = item.clone();
+            for edit in edits {
+                let start = patch::map_offset(item.range.start, edit, true);
+                let end = patch::map_offset(item.range.end, edit, false).max(start);
+                item.range = start..end;
+                item.name_start = patch::map_offset(item.name_start, edit, true).clamp(start, end);
+            }
+            item
+        })
+        .collect()
+}
+
 fn disable(syntax: &mut SyntaxState) {
     syntax.status = Status::Disabled;
     syntax.reset_tree();
     syntax.outline = Arc::from([]);
     syntax.outline_task = None;
     *syntax.cache.borrow_mut() = None;
+}
+
+#[cfg(test)]
+mod outline_tests {
+    use syntax::SymbolKind;
+    use text::{Buffer, Document, Selection};
+
+    use super::*;
+
+    #[test]
+    fn items_grow_with_typing_inside_them() {
+        let text = "fn main() {
+    x
+}
+";
+        let item = OutlineItem {
+            kind: SymbolKind::Function,
+            name: "main".to_owned(),
+            range: 0..text.len() - 1,
+            name_start: 3,
+            depth: 0,
+        };
+        let mut document = Document::new(Buffer::from_text(text));
+        document.track_changes();
+        document.set_primary_selection(Selection::cursor(17));
+        document.insert("    more");
+        let moved = move_outline(&[item], &document.take_changes().edits);
+        let head = document.selections().primary().head;
+        assert_eq!(moved[0].range, 0..text.len() - 1 + 8);
+        assert_eq!(
+            syntax::items_at(&moved, head).len(),
+            1,
+            "the cursor is still in main"
+        );
+    }
 }

@@ -99,12 +99,13 @@ fn leading(workbench: &Workbench, cx: &mut Context<Workbench>) -> AnyElement {
                 .then(|| workbench.menu.as_ref().map(|open| open.view.clone()))
                 .flatten()
                 .map(|view| {
-                    deferred(anchored().child(div().pt(px(metrics.space.xs)).child(view)))
+                    deferred(anchored().child(div().pt(px(metrics.space.sm)).child(view)))
                         .with_priority(1)
                 });
             clickable(
                 div()
                     .id(("menu-button", index))
+                    .debug_selector(move || format!("menu-button-{index}"))
                     .flex()
                     .flex_col()
                     .on_hover(move |hovered, window, cx| {
@@ -115,7 +116,9 @@ fn leading(workbench: &Workbench, cx: &mut Context<Workbench>) -> AnyElement {
                         }
                     })
                     .child(button)
-                    .children(dropdown),
+                    // A zero-height box under the button: the menu hangs
+                    // from its origin, below the button, not over it.
+                    .child(div().h(px(0.0)).children(dropdown)),
             )
         }));
     div()

@@ -250,6 +250,19 @@ mod tests {
     }
 
     #[gpui::test]
+    fn a_menu_opens_below_its_button(cx: &mut TestAppContext) {
+        let (workbench, mut cx, _) = workbench(cx);
+        workbench.update_in(&mut cx, |workbench, window, cx| {
+            workbench.toggle_menu(1, false, window, cx);
+        });
+        cx.run_until_parked();
+        let button = cx.debug_bounds("menu-button-1").unwrap();
+        let menu = cx.debug_bounds("menu").unwrap();
+        assert!(menu.top() >= button.bottom(), "{menu:?} covers {button:?}");
+        assert_eq!(menu.left(), button.left());
+    }
+
+    #[gpui::test]
     fn the_keyboard_opens_switches_runs_and_closes_menus(cx: &mut TestAppContext) {
         let (workbench, mut cx, ran) = workbench(cx);
         workbench.update_in(&mut cx, |workbench, window, cx| {

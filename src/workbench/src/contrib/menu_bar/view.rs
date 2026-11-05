@@ -176,6 +176,7 @@ impl Render for MenuView {
         });
         div()
             .id("menu")
+            .debug_selector(|| "menu".to_owned())
             .track_focus(&self.focus_handle)
             .on_key_down(cx.listener(Self::on_key_down))
             .flex()
