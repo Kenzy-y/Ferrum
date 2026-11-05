@@ -1,6 +1,7 @@
 # Default keybindings on Linux. See default-windows.toml for the format.
 
 [global]
+"f10" = "workbench.openMenuBar"
 "ctrl-," = "preferences.openSettings"
 "ctrl-q" = "app.quit"
 

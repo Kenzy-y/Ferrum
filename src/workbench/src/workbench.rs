@@ -20,7 +20,7 @@ use crate::contrib::explorer::file_tree_view::FileTreeView;
 use crate::contrib::outline;
 use crate::contrib::quick_open::{QuickOpenContext, QuickOpenMode};
 use crate::layout::{PanelKind, SidebarView};
-use crate::overlays::{OpenPathPrompt, OpenQuickOpen};
+use crate::overlays::{OpenMenu, OpenPathPrompt, OpenQuickOpen};
 use crate::parts::editor_area::{closing, tabs};
 use crate::parts::{activity_bar, bottom_panel, editor_area, sidebar, status_bar, title_bar};
 
@@ -60,6 +60,8 @@ pub struct Workbench {
     pub(crate) keymap: Arc<Keymap>,
     pub(crate) quick_open_context: QuickOpenContext,
     pub(crate) quick_open: Option<OpenQuickOpen>,
+    /// The open title bar menu.
+    pub(crate) menu: Option<OpenMenu>,
     pub(crate) open_path: OpenPath,
     pub(crate) path_prompt: Option<OpenPathPrompt>,
     pub(crate) workspace: Option<WorkspaceInfo>,
@@ -98,6 +100,7 @@ impl Workbench {
             keymap,
             quick_open_context,
             quick_open: None,
+            menu: None,
             open_path,
             path_prompt: None,
             workspace: None,
@@ -171,6 +174,9 @@ impl Workbench {
             this.close(closing::AfterClose::CloseWindow, window, cx);
         })?;
         handlers.register_entity(command_ids::FOCUS_OUTLINE, this, Self::focus_outline)?;
+        handlers.register_entity(command_ids::OPEN_MENU_BAR, this, |this, window, cx| {
+            this.toggle_menu(0, true, window, cx);
+        })?;
         handlers.register_entity(command_ids::TOGGLE_OUTLINE, this, |this, _, cx| {
             this.toggle_outline(cx);
         })?;
@@ -283,6 +289,21 @@ impl Render for Workbench {
                     cx.listener(|this, _, window, cx| this.close_quick_open(window, cx)),
                 )
         });
+        // Below the title bar, so its menu buttons still switch menus.
+        let menu_backdrop = self.menu.is_some().then(|| {
+            div()
+                .id("menu-backdrop")
+                .absolute()
+                .top(px(cx.theme().metrics.size.titlebar_height))
+                .left_0()
+                .right_0()
+                .bottom_0()
+                .occlude()
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(|this, _, window, cx| this.close_menu(window, cx)),
+                )
+        });
 
         let theme = cx.theme();
         let metrics = &theme.metrics;
@@ -321,6 +342,7 @@ impl Render for Workbench {
             .child(body)
             .child(status_bar)
             .children(backdrop)
+            .children(menu_backdrop)
             .children(dialog)
     }
 }

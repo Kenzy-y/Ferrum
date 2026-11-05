@@ -93,6 +93,19 @@ editor. The commands are `workbench.focusOutline` and
 `workbench.toggleOutline`. The breadcrumbs end with the items around the
 cursor (`ƒ main`).
 
+**Menus** (`contrib/menu_bar/`, ADR 0008). `MENUS` lists File, Edit,
+View and Go as rows of existing command ids and separators. Rows whose
+command is not registered are left out, as are separators that would
+lead, trail or double. `MenuView` shows the titles and first shortcuts,
+styled like the palette. A click on a title bar menu button toggles it, and
+`workbench.openMenuBar` (F10) opens File with its first row selected. Up
+and Down skip separators and wrap, Left and Right switch menus
+(`MenuEvent::Switch`), Enter or Space runs, Escape closes. While a menu is
+open, hovering another menu button opens that one. A backdrop below the
+title bar closes it on a click. Running a row closes the menu, gives the
+focus back, then dispatches the command (`overlays.rs`, `OpenMenu`). A new
+menu entry is one more row in `MENUS`.
+
 **Window chrome.** `Workbench::window_options()` hides the platform title
 bar. Windows: drag and min/max/close use native hit-test areas
 (`window_control_area`), so Snap layouts work. Interactive elements in the

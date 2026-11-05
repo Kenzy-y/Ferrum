@@ -1,6 +1,7 @@
 # Default keybindings on macOS. See default-windows.toml for the format.
 
 [global]
+"f10" = "workbench.openMenuBar"
 "cmd-," = "preferences.openSettings"
 "cmd-q" = "app.quit"
 

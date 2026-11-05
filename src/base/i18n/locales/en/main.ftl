@@ -203,6 +203,7 @@ command-workbench-previous-tab = Previous tab
 command-workbench-close-window = Close window
 command-workbench-focus-outline = Focus outline
 command-workbench-toggle-outline = Toggle outline
+command-workbench-open-menu-bar = Open Menu Bar
 editor-close-unsaved = Save changes to { $name }?
 editor-close-unsaved-detail = Your changes will be lost if you don't save them.
 editor-untitled = Untitled

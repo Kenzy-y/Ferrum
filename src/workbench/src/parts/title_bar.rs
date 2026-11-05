@@ -4,12 +4,13 @@ use commands::CommandId;
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, App, Context, Div, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
-    ParentElement as _, Styled as _, TitlebarOptions, Window, WindowControlArea, deferred, div,
-    point, px,
+    ParentElement as _, StatefulInteractiveElement as _, Styled as _, TitlebarOptions, Window,
+    WindowControlArea, anchored, deferred, div, point, px,
 };
 use theme::ActiveTheme as _;
-use ui::{Button, ButtonVariant, Icon, IconButton, IconName, SearchField};
+use ui::{Button, ButtonVariant, Icon, IconButton, IconName, InteractionState, SearchField};
 
+use crate::contrib::menu_bar::MENUS;
 use crate::parts::window_controls;
 use crate::{Dispatch, Workbench, command_ids};
 
@@ -20,9 +21,6 @@ const MACOS_TRAFFIC_LIGHTS_WIDTH: f32 = 72.0;
 /// Where macOS places the traffic lights: vertically centered in the
 /// title bar of the mockups.
 const MACOS_TRAFFIC_LIGHTS_POSITION: (f32, f32) = (20.0, 26.0);
-
-/// Menu buttons: message ids of their labels.
-const MENUS: [&str; 4] = ["menu-file", "menu-edit", "menu-view", "menu-go"];
 
 /// Title bar options for a window whose title bar the workbench draws.
 pub(crate) fn titlebar_options() -> TitlebarOptions {
@@ -53,7 +51,8 @@ fn clickable(element: impl IntoElement) -> Div {
 }
 
 /// Logo, wordmark and menus.
-fn leading(workbench: &Workbench, cx: &App) -> AnyElement {
+fn leading(workbench: &Workbench, cx: &mut Context<Workbench>) -> AnyElement {
+    let this = cx.entity().downgrade();
     let theme = cx.theme();
     let colors = &theme.colors;
     let metrics = &theme.metrics;
@@ -78,8 +77,46 @@ fn leading(workbench: &Workbench, cx: &App) -> AnyElement {
         .flex_none()
         .items_center()
         .ml(px(size.titlebar_menus_offset - metrics.space.md))
-        .children(MENUS.iter().map(|id| {
-            clickable(Button::new(*id, workbench.text(id)).variant(ButtonVariant::Text))
+        .children(MENUS.iter().enumerate().map(|(index, menu)| {
+            let open = workbench
+                .menu
+                .as_ref()
+                .is_some_and(|open| open.index == index);
+            let toggle = this.clone();
+            let hover = this.clone();
+            let mut button =
+                Button::new(menu.label, workbench.text(menu.label)).variant(ButtonVariant::Text);
+            if open {
+                button = button.force_state(InteractionState::Hover);
+            }
+            let button = button.on_activate(move |window, cx| {
+                let _ = toggle.update(cx, |workbench, cx| {
+                    workbench.toggle_menu(index, false, window, cx);
+                });
+            });
+            // The open menu hangs below its button, above the panels.
+            let dropdown = open
+                .then(|| workbench.menu.as_ref().map(|open| open.view.clone()))
+                .flatten()
+                .map(|view| {
+                    deferred(anchored().child(div().pt(px(metrics.space.xs)).child(view)))
+                        .with_priority(1)
+                });
+            clickable(
+                div()
+                    .id(("menu-button", index))
+                    .flex()
+                    .flex_col()
+                    .on_hover(move |hovered, window, cx| {
+                        if *hovered {
+                            let _ = hover.update(cx, |workbench, cx| {
+                                workbench.hover_menu(index, window, cx);
+                            });
+                        }
+                    })
+                    .child(button)
+                    .children(dropdown),
+            )
         }));
     div()
         .flex()

@@ -203,6 +203,7 @@ command-workbench-previous-tab = Предыдущая вкладка
 command-workbench-close-window = Закрыть окно
 command-workbench-focus-outline = Перейти к структуре
 command-workbench-toggle-outline = Свернуть или развернуть структуру
+command-workbench-open-menu-bar = Открыть меню
 editor-close-unsaved = Сохранить изменения в { $name }?
 editor-close-unsaved-detail = Если не сохранить, изменения пропадут.
 editor-untitled = Без имени

@@ -3,6 +3,7 @@
 # `mod` (Ctrl on Windows and Linux, Cmd on macOS).
 
 [global]
+"f10" = "workbench.openMenuBar"
 "ctrl-," = "preferences.openSettings"
 "alt-f4" = "app.quit"
 

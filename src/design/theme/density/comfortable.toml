@@ -80,6 +80,7 @@
 "completion.width" = 420
 "completion.rows" = 10
 "editor.popup_gap" = 4
+"menu.width" = 260                  # not in the mockups (ADR 0008)
 
 [space]
 "xxs" = 2

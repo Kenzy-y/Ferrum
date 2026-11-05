@@ -29,6 +29,9 @@ pub const NEXT_TAB: &str = "workbench.nextTab";
 /// Activates the previous tab.
 pub const PREVIOUS_TAB: &str = "workbench.previousTab";
 
+/// Opens the first menu of the title bar for the keyboard.
+pub const OPEN_MENU_BAR: &str = "workbench.openMenuBar";
+
 /// Closes the window, asking about unsaved files.
 pub const CLOSE_WINDOW: &str = "workbench.closeWindow";
 
@@ -69,6 +72,7 @@ pub(crate) const ALL: &[(&str, &str)] = &[
     (CLOSE_WINDOW, "command-workbench-close-window"),
     (FOCUS_OUTLINE, "command-workbench-focus-outline"),
     (TOGGLE_OUTLINE, "command-workbench-toggle-outline"),
+    (OPEN_MENU_BAR, "command-workbench-open-menu-bar"),
 ];
 
 /// The command that shows `view`.

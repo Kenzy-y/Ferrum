@@ -120,6 +120,8 @@ token_struct! {
         completion_rows = "completion.rows",
         /// Gap between the text and an editor popup.
         editor_popup_gap = "editor.popup_gap",
+        /// Smallest width of a title bar menu.
+        menu_width = "menu.width",
     }
 }
 
