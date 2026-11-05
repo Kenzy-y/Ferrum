@@ -8,7 +8,9 @@ the UI asks of language support. ADR 0006.
   `syntax::GrammarSpec` and an optional `ServerFactory`.
   `LanguagePack::new(grammar)` takes the identity from the grammar,
   `without_grammar` exists for languages a server serves as plain text,
-  `with_server` adds the server.
+  `with_server` adds the server. `with_pairs` replaces the auto-closing pairs
+  (`text::DEFAULT_PAIRS` by default; Rust drops `'`), and the editor gets them
+  from `LanguageEntry::pairs`.
 - `LanguageRegistry`: packs by id and by path (exact name wins over the
   extension, case ignored). It registers each pack's grammar in its
   `GrammarRegistry` (`grammars()`), the pack's identity overriding the

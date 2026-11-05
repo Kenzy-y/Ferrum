@@ -23,6 +23,7 @@ pub use service::{
     BoxFuture, Capabilities, CompletionCapabilities, CompletionTrigger, LanguageService,
     ResolveCapability, ServiceError, ServiceEvent,
 };
+pub use text::{AutoPair, DEFAULT_PAIRS};
 pub use types::{
     CodeLens, Completion, CompletionEdit, CompletionKind, CompletionList, Diagnostic, Hover,
     InlayHint, InlayHintKind, LensAction, Location, ResolveToken, ServerStatus, Severity,

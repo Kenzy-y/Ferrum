@@ -42,6 +42,9 @@ pub struct EditorSettings {
     /// Opens the completion list when a word starts, not only after a
     /// trigger character or Ctrl Space.
     pub suggest_on_type: bool,
+    /// Typing an opening bracket or quote also inserts its closing one;
+    /// the language decides which characters pair.
+    pub auto_close_pairs: bool,
 }
 
 impl Default for EditorSettings {
@@ -56,6 +59,7 @@ impl Default for EditorSettings {
             minimap: true,
             hover_delay_ms: 300,
             suggest_on_type: true,
+            auto_close_pairs: true,
         }
     }
 }

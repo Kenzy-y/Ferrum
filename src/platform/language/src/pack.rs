@@ -3,6 +3,7 @@
 use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
+use text::{AutoPair, DEFAULT_PAIRS};
 
 use process::ProcessRunner;
 use settings::SettingsStore;
@@ -45,6 +46,7 @@ pub struct LanguagePack {
     pub(crate) file_names: Vec<String>,
     pub(crate) grammar: Option<GrammarSpec>,
     pub(crate) server: Option<Arc<dyn ServerFactory>>,
+    pub(crate) pairs: Vec<AutoPair>,
 }
 
 impl fmt::Debug for LanguagePack {
@@ -68,6 +70,7 @@ impl LanguagePack {
             file_names: grammar.file_names.clone(),
             grammar: Some(grammar),
             server: None,
+            pairs: DEFAULT_PAIRS.to_vec(),
         }
     }
 
@@ -86,6 +89,7 @@ impl LanguagePack {
             file_names,
             grammar: None,
             server: None,
+            pairs: DEFAULT_PAIRS.to_vec(),
         }
     }
 
@@ -93,6 +97,14 @@ impl LanguagePack {
     #[must_use]
     pub fn with_server(mut self, server: Arc<dyn ServerFactory>) -> Self {
         self.server = Some(server);
+        self
+    }
+
+    /// Replaces the auto-closing pairs (by default
+    /// [`text::DEFAULT_PAIRS`]).
+    #[must_use]
+    pub fn with_pairs(mut self, pairs: &[AutoPair]) -> Self {
+        self.pairs = pairs.to_vec();
         self
     }
 

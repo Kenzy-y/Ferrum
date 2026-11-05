@@ -111,6 +111,8 @@ pub struct Editor {
     pub(crate) scrollbar_hovered: bool,
     /// The language service and what it shows, when connected.
     pub(crate) language: Option<crate::language::LanguageState>,
+    /// Brackets and quotes that close themselves, from the language.
+    pub(crate) auto_pairs: Arc<[text::AutoPair]>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -166,6 +168,7 @@ impl Editor {
             minimap_cache: MinimapCache::default(),
             scrollbar_hovered: false,
             language: None,
+            auto_pairs: text::DEFAULT_PAIRS.into(),
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
@@ -228,6 +231,12 @@ impl Editor {
         }
     }
 
+    /// The brackets and quotes that close themselves (from the language
+    /// of the text).
+    pub fn set_auto_pairs(&mut self, pairs: Arc<[text::AutoPair]>) {
+        self.auto_pairs = pairs;
+    }
+
     /// Applies changed settings.
     pub fn set_settings(&mut self, settings: EditorSettings, cx: &mut Context<Self>) {
         if settings != self.settings {
@@ -287,7 +296,10 @@ impl Editor {
                 }
             }
             Action::Paste => self.paste(cx),
-            Action::DeleteLeft => self.change(cx, Document::delete_backward),
+            Action::DeleteLeft => {
+                let pairs = self.active_pairs();
+                self.change(cx, |document| document.delete_backward_paired(&pairs));
+            }
             Action::DeleteRight => self.change(cx, Document::delete_forward),
             Action::DeleteWordLeft => self.change(cx, Document::delete_word_backward),
             Action::DeleteWordRight => self.change(cx, Document::delete_word_forward),
@@ -387,6 +399,16 @@ impl Editor {
         self.autoscroll = true;
         self.restart_blink(cx);
         cx.notify();
+    }
+
+    /// The pairs typing closes: none when `[editor] auto_close_pairs` is
+    /// off.
+    pub(crate) fn active_pairs(&self) -> Arc<[text::AutoPair]> {
+        if self.settings.auto_close_pairs {
+            self.auto_pairs.clone()
+        } else {
+            Arc::from([])
+        }
     }
 
     /// Lines moved by Page Up and Page Down: the visible rows less one.

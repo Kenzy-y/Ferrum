@@ -25,7 +25,7 @@ pub use boundaries::{
 };
 pub use buffer::{Buffer, LineEnding, LineEndings, Point};
 pub use changes::{TextChanges, TextEdit};
-pub use document::{Clock, CopiedText, Document, Indent, Movement};
+pub use document::{AutoPair, Clock, CopiedText, DEFAULT_PAIRS, Document, Indent, Movement};
 pub use history::{EditKind, History, UNDO_GROUP_PAUSE};
 pub use io::{TextError, load, save};
 pub use selection::{Selection, Selections};

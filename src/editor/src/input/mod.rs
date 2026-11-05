@@ -86,13 +86,20 @@ impl EntityInputHandler for Editor {
             .map(|range| self.to_offsets(&range))
             .or_else(|| self.marked.take());
         self.marked = None;
-        match range {
-            // The platform names the range (input methods, accent menus).
-            Some(range) => self.change(cx, |document| {
+        // The platform names the range (input methods, accent menus).
+        if let Some(range) = range {
+            self.change(cx, |document| {
                 document.replace(range, text);
-            }),
-            // Plain typing: at every cursor.
-            None => self.change(cx, |document| document.insert(text)),
+            });
+            return;
+        }
+        // Plain typing: at every cursor; brackets and quotes pair.
+        let pairs = self.active_pairs();
+        let mut chars = text.chars();
+        if let (Some(typed), None) = (chars.next(), chars.next()) {
+            self.change(cx, |document| document.insert_paired(typed, &pairs));
+        } else {
+            self.change(cx, |document| document.insert(text));
         }
     }
 

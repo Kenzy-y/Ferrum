@@ -5,7 +5,7 @@ mod rust_analyzer;
 
 use std::sync::Arc;
 
-use language::LanguagePack;
+use language::{AutoPair, LanguagePack};
 use syntax::GrammarSpec;
 
 pub use rust_analyzer::RustAnalyzerSettings;
@@ -26,9 +26,19 @@ pub fn grammar() -> GrammarSpec {
     }
 }
 
+/// Pairs of Rust: no single quote, which also starts lifetimes (`'a`).
+const PAIRS: &[AutoPair] = &[
+    AutoPair::new('(', ')'),
+    AutoPair::new('[', ']'),
+    AutoPair::new('{', '}'),
+    AutoPair::new('"', '"'),
+];
+
 /// The language pack.
 pub fn pack() -> LanguagePack {
-    LanguagePack::new(grammar()).with_server(Arc::new(rust_analyzer::RustAnalyzerFactory))
+    LanguagePack::new(grammar())
+        .with_pairs(PAIRS)
+        .with_server(Arc::new(rust_analyzer::RustAnalyzerFactory))
 }
 
 #[cfg(test)]

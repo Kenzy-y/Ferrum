@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
 use std::sync::Arc;
+use text::AutoPair;
 
 use syntax::{GrammarEntry, GrammarRegistry, SyntaxError};
 
@@ -27,6 +28,7 @@ pub struct LanguageEntry {
     name: String,
     grammar: Option<Arc<GrammarEntry>>,
     server: Option<Arc<dyn ServerFactory>>,
+    pairs: Arc<[AutoPair]>,
 }
 
 impl fmt::Debug for LanguageEntry {
@@ -42,6 +44,11 @@ impl LanguageEntry {
     /// Stable id (`rust`).
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    /// Brackets and quotes that close themselves when typed.
+    pub fn pairs(&self) -> &Arc<[AutoPair]> {
+        &self.pairs
     }
 
     /// Name shown to the user (`Rust`).
@@ -108,6 +115,7 @@ impl LanguageRegistry {
             name: pack.name,
             grammar,
             server: pack.server,
+            pairs: pack.pairs.into(),
         }));
         Ok(())
     }

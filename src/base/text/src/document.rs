@@ -190,10 +190,12 @@ fn clamp_selections(selections: &Selections, buffer: &Buffer) -> Selections {
 mod editing;
 mod indentation;
 mod movement;
+mod pairs;
 mod ranges;
 
 pub use indentation::Indent;
 pub use movement::Movement;
+pub use pairs::{AutoPair, DEFAULT_PAIRS};
 pub use ranges::CopiedText;
 
 #[cfg(test)]

@@ -87,3 +87,12 @@ timings are only meaningful on a quiet machine.
 (`encoding_rs`). LSP positions (UTF-16) get a conversion next to
 `char_column`. The editor (stage 3, part 2) maps its commands onto
 `Document` operations.
+
+**Auto-closing pairs** (`document/pairs.rs`, ADR 0008).
+`Document::insert_paired(c, pairs)` closes an opening bracket or quote
+where it does not split a word (before the end of the line, whitespace or
+a closing character; a quote also not right after a letter). Typing the
+closing character before it steps over it. Over selections it wraps them.
+`delete_backward_paired` deletes an empty pair. Every cursor is handled,
+and each case is one undo step. `DEFAULT_PAIRS` are `() [] {} "" ''`.
+

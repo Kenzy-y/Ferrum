@@ -51,6 +51,9 @@ impl Shell {
                         let mut editor =
                             Editor::new(Document::new(buffer), file, settings, window, cx);
                         editor.set_grammar(grammar, syntax_settings, cx);
+                        if let Some(entry) = &entry {
+                            editor.set_auto_pairs(entry.pairs().clone());
+                        }
                         editor
                     });
                     shell.connect_language(&editor, entry.as_deref(), window, cx);
