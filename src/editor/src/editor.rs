@@ -355,6 +355,12 @@ impl Editor {
                 _ => {}
             }
         }
+        match action {
+            Action::Indent => return self.snippet_step(true, cx),
+            Action::Outdent => return self.snippet_step(false, cx),
+            Action::SingleCursor if self.end_snippet() => return true,
+            _ => {}
+        }
         action == Action::SingleCursor && self.dismiss_hover(cx)
     }
 

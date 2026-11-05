@@ -149,6 +149,7 @@ mod tests {
             edit: CompletionEdit {
                 range: None,
                 new_text: label.to_owned(),
+                tab_stops: Vec::new(),
             },
             additional_edits: Vec::new(),
             resolve: None,
@@ -263,6 +264,77 @@ mod tests {
         let text = text_of(window, cx);
         assert!(text == "println" || text == "print", "{text}");
         assert!(!text.contains('\n'), "Enter accepted instead of a new line");
+    }
+
+    fn snippet(label: &str, source: &str) -> Completion {
+        let parsed = language::Snippet::parse(source);
+        Completion {
+            edit: CompletionEdit {
+                range: None,
+                new_text: parsed.text,
+                tab_stops: parsed.stops,
+            },
+            ..completion(label)
+        }
+    }
+
+    fn cursor(window: WindowHandle<Editor>, cx: &mut TestAppContext) -> (usize, usize) {
+        window
+            .read_with(cx, |editor, _| {
+                editor.document().selections().primary().range()
+            })
+            .map(|range| (range.start, range.end))
+            .unwrap()
+    }
+
+    fn accept_first(window: WindowHandle<Editor>, typed: usize, cx: &mut TestAppContext) {
+        window
+            .update(cx, |editor, _, cx| {
+                editor.edit_document(cx, |document| {
+                    document.set_primary_selection(text::Selection::cursor(typed));
+                });
+            })
+            .unwrap();
+        command(window, "editor.triggerSuggest", cx);
+        settle(cx);
+        command(window, "editor.newline", cx);
+    }
+
+    #[gpui::test]
+    fn a_macro_snippet_puts_the_cursor_inside(cx: &mut TestAppContext) {
+        let service = Arc::new(FakeService {
+            completions: vec![snippet("println!", "println!($0)")],
+            ..FakeService::default()
+        });
+        let window = open("prin", &service, cx);
+        accept_first(window, 4, cx);
+        assert_eq!(text_of(window, cx), "println!()");
+        assert_eq!(cursor(window, cx), (9, 9));
+    }
+
+    #[gpui::test]
+    fn tab_visits_the_placeholders_then_the_end(cx: &mut TestAppContext) {
+        let service = Arc::new(FakeService {
+            completions: vec![snippet("pair", "pair(${1:x}, ${2:y})")],
+            ..FakeService::default()
+        });
+        let window = open("pa", &service, cx);
+        accept_first(window, 2, cx);
+        assert_eq!(text_of(window, cx), "pair(x, y)");
+        assert_eq!(cursor(window, cx), (5, 6), "x is selected");
+        // Typing over the placeholder keeps the session.
+        window
+            .update(cx, |editor, _, cx| {
+                editor.edit_document(cx, |document| document.insert("first"));
+            })
+            .unwrap();
+        command(window, "editor.indent", cx);
+        assert_eq!(cursor(window, cx), (12, 13), "y is selected");
+        command(window, "editor.indent", cx);
+        assert_eq!(cursor(window, cx), (14, 14), "the end of the snippet");
+        command(window, "editor.indent", cx);
+        // The session ended: Tab indents again, to the next tab stop.
+        assert_eq!(text_of(window, cx), "pair(first, y)  ");
     }
 
     #[gpui::test]

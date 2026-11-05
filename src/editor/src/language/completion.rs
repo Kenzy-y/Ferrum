@@ -271,10 +271,16 @@ impl Editor {
             None => menu.word_start..head,
         };
         let additional = item.additional_edits.clone();
+        let mut base = range.start;
         self.change(cx, |document| {
-            document.replace(range, &item.edit.new_text);
-            apply_additional(document, &additional);
+            let inserted = document.replace(range, &item.edit.new_text);
+            base = apply_additional(document, &additional, inserted.start);
         });
+        if !item.edit.tab_stops.is_empty() {
+            let length = item.edit.new_text.len();
+            let stops = item.edit.tab_stops.clone();
+            self.start_snippet(base, length, &stops, cx);
+        }
         if resolve {
             // The service fills in edits elsewhere (an import) on request.
             let version = self.document.version();
@@ -286,8 +292,10 @@ impl Editor {
                 let _ = editor.update(cx, |editor, cx| {
                     if editor.document.version() == version && !resolved.additional_edits.is_empty()
                     {
+                        editor.end_snippet();
                         editor.change(cx, |document| {
-                            apply_additional(document, &resolved.additional_edits);
+                            let head = document.selections().primary().head;
+                            apply_additional(document, &resolved.additional_edits, head);
                         });
                     }
                 });
@@ -451,9 +459,14 @@ fn kind_glyph(kind: Option<CompletionKind>) -> &'static str {
 
 /// Applies edits made elsewhere (an import); the cursor keeps its place in
 /// the text.
-fn apply_additional(document: &mut text::Document, edits: &[language::TextReplacement]) {
+/// Returns where `anchor` (the start of the main edit) moved.
+fn apply_additional(
+    document: &mut text::Document,
+    edits: &[language::TextReplacement],
+    anchor: usize,
+) -> usize {
     if edits.is_empty() {
-        return;
+        return anchor;
     }
     let mut ranges: Vec<(Range<usize>, &str)> = edits
         .iter()
@@ -468,13 +481,18 @@ fn apply_additional(document: &mut text::Document, edits: &[language::TextReplac
     // From the end, so earlier ranges stay valid.
     ranges.sort_by_key(|(range, _)| std::cmp::Reverse(range.start));
     let mut head = document.selections().primary().head;
+    let mut anchor = anchor;
     for (range, text) in ranges {
         document.replace(range.clone(), text);
         if range.end <= head {
             head = head - (range.end - range.start) + text.len();
         }
+        if range.end <= anchor {
+            anchor = anchor - (range.end - range.start) + text.len();
+        }
     }
     document.set_primary_selection(Selection::cursor(head));
+    anchor
 }
 
 /// The one character the edit typed, if it typed exactly one.
@@ -525,6 +543,7 @@ mod tests {
             edit: CompletionEdit {
                 range: None,
                 new_text: label.to_owned(),
+                tab_stops: Vec::new(),
             },
             additional_edits: Vec::new(),
             resolve: None,

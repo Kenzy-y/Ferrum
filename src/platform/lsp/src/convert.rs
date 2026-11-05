@@ -6,7 +6,8 @@ use std::sync::Arc;
 
 use language::{
     CodeLens, Completion, CompletionEdit, CompletionKind, CompletionList, Diagnostic, Hover,
-    InlayHint, InlayHintKind, LensAction, Location, ResolveToken, Severity, TextReplacement,
+    InlayHint, InlayHintKind, LensAction, Location, ResolveToken, Severity, Snippet,
+    TextReplacement,
 };
 use lsp_types as lsp;
 use text::ropey::Rope;
@@ -100,24 +101,33 @@ impl Converter<'_> {
         resolvable: bool,
     ) -> Completion {
         let snippet = item.insert_text_format == Some(lsp::InsertTextFormat::SNIPPET);
-        let plain = |text: String| if snippet { plain_snippet(&text) } else { text };
-        let edit = match &item.text_edit {
-            Some(lsp::CompletionTextEdit::Edit(edit)) => CompletionEdit {
-                range: Some(self.range(path, edit.range)),
-                new_text: plain(edit.new_text.clone()),
-            },
-            Some(lsp::CompletionTextEdit::InsertAndReplace(edit)) => CompletionEdit {
-                range: Some(self.range(path, edit.insert)),
-                new_text: plain(edit.new_text.clone()),
-            },
-            None => CompletionEdit {
-                range: None,
-                new_text: plain(
-                    item.insert_text
-                        .clone()
-                        .unwrap_or_else(|| item.label.clone()),
-                ),
-            },
+        let (range, text) = match &item.text_edit {
+            Some(lsp::CompletionTextEdit::Edit(edit)) => {
+                (Some(self.range(path, edit.range)), edit.new_text.clone())
+            }
+            Some(lsp::CompletionTextEdit::InsertAndReplace(edit)) => {
+                (Some(self.range(path, edit.insert)), edit.new_text.clone())
+            }
+            None => (
+                None,
+                item.insert_text
+                    .clone()
+                    .unwrap_or_else(|| item.label.clone()),
+            ),
+        };
+        let edit = if snippet {
+            let Snippet { text, stops } = Snippet::parse(&text);
+            CompletionEdit {
+                range,
+                new_text: text,
+                tab_stops: stops,
+            }
+        } else {
+            CompletionEdit {
+                range,
+                new_text: text,
+                tab_stops: Vec::new(),
+            }
         };
         let additional_edits = item
             .additional_text_edits
@@ -247,74 +257,11 @@ fn completion_kind(kind: lsp::CompletionItemKind) -> Option<CompletionKind> {
     })
 }
 
-/// The text of a snippet without its tab stops: `${1:name}` becomes
-/// `name`, `$0` and `$1` disappear, `\$` becomes `$`. Snippet sessions are
-/// not supported yet (ROADMAP), and servers are told so, but some send
-/// snippets anyway.
-pub(crate) fn plain_snippet(snippet: &str) -> String {
-    let mut plain = String::with_capacity(snippet.len());
-    let mut chars = snippet.chars().peekable();
-    while let Some(char) = chars.next() {
-        match char {
-            '\\' => {
-                if let Some(next) = chars.next() {
-                    plain.push(next);
-                }
-            }
-            '$' => match chars.peek() {
-                Some('{') => {
-                    chars.next();
-                    while chars.peek().is_some_and(char::is_ascii_digit) {
-                        chars.next();
-                    }
-                    if chars.peek() == Some(&':') {
-                        chars.next();
-                    }
-                    // The placeholder text up to the matching brace.
-                    let mut depth = 1;
-                    for inner in chars.by_ref() {
-                        match inner {
-                            '{' => depth += 1,
-                            '}' => {
-                                depth -= 1;
-                                if depth == 0 {
-                                    break;
-                                }
-                            }
-                            _ => {}
-                        }
-                        plain.push(inner);
-                    }
-                }
-                Some(next) if next.is_ascii_digit() => {
-                    while chars.peek().is_some_and(char::is_ascii_digit) {
-                        chars.next();
-                    }
-                }
-                _ => plain.push('$'),
-            },
-            _ => plain.push(char),
-        }
-    }
-    plain
-}
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr as _;
 
     use super::*;
-
-    #[test]
-    fn snippets_lose_their_tab_stops() {
-        assert_eq!(plain_snippet("println!(\"$1\")$0"), "println!(\"\")");
-        assert_eq!(
-            plain_snippet("fn ${1:name}(${2:args}) {}"),
-            "fn name(args) {}"
-        );
-        assert_eq!(plain_snippet("cost: \\$5"), "cost: $5");
-        assert_eq!(plain_snippet("a $ b"), "a $ b");
-    }
 
     #[test]
     fn converts_answers() {

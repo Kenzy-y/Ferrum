@@ -58,8 +58,10 @@ client capabilities, unknown notifications (a status), code lens
 commands (`LensAction`) and settings changes. It lives in the language
 pack (`lang_rust` for rust-analyzer).
 
-**Not supported yet:** snippets in completions (servers are told
-`snippetSupport: false`, stray snippets are flattened), `applyEdit` and
+Completions declare `snippetSupport: true`. Snippet items are parsed with
+`language::Snippet` into text and tab stops (ADR 0008).
+
+**Not supported yet:** `applyEdit` and
 code actions, semantic tokens.
 
 **Tests.** `tests/service.rs` runs the service against a scripted server

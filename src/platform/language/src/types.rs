@@ -131,8 +131,11 @@ pub struct Completion {
 pub struct CompletionEdit {
     /// Replaced text; `None`: the word before the cursor.
     pub range: Option<Range<Point>>,
-    /// Inserted text.
+    /// Inserted text (a snippet's text without its markup).
     pub new_text: String,
+    /// Where the cursor goes in `new_text`, in order; empty for plain
+    /// text (the cursor goes after it).
+    pub tab_stops: Vec<crate::TabStop>,
 }
 
 /// Completions at a position.

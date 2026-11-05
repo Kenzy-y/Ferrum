@@ -15,6 +15,7 @@
 mod pack;
 mod registry;
 mod service;
+mod snippet;
 mod types;
 
 pub use pack::{LanguagePack, ServerContext, ServerFactory};
@@ -23,6 +24,7 @@ pub use service::{
     BoxFuture, Capabilities, CompletionCapabilities, CompletionTrigger, LanguageService,
     ResolveCapability, ServiceError, ServiceEvent,
 };
+pub use snippet::{Snippet, TabStop};
 pub use text::{AutoPair, DEFAULT_PAIRS};
 pub use types::{
     CodeLens, Completion, CompletionEdit, CompletionKind, CompletionList, Diagnostic, Hover,

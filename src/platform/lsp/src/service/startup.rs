@@ -375,8 +375,8 @@ fn client_capabilities(inner: &Inner) -> ClientCapabilities {
             }),
             completion: Some(CompletionClientCapabilities {
                 completion_item: Some(CompletionItemCapability {
-                    // Snippet sessions are a ROADMAP item.
-                    snippet_support: Some(false),
+                    // Tab stops are visited in the editor (ADR 0008).
+                    snippet_support: Some(true),
                     documentation_format: markdown,
                     resolve_support: Some(CompletionItemCapabilityResolveSupport {
                         properties: ["documentation", "detail", "additionalTextEdits"]

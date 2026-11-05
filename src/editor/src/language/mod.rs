@@ -9,6 +9,7 @@ pub(crate) mod hover;
 pub(crate) mod markdown;
 mod navigation;
 pub(crate) mod popup;
+pub(crate) mod snippet;
 
 use std::ops::Range;
 use std::path::{Path, PathBuf};
@@ -43,6 +44,8 @@ pub(crate) struct LanguageState {
     pub(crate) completion_task: Option<Task<()>>,
     /// The go to definition request in flight.
     pub(crate) definition_task: Option<Task<()>>,
+    /// The snippet being filled in.
+    pub(crate) snippet: Option<self::snippet::SnippetSession>,
     _events: Task<()>,
 }
 
@@ -90,6 +93,7 @@ impl Editor {
             completion: None,
             completion_task: None,
             definition_task: None,
+            snippet: None,
             _events: task,
         });
         cx.notify();
@@ -120,6 +124,7 @@ impl Editor {
             self.document.buffer().clone(),
         );
         diagnostics::follow(&mut language.diagnostics, changes, self.document.buffer());
+        self.follow_snippet(changes);
         self.dismiss_hover(cx);
         self.update_completion_after_edit(changes, cx);
     }

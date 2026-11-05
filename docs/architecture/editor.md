@@ -146,6 +146,12 @@ dropping the state closes it. Only what `capabilities()` allows is offered.
   modifier that does not add cursors (Ctrl/Cmd, or Alt when
   `multi_cursor_modifier = "ctrl"`). A definition in the same file moves
   the cursor; one elsewhere emits `EditorEvent::OpenLocation`.
+- `snippet.rs`: a completion with tab stops (`language::Snippet`)
+  selects the first one. Tab and Shift+Tab move between them (handled in
+  `Editor::popup_takes`), and stops with several ranges get a cursor each.
+  The final stop (`$0`, or the end of the snippet) ends the session, as do
+  Escape and an edit away from the current stop. Stops follow edits like
+  diagnostics.
 - `markdown.rs` reduces hover and documentation Markdown to paragraphs,
   code blocks and rules. Code in the editor's language is highlighted with
   its grammar in the background. `popup.rs` styles popups like the palette
