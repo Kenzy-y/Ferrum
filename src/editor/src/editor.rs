@@ -8,8 +8,8 @@ use std::time::Duration;
 
 use gpui::{
     ClipboardEntry, ClipboardItem, Context, CursorStyle, EventEmitter, FocusHandle, Focusable,
-    InteractiveElement as _, IntoElement, MouseButton, ParentElement as _, Render, Styled as _,
-    Subscription, Task, Window, div,
+    InteractiveElement as _, IntoElement, MouseButton, ParentElement as _, Render,
+    StatefulInteractiveElement as _, Styled as _, Subscription, Task, Window, div,
 };
 use serde::{Deserialize, Serialize};
 use text::{Document, LineEndings, Selection, Selections};
@@ -44,6 +44,11 @@ pub enum EditorEvent {
     Renamed,
     /// The outline was computed again ([`Editor::outline`]).
     OutlineChanged,
+    /// The language service published new diagnostics
+    /// ([`Editor::problem_counts`]).
+    DiagnosticsChanged,
+    /// Go to definition found it in another file; the owner opens it.
+    OpenLocation(language::Location),
 }
 
 /// What the status bar shows about an editor.
@@ -104,6 +109,8 @@ pub struct Editor {
     pub(crate) minimap_cache: MinimapCache,
     /// The pointer is over the scrollbar (the thumb is drawn brighter).
     pub(crate) scrollbar_hovered: bool,
+    /// The language service and what it shows, when connected.
+    pub(crate) language: Option<crate::language::LanguageState>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -158,6 +165,7 @@ impl Editor {
             syntax: None,
             minimap_cache: MinimapCache::default(),
             scrollbar_hovered: false,
+            language: None,
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
@@ -239,6 +247,9 @@ impl Editor {
     }
 
     fn perform(&mut self, action: Action, _window: &mut Window, cx: &mut Context<Self>) {
+        if self.popup_takes(action, cx) {
+            return;
+        }
         let indent = self.settings.indent();
         let page_rows = self.page_rows();
         match action {
@@ -289,7 +300,50 @@ impl Editor {
             Action::LineEndings(ending) => {
                 self.change(cx, |document| document.set_line_endings(ending));
             }
+            Action::TriggerSuggest => {
+                self.trigger_completion(language::CompletionTrigger::Invoked, cx);
+            }
+            Action::ShowHover => self.show_hover_at_cursor(cx),
+            Action::GoToDefinition => {
+                let head = self.document.selections().primary().head;
+                self.go_to_definition(head, cx);
+            }
         }
+    }
+
+    /// Keys an open popup handles instead of the text: the completion list
+    /// takes moves up and down, Enter, Tab and Escape; Escape also closes
+    /// the hover. Returns `true` if the action was taken.
+    fn popup_takes(&mut self, action: Action, cx: &mut Context<Self>) -> bool {
+        use crate::actions::Motion;
+        use crate::language::completion::{Step, completion_rows};
+        if self.completion_open() {
+            let rows = completion_rows(&theme::shared_theme(cx));
+            let step = match action {
+                Action::Move(Motion::Up, false) => Some(Step::Up),
+                Action::Move(Motion::Down, false) => Some(Step::Down),
+                Action::Move(Motion::PageUp, false) => Some(Step::PageUp),
+                Action::Move(Motion::PageDown, false) => Some(Step::PageDown),
+                _ => None,
+            };
+            if let Some(step) = step {
+                self.step_completion(step, rows, cx);
+                return true;
+            }
+            match action {
+                Action::Newline | Action::Indent => {
+                    self.accept_completion(None, cx);
+                    return true;
+                }
+                Action::SingleCursor => {
+                    self.close_completion(cx);
+                    return true;
+                }
+                Action::Move(..) => self.close_completion(cx),
+                _ => {}
+            }
+        }
+        action == Action::SingleCursor && self.dismiss_hover(cx)
     }
 
     fn paste(&mut self, cx: &mut Context<Self>) {
@@ -397,6 +451,8 @@ fn write_clipboard(copied: &text::CopiedText, cx: &mut Context<Editor>) {
 
 impl Render for Editor {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = theme::shared_theme(cx);
+        let popups = self.render_popups(&theme, cx);
         div()
             .id("editor")
             .key_context(actions::CONTEXT)
@@ -407,6 +463,12 @@ impl Render for Editor {
             .on_mouse_move(cx.listener(Self::on_mouse_move))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_scroll(cx.listener(Self::on_scroll))
+            .on_hover(cx.listener(|editor, hovered: &bool, _, cx| {
+                if !*hovered {
+                    editor.hover_pointer(None, cx);
+                }
+            }))
             .child(EditorElement::new(cx.entity()))
+            .children(popups)
     }
 }

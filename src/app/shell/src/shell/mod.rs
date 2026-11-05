@@ -26,6 +26,7 @@ use crate::app_commands;
 use crate::config::{self, LoadedConfig};
 #[cfg(debug_assertions)]
 use crate::gallery::Gallery;
+use crate::language_servers::LanguageServers;
 use crate::live_config;
 
 pub(crate) struct Shell {
@@ -48,6 +49,8 @@ pub(crate) struct Shell {
     file_icons: Arc<workbench::FileIcons>,
     /// Grammars of the language packs, by file.
     languages: Arc<language::LanguageRegistry>,
+    /// Running language services of the open folder.
+    language_servers: LanguageServers,
     /// The file tree of the open folder.
     file_tree: Option<Entity<workbench::FileTreeView>>,
     /// `[files] hidden` the tree was last given.
@@ -149,6 +152,7 @@ impl Shell {
             recent,
             file_icons,
             languages,
+            language_servers: LanguageServers::new(Arc::new(process::RealProcessRunner)),
             workspace_watch: None,
             file_tree: None,
             hidden: Vec::new(),

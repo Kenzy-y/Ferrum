@@ -23,6 +23,14 @@ binary only sets up logging and calls `shell::run()`.
   file tree) and keymaps without a restart.
 - `shell/workspace.rs` and `shell/files.rs` open folders (picker, typed
   path, recent projects) and files.
+- `language_servers.rs`: `LanguageServers`, the running services keyed
+  by server id and folder. `shell/files.rs` connects every opened editor
+  to the service of its language in the open folder, and opens the file
+  and position of `EditorEvent::OpenLocation`. Opening another folder
+  stops the previous folder's servers in the background. Settings changes
+  go to every service with `configure`. The table belongs to the window
+  for now; it moves to the application when there are several windows
+  (ADR 0006: one server per folder).
 - `gallery/`: the component gallery, debug builds only.
 
 **Commands.** `Shell::new` builds the window's `workbench::CommandHandlers`

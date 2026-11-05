@@ -166,6 +166,16 @@ pub fn set_theme(theme: Theme, cx: &mut gpui::App) {
     cx.refresh_windows();
 }
 
+/// The active theme, shared: for views that hold it while borrowing the
+/// context mutably.
+///
+/// # Panics
+///
+/// If no theme was set with [`set_theme`] (a startup wiring bug).
+pub fn shared_theme(cx: &gpui::App) -> Arc<Theme> {
+    cx.global::<GlobalTheme>().0.clone()
+}
+
 /// Access to the active theme.
 pub trait ActiveTheme {
     /// The active theme.

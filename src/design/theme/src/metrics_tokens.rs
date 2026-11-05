@@ -106,6 +106,20 @@ token_struct! {
         minimap_bar_height = "minimap.bar_height",
         /// Width of a character on the minimap.
         minimap_char_width = "minimap.char_width",
+        /// Thickness of a diagnostic underline.
+        diagnostic_underline = "diagnostic.underline",
+        /// Side and gap of the dots under a hint.
+        diagnostic_dot = "diagnostic.dot",
+        /// Widest a hover popup grows before it wraps.
+        hover_max_width = "hover.max_width",
+        /// Tallest a hover popup grows before it scrolls.
+        hover_max_height = "hover.max_height",
+        /// Width of the completion list.
+        completion_width = "completion.width",
+        /// Rows of the completion list shown at once.
+        completion_rows = "completion.rows",
+        /// Gap between the text and an editor popup.
+        editor_popup_gap = "editor.popup_gap",
     }
 }
 

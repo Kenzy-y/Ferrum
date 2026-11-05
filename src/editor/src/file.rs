@@ -193,6 +193,7 @@ impl Editor {
                             file.disk = DiskState::InSync;
                             file.disk_text = None;
                             cx.emit(EditorEvent::Saved);
+                            editor.language_saved();
                             true
                         }
                         Err(error) => {
@@ -336,6 +337,7 @@ impl Editor {
                 file.path = renamed;
                 file.disk = DiskState::InSync;
                 cx.emit(EditorEvent::Renamed);
+                self.language_renamed(cx);
             }
             OnDisk::Gone => {
                 file.disk = DiskState::Deleted;

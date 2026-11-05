@@ -1,9 +1,14 @@
-//! The built-in Rust language pack: file types, the tree-sitter grammar and
-//! the highlight and outline queries. The language server part
-//! (rust-analyzer) joins it in stage 4.
+//! The built-in Rust language pack: file types, the tree-sitter grammar,
+//! the highlight and outline queries, and rust-analyzer.
+
+mod rust_analyzer;
+
+use std::sync::Arc;
 
 use language::LanguagePack;
 use syntax::GrammarSpec;
+
+pub use rust_analyzer::RustAnalyzerSettings;
 
 /// Language id.
 pub const ID: &str = "rust";
@@ -23,7 +28,7 @@ pub fn grammar() -> GrammarSpec {
 
 /// The language pack.
 pub fn pack() -> LanguagePack {
-    LanguagePack::new(grammar())
+    LanguagePack::new(grammar()).with_server(Arc::new(rust_analyzer::RustAnalyzerFactory))
 }
 
 #[cfg(test)]

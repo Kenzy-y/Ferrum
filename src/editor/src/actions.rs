@@ -54,6 +54,12 @@ pub(crate) enum Action {
     ReloadFromDisk,
     KeepLocalChanges,
     LineEndings(LineEnding),
+    /// Opens the completion list.
+    TriggerSuggest,
+    /// Shows the hover of the cursor.
+    ShowHover,
+    /// Goes to the definition of the symbol at the cursor.
+    GoToDefinition,
 }
 
 /// A movement without its page size, which depends on the view.
@@ -283,6 +289,21 @@ pub(crate) const COMMANDS: &[(&str, &str, Action)] = &[
         "editor.convertLineEndingsToCrlf",
         "command-editor-line-endings-crlf",
         Action::LineEndings(LineEnding::CrLf),
+    ),
+    (
+        "editor.triggerSuggest",
+        "command-editor-trigger-suggest",
+        Action::TriggerSuggest,
+    ),
+    (
+        "editor.showHover",
+        "command-editor-show-hover",
+        Action::ShowHover,
+    ),
+    (
+        "editor.goToDefinition",
+        "command-editor-go-to-definition",
+        Action::GoToDefinition,
     ),
 ];
 

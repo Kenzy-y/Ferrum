@@ -16,6 +16,8 @@ pub enum MultiCursorModifier {
 }
 
 /// Settings of the editor.
+// Each flag is an independent user setting, not a hidden state machine.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct EditorSettings {
@@ -34,6 +36,12 @@ pub struct EditorSettings {
     pub scroll_sensitivity: f32,
     /// Shows the minimap at the right of the text.
     pub minimap: bool,
+    /// How long the pointer rests on a symbol before its hover shows, in
+    /// milliseconds; also how long a hover stays after the pointer left.
+    pub hover_delay_ms: u64,
+    /// Opens the completion list when a word starts, not only after a
+    /// trigger character or Ctrl Space.
+    pub suggest_on_type: bool,
 }
 
 impl Default for EditorSettings {
@@ -46,6 +54,8 @@ impl Default for EditorSettings {
             multi_cursor_modifier: MultiCursorModifier::Alt,
             scroll_sensitivity: 1.0,
             minimap: true,
+            hover_delay_ms: 300,
+            suggest_on_type: true,
         }
     }
 }

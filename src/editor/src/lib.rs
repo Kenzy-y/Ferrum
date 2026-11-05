@@ -16,6 +16,7 @@ mod editor;
 mod file;
 mod highlighting;
 mod input;
+mod language;
 mod render;
 mod settings;
 

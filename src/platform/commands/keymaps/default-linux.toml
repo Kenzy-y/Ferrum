@@ -73,3 +73,6 @@
 "tab" = "editor.indent"
 "shift-tab" = "editor.outdent"
 "ctrl-s" = "editor.save"
+"ctrl-space" = "editor.triggerSuggest"
+"ctrl-k ctrl-i" = "editor.showHover"
+"f12" = "editor.goToDefinition"

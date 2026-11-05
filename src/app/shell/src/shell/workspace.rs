@@ -130,6 +130,12 @@ impl Shell {
         cx: &mut Context<Self>,
     ) {
         tracing::info!(root = %workspace.display_root(), "opened folder");
+        // Servers of the previous folder stop in the background.
+        if let Some(previous) = &self.workspace {
+            for stopping in self.language_servers.stop(Some(previous.root())) {
+                cx.background_executor().spawn(stopping).detach();
+            }
+        }
         self.apply_workspace_layer(layer, window, cx);
 
         window.set_window_title(&super::window_title(&self.i18n, Some(&workspace)));
@@ -155,7 +161,7 @@ impl Shell {
             &tree,
             window,
             |shell, _, event: &workbench::OpenFile, window, cx| {
-                shell.open_file(event.0.clone(), window, cx);
+                shell.open_file(event.0.clone(), None, window, cx);
             },
         ));
         self.workspace_watch = Some(cx.subscribe_in(

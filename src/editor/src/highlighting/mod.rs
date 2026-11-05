@@ -262,6 +262,13 @@ impl Editor {
         }
     }
 
+    /// The compiled grammar of the text, once loaded.
+    pub(crate) fn loaded_grammar(&self) -> Option<Arc<Grammar>> {
+        self.syntax
+            .as_ref()
+            .and_then(|syntax| syntax.grammar.clone())
+    }
+
     /// Id of the language of the text (for `[lang.<id>]` settings), if it
     /// has a grammar.
     pub fn language_id(&self) -> Option<&str> {
@@ -296,6 +303,7 @@ impl Editor {
     /// edit.
     pub(crate) fn follow_text_changes(&mut self, cx: &mut Context<Self>) {
         let changes: TextChanges = self.document.take_changes();
+        self.follow_language_changes(&changes, cx);
         let Some(syntax) = &mut self.syntax else {
             return;
         };

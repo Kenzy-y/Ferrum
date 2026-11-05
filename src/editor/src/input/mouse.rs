@@ -74,10 +74,20 @@ impl Editor {
         }
         let buffer = self.document.buffer();
         let offset = layout.offset_at(buffer, event.position);
-        let add = match self.settings.multi_cursor_modifier {
-            MultiCursorModifier::Alt => event.modifiers.alt,
-            MultiCursorModifier::Ctrl => event.modifiers.secondary(cx),
+        self.dismiss_popups(cx);
+        // The modifier that does not add cursors goes to the definition.
+        let (add, go_to) = match self.settings.multi_cursor_modifier {
+            MultiCursorModifier::Alt => (event.modifiers.alt, event.modifiers.secondary(cx)),
+            MultiCursorModifier::Ctrl => (event.modifiers.secondary(cx), event.modifiers.alt),
         };
+        if go_to && event.click_count == 1 && self.language.is_some() {
+            self.change(cx, |document| {
+                document.set_selections(&Selections::single(Selection::cursor(offset)));
+            });
+            self.go_to_definition(offset, cx);
+            cx.stop_propagation();
+            return;
+        }
         let granularity = match event.click_count {
             0 | 1 => Granularity::Character,
             2 => Granularity::Word,
@@ -124,6 +134,8 @@ impl Editor {
             cx.notify();
         }
         let Some(drag) = self.drag.clone() else {
+            let over_text = !hovered && !layout.minimap.is_some_and(|map| map.contains(x, y));
+            self.hover_pointer(over_text.then_some(event.position), cx);
             return;
         };
         if event.pressed_button != Some(gpui::MouseButton::Left) {
@@ -195,6 +207,7 @@ impl Editor {
         let Some(layout) = self.layout.clone() else {
             return;
         };
+        self.dismiss_popups(cx);
         let delta = event.delta.pixel_delta(px(layout.line_height));
         let sensitivity = self.settings.scroll_sensitivity;
         let (mut dx, dy) = (delta.x.as_f32(), delta.y.as_f32());

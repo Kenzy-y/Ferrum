@@ -15,6 +15,7 @@ use crate::decorations::minimap::{Minimap, MinimapView};
 use crate::decorations::scrollbar::{Scrollbar, ScrollbarFrame};
 use crate::editor::Editor;
 use crate::render::layout::{LayoutSnapshot, ShapedRow};
+use crate::render::marks::Mark;
 use crate::render::runs::RunStyle;
 use crate::render::scene::{Scene, near_rows};
 use crate::render::shaping::{Metrics, head_x, shape_row};
@@ -55,6 +56,8 @@ pub(crate) struct Prepaint {
     /// Line height the numbers are painted with.
     number_height: f32,
     cursors: Vec<PaintQuad>,
+    /// Diagnostic underlines and dots, painted over the text.
+    marks: Vec<Mark>,
     scrollbar: Option<PaintQuad>,
     /// Background, bars and visible part of the minimap.
     minimap: Vec<PaintQuad>,
@@ -171,6 +174,9 @@ impl Element for EditorElement {
                             cx,
                         );
                     }
+                }
+                for mark in prepaint.marks.drain(..) {
+                    mark.paint(window);
                 }
                 for quad in prepaint.cursors.drain(..) {
                     window.paint_quad(quad);
@@ -406,6 +412,7 @@ impl Frame {
         backgrounds.extend(scene.selections());
         backgrounds.extend(scene.guides());
         let cursors = scene.cursors();
+        let marks = scene.diagnostic_marks();
         let numbers = scene.numbers(&metrics.font, metrics.number_size, window);
         let origins = snapshot
             .rows
@@ -427,6 +434,7 @@ impl Frame {
             numbers,
             number_height: metrics.number_height,
             cursors,
+            marks,
             scrollbar: snapshot.scrollbar.map(|scrollbar| {
                 let color = if editor.scrollbar_active() {
                     theme.colors.bg_scrollbar_thumb_hover

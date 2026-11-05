@@ -116,6 +116,43 @@ the theme's `[syntax]` tokens, the input method underline on top).
 `outline()`, `symbols_at_cursor()` and `go_to()` serve the Outline section
 and the breadcrumbs. `language_id()` selects `[lang.<id>]` settings.
 
-**Extending.** Decorations (diagnostics, inlay hints) become further
+**Language support** (`language/`, ADR 0006, 0007). The owner connects a
+`language::LanguageService` with `Editor::set_language_service`; only
+editors of files can be connected. The document is opened at version 1,
+every edit goes out with `change_document` (from `follow_text_changes`),
+saves with `save_document`, a rename reopens it under the new name, and
+dropping the state closes it. Only what `capabilities()` allows is offered.
+- `diagnostics.rs` places the service's diagnostics as byte ranges, which
+  follow edits until new ones arrive. An empty range marks one character.
+  `problem_counts()` gives errors and warnings, and
+  `EditorEvent::DiagnosticsChanged` tells when they change.
+  `render/marks.rs` draws waves (`diagnostic.error`, `.warning`, `.info`)
+  and dots under hints, for visible rows only.
+- `hover.rs`: the pointer resting on an identifier or a diagnostic for
+  `[editor] hover_delay_ms` (or `editor.showHover`, Ctrl K Ctrl I) shows
+  the diagnostics there and the service's hover. The popup hides once the
+  pointer has left both its word and the popup for the same delay, and on
+  an edit, a scroll, a click or Escape.
+- `completion.rs`: the list opens with `editor.triggerSuggest` (Ctrl
+  Space), after a trigger character, or when a word starts
+  (`[editor] suggest_on_type`). Typing filters it with
+  `commands::fuzzy_match`, and an incomplete list is asked for again.
+  While it is open, `Editor::popup_takes` routes Up, Down, Page Up and
+  Page Down to it, Enter and Tab accept, Escape closes. The keymap has no
+  "list open" context, so the editor decides. Accepting replaces the
+  item's range (or the typed word) and applies its additional edits.
+  Without them, resolving the item fills them in afterwards (imports).
+- `navigation.rs`: `editor.goToDefinition` (F12), or a click with the
+  modifier that does not add cursors (Ctrl/Cmd, or Alt when
+  `multi_cursor_modifier = "ctrl"`). A definition in the same file moves
+  the cursor; one elsewhere emits `EditorEvent::OpenLocation`.
+- `markdown.rs` reduces hover and documentation Markdown to paragraphs,
+  code blocks and rules. Code in the editor's language is highlighted with
+  its grammar in the background. `popup.rs` styles popups like the palette
+  and anchors them below the line, or above it in the lower part of the
+  view (`deferred` + `anchored`, which also switches sides at the window
+  edge).
+
+**Extending.** Decorations (inlay hints) become further
 layers in `render/scene.rs`. New commands: a row in `actions::COMMANDS`, a title
 in every locale, a binding in the default keymaps.

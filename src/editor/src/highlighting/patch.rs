@@ -112,7 +112,7 @@ fn clip(span: &HighlightSpan, from: usize, to: usize) -> Option<HighlightSpan> {
 
 /// `offset` moved through `edit`; an offset inside the replaced text goes
 /// to the start of the edit (`start_side`) or to the end of the new text.
-fn map_offset(offset: usize, edit: &TextEdit, start_side: bool) -> usize {
+pub(crate) fn map_offset(offset: usize, edit: &TextEdit, start_side: bool) -> usize {
     if offset <= edit.start {
         offset
     } else if offset >= edit.old_end {

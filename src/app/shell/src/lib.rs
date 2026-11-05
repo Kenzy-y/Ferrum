@@ -14,6 +14,7 @@ mod config;
 // Development aid: the component gallery exists only in debug builds.
 #[cfg(debug_assertions)]
 mod gallery;
+mod language_servers;
 mod languages;
 mod live_config;
 mod shell;

@@ -66,6 +66,14 @@ token_struct! {
         bg_selection_inactive = "bg.selection.inactive",
         /// Text cursor in the editor.
         cursor = "cursor",
+        /// Underline of an error.
+        diagnostic_error = "diagnostic.error",
+        /// Underline of a warning.
+        diagnostic_warning = "diagnostic.warning",
+        /// Underline of an information.
+        diagnostic_info = "diagnostic.info",
+        /// Dots under a hint.
+        diagnostic_hint = "diagnostic.hint",
         border_panel = "border.panel",
         border_input = "border.input",
         border_overlay = "border.overlay",

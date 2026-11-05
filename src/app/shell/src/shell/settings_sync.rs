@@ -41,6 +41,7 @@ impl Shell {
     /// Re-applies everything that depends on settings.
     pub(super) fn settings_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         config::report_settings(&self.settings);
+        self.language_servers.configure(&self.settings);
         self.keyboard
             .set_chord_timeout(config::chord_timeout(&self.settings));
         self.apply_language(window, cx);

@@ -73,6 +73,13 @@
 "minimap.line_height" = 4
 "minimap.bar_height" = 1.5
 "minimap.char_width" = 1.25
+"diagnostic.underline" = 1          # not in the mockups (ADR 0007)
+"diagnostic.dot" = 2
+"hover.max_width" = 560
+"hover.max_height" = 320
+"completion.width" = 420
+"completion.rows" = 10
+"editor.popup_gap" = 4
 
 [space]
 "xxs" = 2
