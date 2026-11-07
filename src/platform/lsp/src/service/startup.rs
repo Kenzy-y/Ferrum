@@ -41,9 +41,7 @@ pub(super) fn launch(inner: &Arc<Inner>) {
             }
         });
     if let Err(error) = spawned {
-        inner.set_status(ServerStatus::Failed {
-            message: error.to_string(),
-        });
+        inner.set_failed(error.to_string());
     }
 }
 
@@ -57,6 +55,7 @@ fn run(inner: &Arc<Inner>) {
         state.generation += 1;
         state.generation
     };
+    *super::lock(&inner.error_output) = None;
     let name = inner.adapter.name().to_owned();
     let _span = tracing::info_span!("lsp.start", server = %name).entered();
     inner.set_status(ServerStatus::Starting);
@@ -75,9 +74,7 @@ fn run(inner: &Arc<Inner>) {
             return;
         }
         Err(error) => {
-            inner.set_status(ServerStatus::Failed {
-                message: error.to_string(),
-            });
+            inner.set_failed(error.to_string());
             return;
         }
     };
@@ -86,9 +83,7 @@ fn run(inner: &Arc<Inner>) {
         Ok(client) => client,
         Err(error) => {
             let _ = control.kill();
-            inner.set_status(ServerStatus::Failed {
-                message: error.to_string(),
-            });
+            inner.set_failed(error.to_string());
             return;
         }
     };
@@ -100,9 +95,7 @@ fn run(inner: &Arc<Inner>) {
         Err(error) => {
             tracing::warn!(%error, "language server did not initialize");
             let _ = control.kill();
-            inner.set_status(ServerStatus::Failed {
-                message: error.to_string(),
-            });
+            inner.set_failed(error.to_string());
             return;
         }
     };
@@ -163,7 +156,15 @@ fn connect(
             closed(&weak, generation);
         }
     };
-    let writer = transport::start(name, streams, on_message, on_closed)?;
+    let on_error_output = {
+        let weak = Arc::downgrade(inner);
+        move |line: &str| {
+            if let Some(inner) = weak.upgrade() {
+                inner.note_error_output(line);
+            }
+        }
+    };
+    let writer = transport::start(name, streams, on_message, on_closed, on_error_output)?;
     let client = Client::new(
         writer,
         inner.timer.clone(),
@@ -220,11 +221,9 @@ fn closed(weak: &Weak<Inner>, generation: u64) {
         inner.state().status,
         Some(ServerStatus::Failed { .. } | ServerStatus::NotFound { .. })
     ) {
-        inner.set_status(ServerStatus::Failed {
-            message: match exit_code {
-                Some(code) => format!("exited with code {code}"),
-                None => "exited".to_owned(),
-            },
+        inner.set_failed(match exit_code {
+            Some(code) => format!("exited with code {code}"),
+            None => "exited".to_owned(),
         });
     }
 }
@@ -377,6 +376,9 @@ fn client_capabilities(inner: &Inner) -> ClientCapabilities {
                 completion_item: Some(CompletionItemCapability {
                     // Tab stops are visited in the editor (ADR 0008).
                     snippet_support: Some(true),
+                    // The label stays the name; imports and signatures
+                    // come apart, to be drawn dimmed.
+                    label_details_support: Some(true),
                     documentation_format: markdown,
                     resolve_support: Some(CompletionItemCapabilityResolveSupport {
                         properties: ["documentation", "detail", "additionalTextEdits"]

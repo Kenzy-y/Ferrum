@@ -111,6 +111,11 @@ pub struct Completion {
     pub kind: Option<CompletionKind>,
     /// A short description (a signature, a type).
     pub detail: Option<String>,
+    /// Shown right after the label, dimmed (`(…)`, `(use std::fmt)`).
+    pub label_detail: Option<String>,
+    /// Shown at the right of the row instead of `detail` (`fn(&str)`,
+    /// `macro_rules! print`).
+    pub description: Option<String>,
     /// Markdown documentation, often only after resolving.
     pub documentation: Option<String>,
     /// Text the typed word is matched against; the label if `None`.
@@ -217,8 +222,11 @@ pub enum ServerStatus {
     },
     /// Stopped after an error.
     Failed {
-        /// What went wrong.
+        /// What went wrong: the server's last error output, or the error.
         message: String,
+        /// Id of an i18n message saying how to fix it, when the pack
+        /// recognizes the failure.
+        hint: Option<String>,
     },
     /// The server program does not exist.
     NotFound {

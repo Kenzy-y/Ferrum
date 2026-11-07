@@ -181,6 +181,36 @@ impl LspAdapter for MockAdapter {
     fn configuration(&self, section: Option<&str>) -> Value {
         json!({ "section": section })
     }
+
+    fn failure_hint(&self, message: &str) -> Option<String> {
+        message
+            .contains("not installed")
+            .then(|| "mock-not-installed".to_owned())
+    }
+}
+
+/// A service whose server writes `error` to standard error and exits.
+pub fn start_failing(error: &'static str) -> Arc<dyn LanguageService> {
+    let runner = Arc::new(FakeProcessRunner::new());
+    runner.serve(
+        "mock-ls",
+        Arc::new(move |mut side: ServerSide| {
+            let _ = writeln!(side.stderr, "{error}");
+        }),
+    );
+    let settings = settings(
+        "[lsp]
+max_restarts = 0
+",
+    );
+    lsp::start(
+        Arc::new(MockAdapter),
+        ServerContext {
+            root: root(),
+            process: runner,
+            settings: &settings,
+        },
+    )
 }
 
 /// A workspace folder; nothing is written there.

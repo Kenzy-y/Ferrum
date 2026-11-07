@@ -38,7 +38,12 @@ pub(super) fn create(
         &problems,
         window,
         |shell, _, event: &OpenProblem, window, cx| {
-            shell.open_file(event.path.clone(), Some(event.position), window, cx);
+            shell.open_file(
+                event.path.clone(),
+                Some(event.position..event.position),
+                window,
+                cx,
+            );
         },
     );
     (problems, open)

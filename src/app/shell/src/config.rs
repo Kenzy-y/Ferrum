@@ -38,6 +38,7 @@ pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
         .register::<editor::EditorSettings>()?
         .register::<syntax::SyntaxSettings>()?
         .register::<terminal::TerminalSettings>()?
+        .register::<search::SearchSettings>()?
         .register::<lsp::LspSettings>()?
         .register::<lang_rust::RustAnalyzerSettings>()?
         .build())

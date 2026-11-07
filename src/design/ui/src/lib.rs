@@ -23,7 +23,7 @@ mod text;
 mod tooltip;
 
 pub use assets::Assets;
-pub use button::{Button, ButtonSize, ButtonVariant, IconButton};
+pub use button::{Button, ButtonSize, ButtonVariant, IconButton, ToggleButton};
 pub use icon::{Icon, IconName};
 pub use input::{SearchField, TextArea, TextField};
 pub use interaction::InteractionState;
@@ -33,6 +33,7 @@ pub use notice::NoticeBar;
 pub use panel::{Card, Panel, PanelSurface, SectionHeader};
 pub use tabs::{EditorTab, PanelTab, SegmentedTab};
 pub use text::{FontRole, Label};
+pub use tooltip::tooltip;
 
 use theme::ActiveTheme as _;
 

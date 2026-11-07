@@ -32,6 +32,7 @@ struct FakeService {
     resolved: Option<CodeLens>,
     hint_requests: Mutex<Vec<Range<Point>>>,
     lens_requests: Mutex<usize>,
+    completions: Vec<Completion>,
 }
 
 impl LanguageService for FakeService {
@@ -42,7 +43,10 @@ impl LanguageService for FakeService {
     fn capabilities(&self) -> Capabilities {
         Capabilities {
             hover: false,
-            completion: None,
+            completion: Some(language::CompletionCapabilities {
+                trigger_characters: Vec::new(),
+                resolve: ResolveCapability::default(),
+            }),
             definition: false,
             inlay_hints: true,
             code_lens: Some(ResolveCapability { resolve: true }),
@@ -75,7 +79,13 @@ impl LanguageService for FakeService {
         _: Point,
         _: CompletionTrigger,
     ) -> BoxFuture<Result<CompletionList, ServiceError>> {
-        Box::pin(async { Ok(CompletionList::default()) })
+        let items = self.completions.clone();
+        Box::pin(async move {
+            Ok(CompletionList {
+                items,
+                incomplete: false,
+            })
+        })
     }
 
     fn resolve_completion(&self, item: Completion) -> BoxFuture<Result<Completion, ServiceError>> {
@@ -339,4 +349,78 @@ fn a_click_on_a_lens_does_not_move_the_cursor(cx: &mut TestAppContext) {
         editor.document().selections().primary().head
     });
     assert_eq!(head, 0);
+}
+
+fn completion(label: &str, label_detail: Option<&str>, description: Option<&str>) -> Completion {
+    Completion {
+        label: label.to_owned(),
+        kind: Some(language::CompletionKind::Function),
+        detail: Some("fn(*const T)".to_owned()),
+        label_detail: label_detail.map(str::to_owned),
+        description: description.map(str::to_owned),
+        documentation: None,
+        filter_text: None,
+        sort_text: None,
+        edit: language::CompletionEdit {
+            range: None,
+            new_text: label.to_owned(),
+            tab_stops: Vec::new(),
+        },
+        additional_edits: Vec::new(),
+        resolve: None,
+    }
+}
+
+#[gpui::test]
+fn long_completions_are_drawn_in_one_line(cx: &mut TestAppContext) {
+    let long = "prefetch_write_instruction_with_a_much_longer_name_than_fits";
+    let service = Arc::new(FakeService {
+        completions: vec![
+            completion("print!(…)", None, Some("macro_rules! print")),
+            completion("prelude::", Some("(use core::prelude)"), None),
+            completion(
+                "prefetch_read_data(…)",
+                Some("(use std::intrinsics::prefetch_read_data)"),
+                Some("const fn(*const T)"),
+            ),
+            completion(
+                long,
+                Some("(use std::intrinsics::very::long::path::to::it)"),
+                None,
+            ),
+            completion("Product", Some("(use std::iter::Product)"), None),
+        ],
+        ..FakeService::default()
+    });
+    let (editor, cx) = open(
+        "fn main() {
+    pr
+}
+",
+        &service,
+        cx,
+    );
+    editor.update(cx, |editor, cx| {
+        editor.edit_document(cx, |document| {
+            document.set_primary_selection(text::Selection::cursor(18));
+        });
+        editor.trigger_completion(CompletionTrigger::Invoked, cx);
+    });
+    // The window draws itself; popups are deferred, which a test draw of
+    // a lone element does not support.
+    frames(cx);
+    assert!(editor.read_with(cx, |editor, _| editor.completion_open()));
+    // Typing on filters and redraws without a panic.
+    editor.update(cx, |editor, cx| {
+        editor.edit_document(cx, |document| document.insert("e"));
+    });
+    frames(cx);
+    assert!(editor.read_with(cx, |editor, _| editor.completion_open()));
+}
+
+fn frames(cx: &mut VisualTestContext) {
+    for _ in 0..3 {
+        cx.update(|window, _| window.refresh());
+        cx.run_until_parked();
+    }
 }

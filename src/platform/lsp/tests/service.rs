@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use futures::executor::block_on;
 use language::{CompletionTrigger, ServerStatus, ServiceError, ServiceEvent};
 use serde_json::json;
-use support::{Mock, PATIENCE, root, start, wait_for_status};
+use support::{Mock, PATIENCE, root, start, start_failing, wait_for_status};
 use text::{Buffer, Document, Point, Selection};
 
 fn ready(status: &ServerStatus) -> bool {
@@ -192,4 +192,16 @@ fn a_missing_server_is_reported() {
         |status| matches!(status, ServerStatus::NotFound { program } if program == "mock-ls"),
     );
     assert_eq!(service.capabilities(), language::Capabilities::default());
+}
+
+#[test]
+fn a_failure_shows_the_server_error_output_and_the_hint() {
+    let service = start_failing("error: mock-ls is not installed for this toolchain");
+    wait_for_status(service.as_ref(), |status| {
+        *status
+            == ServerStatus::Failed {
+                message: "error: mock-ls is not installed for this toolchain".to_owned(),
+                hint: Some("mock-not-installed".to_owned()),
+            }
+    });
 }

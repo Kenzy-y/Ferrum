@@ -16,9 +16,9 @@ const RECENT_ROWS: usize = 5;
 /// Rows of "Get started": message id of the label and the command.
 const GET_STARTED: [(&str, &str); 4] = [
     ("welcome-start-palette", command_ids::SHOW_COMMAND_PALETTE),
-    ("welcome-start-search", command_ids::QUICK_OPEN),
-    ("welcome-start-open-folder", command_ids::OPEN_FOLDER),
-    ("welcome-start-panel", command_ids::TOGGLE_PANEL),
+    ("welcome-start-find-file", command_ids::QUICK_OPEN),
+    ("welcome-start-settings", command_ids::OPEN_SETTINGS),
+    ("welcome-start-terminal", command_ids::TOGGLE_TERMINAL),
 ];
 
 /// A handler that runs `command`.

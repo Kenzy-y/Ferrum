@@ -43,6 +43,8 @@
 "list_row.height" = 34
 "outline.row_height" = 30            # rows of the Outline section
 "outline.max_height" = 300           # tallest the Outline list grows before scrolling
+"search.row_height" = 37            # rows of search results, search.svg
+"search.line_number" = 34           # line number column of a search result
 "button.small.height" = 34
 "button.medium.height" = 40
 "input.height" = 35
@@ -86,6 +88,7 @@
 "terminal.top" = 20
 "terminal_tabs.width" = 180          # not in the mockups (ADR 0010)
 "terminal_hint.height" = 32
+"status_item.max_width" = 320
 "panel_actions.gap" = 5              # between bottom panel header buttons (37 px apart in editor.svg)
 "sidebar.min_width" = 180           # not in the mockups: limits of dragging panel borders
 "bottom_panel.min_height" = 120

@@ -21,6 +21,8 @@ use crate::contrib::explorer::file_tree_view::FileTreeView;
 use crate::contrib::outline;
 use crate::contrib::problems::ProblemsView;
 use crate::contrib::quick_open::{QuickOpenContext, QuickOpenMode};
+use crate::contrib::run_debug::DebugSections;
+use crate::contrib::search::SearchView;
 use crate::contrib::terminal::TerminalPanel;
 use crate::layout::{PanelKind, SidebarView};
 use crate::overlays::{OpenMenu, OpenPathPrompt, OpenQuickOpen};
@@ -84,6 +86,8 @@ pub struct Workbench {
     pub(crate) tabs: Vec<tabs::Tab>,
     pub(crate) active_tab: Option<usize>,
     pub(crate) file_icons: Arc<FileIcons>,
+    /// Servers, toolchains and file details for the status bar.
+    pub(crate) language_status: crate::contrib::language_status::LanguageStatus,
     pub(crate) outline: outline::OutlineSection,
     pub(crate) closing: closing::Closing,
     /// The Problems panel, once the application provides it.
@@ -93,6 +97,10 @@ pub struct Workbench {
     pub(crate) terminal: Option<Entity<TerminalPanel>>,
     pub(crate) terminal_watch: Option<gpui::Subscription>,
     pub(crate) terminal_observe: Option<gpui::Subscription>,
+    /// The Search view, once the application provides it.
+    pub(crate) search: Option<Entity<SearchView>>,
+    /// Collapsed sections of the Run and Debug view.
+    pub(crate) debug_sections: DebugSections,
 }
 
 impl Workbench {
@@ -133,6 +141,7 @@ impl Workbench {
             tabs: Vec::new(),
             active_tab: None,
             file_icons: Arc::new(FileIcons::new()),
+            language_status: crate::contrib::language_status::LanguageStatus::default(),
             outline: outline::OutlineSection::default(),
             closing: closing::Closing::default(),
             problems: None,
@@ -140,6 +149,8 @@ impl Workbench {
             terminal: None,
             terminal_watch: None,
             terminal_observe: None,
+            search: None,
+            debug_sections: DebugSections::default(),
         }
     }
 
@@ -190,10 +201,17 @@ impl Workbench {
             cx.notify();
         })?;
         for view in SidebarView::ALL {
-            handlers.register_entity(command_ids::show_view(view), this, move |this, _, cx| {
-                this.show_view(view);
-                cx.notify();
-            })?;
+            handlers.register_entity(
+                command_ids::show_view(view),
+                this,
+                move |this, window, cx| {
+                    this.show_view(view);
+                    if this.sidebar_visible && this.view == SidebarView::Search {
+                        this.focus_search(window, cx);
+                    }
+                    cx.notify();
+                },
+            )?;
         }
         handlers.register_entity(command_ids::CLOSE_TAB, this, Self::close_active_tab)?;
         handlers.register_entity(command_ids::NEXT_TAB, this, |this, window, cx| {
@@ -243,6 +261,19 @@ impl Workbench {
         cx.notify();
     }
 
+    /// Shows `search` as the Search view of the sidebar.
+    pub fn set_search(&mut self, search: Entity<SearchView>, cx: &mut Context<Self>) {
+        self.search = Some(search);
+        cx.notify();
+    }
+
+    /// Moves the focus to the query of the Search view.
+    pub(crate) fn focus_search(&self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(search) = &self.search {
+            search.update(cx, |search, cx| search.focus_query(window, cx));
+        }
+    }
+
     /// Errors and warnings of the project, if problems are shown.
     pub(crate) fn problem_counts(&self, cx: &App) -> Option<(usize, usize)> {
         self.problems
@@ -256,6 +287,10 @@ impl Workbench {
         if let Some(panel) = &self.terminal {
             let i18n = i18n.clone();
             panel.update(cx, |panel, cx| panel.set_i18n(i18n, cx));
+        }
+        if let Some(search) = &self.search {
+            let i18n = i18n.clone();
+            search.update(cx, |search, cx| search.set_i18n(i18n, cx));
         }
         self.i18n = i18n;
         self.sync_outline(cx);
@@ -336,6 +371,7 @@ impl Workbench {
 impl Render for Workbench {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.ensure_outline(window, cx);
+        self.ensure_debug_sections(cx);
         let title_bar = title_bar::render(self, window, cx);
         let activity_bar = activity_bar::render(self, cx);
         let sidebar_width = self.sidebar_width(window, cx);

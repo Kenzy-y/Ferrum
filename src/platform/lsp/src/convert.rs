@@ -142,6 +142,14 @@ impl Converter<'_> {
             label: item.label.clone(),
             kind: item.kind.and_then(completion_kind),
             detail: item.detail.clone(),
+            label_detail: item
+                .label_details
+                .as_ref()
+                .and_then(|details| details.detail.clone()),
+            description: item
+                .label_details
+                .as_ref()
+                .and_then(|details| details.description.clone()),
             documentation: item.documentation.clone().map(documentation),
             filter_text: item.filter_text.clone(),
             sort_text: item.sort_text.clone(),

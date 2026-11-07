@@ -59,6 +59,14 @@ pub trait LspAdapter: Send + Sync + 'static {
         LensAction::Unsupported
     }
 
+    /// Recognizes why the server failed from `message` (its last error
+    /// output) and returns the id of an i18n message that says how to fix
+    /// it.
+    fn failure_hint(&self, message: &str) -> Option<String> {
+        let _ = message;
+        None
+    }
+
     /// Settings changed. Returns `true` if the server's configuration
     /// changed and it should be told (`workspace/didChangeConfiguration`).
     fn configure(&self, settings: &SettingsStore) -> bool {

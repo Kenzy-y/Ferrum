@@ -6,6 +6,13 @@ use gpui::{
 };
 use theme::ActiveTheme as _;
 
+/// A builder for GPUI's `tooltip` on any element that shows `text`.
+pub fn tooltip(
+    text: impl Into<SharedString>,
+) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
+    Tooltip::builder(text.into())
+}
+
 /// The view of a tooltip: a short text on the overlay surface.
 pub(crate) struct Tooltip {
     text: SharedString,

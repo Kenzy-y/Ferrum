@@ -25,6 +25,7 @@ language.workspace = true
 lsp.workspace = true
 process.workspace = true
 project.workspace = true
+search.workspace = true
 text.workspace = true
 settings.workspace = true
 syntax.workspace = true

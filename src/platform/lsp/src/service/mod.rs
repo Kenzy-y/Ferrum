@@ -131,6 +131,9 @@ struct Inner {
     /// The last diagnostics of every file, for new subscribers.
     published: Mutex<HashMap<PathBuf, FileDiagnostics>>,
     pending: Mutex<PendingDiagnostics>,
+    /// The last line the server wrote to standard error: the reason shown
+    /// when it fails.
+    error_output: Mutex<Option<String>>,
     timer: Timer,
 }
 
@@ -172,6 +175,30 @@ impl Inner {
 
     fn set_status(&self, status: ServerStatus) {
         self.update_status(|state| state.status = Some(status));
+    }
+
+    /// The server stopped after `error`. The reason shown is its last
+    /// error output when it wrote one, else `error`.
+    fn set_failed(&self, error: impl Into<String>) {
+        let message = lock(&self.error_output)
+            .clone()
+            .unwrap_or_else(|| error.into());
+        let hint = self.adapter.failure_hint(&message);
+        self.set_status(ServerStatus::Failed { message, hint });
+    }
+
+    /// A line the server wrote to standard error. A failure shown before
+    /// the line arrived gets it as its reason.
+    fn note_error_output(&self, line: &str) {
+        let line = line.trim();
+        if line.is_empty() {
+            return;
+        }
+        *lock(&self.error_output) = Some(line.to_owned());
+        let status = self.state().status.clone();
+        if let Some(ServerStatus::Failed { message, .. }) = status {
+            self.set_failed(message);
+        }
     }
 
     /// Texts of the open documents, for converting positions.
@@ -235,6 +262,7 @@ impl LspService {
                 subscribers: Mutex::new(Vec::new()),
                 published: Mutex::new(HashMap::new()),
                 pending: Mutex::new(PendingDiagnostics::default()),
+                error_output: Mutex::new(None),
                 timer,
             }),
         }

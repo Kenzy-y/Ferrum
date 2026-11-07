@@ -100,3 +100,18 @@ fn reference_lenses_show_their_locations_and_run_lenses_wait() {
         LensAction::Unsupported
     );
 }
+
+#[test]
+fn a_toolchain_without_rust_analyzer_is_recognized() {
+    assert_eq!(
+        failure_hint(
+            "error: Unknown binary 'rust-analyzer.exe' in official toolchain 'stable-x86_64-pc-windows-msvc'."
+        ),
+        Some(HINT_NOT_INSTALLED)
+    );
+    assert_eq!(
+        failure_hint("error: 'rust-analyzer' is not installed for the toolchain 'stable'"),
+        Some(HINT_NOT_INSTALLED)
+    );
+    assert_eq!(failure_hint("thread 'main' panicked"), None);
+}

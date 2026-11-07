@@ -244,5 +244,11 @@ fn breadcrumbs(
                     ),
             );
     }
+    let detail = crate::contrib::language_status::breadcrumb_detail(workbench, path, cx);
+    if let Some(detail) = detail {
+        row = row
+            .child(div().flex_1().min_w(px(cx.theme().metrics.space.lg)))
+            .child(detail);
+    }
     row.into_any_element()
 }

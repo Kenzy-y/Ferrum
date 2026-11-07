@@ -25,6 +25,7 @@ pub struct ListRow {
     highlights: Vec<Range<usize>>,
     disclosure_slot: bool,
     font: RowFont,
+    height: Option<f32>,
 }
 
 /// The font of a row's label.
@@ -34,6 +35,8 @@ enum RowFont {
     Interface,
     /// The code font in shorter rows (symbols).
     Code,
+    /// The code font at the normal row height (search results).
+    Mono,
 }
 
 impl ListRow {
@@ -51,6 +54,7 @@ impl ListRow {
             highlights: Vec::new(),
             disclosure_slot: true,
             font: RowFont::Interface,
+            height: None,
         }
     }
 
@@ -67,6 +71,21 @@ impl ListRow {
     #[must_use]
     pub fn code(mut self) -> Self {
         self.font = RowFont::Code;
+        self
+    }
+
+    /// Shows the label in the code font without making the row shorter
+    /// (lines of search results).
+    #[must_use]
+    pub fn mono(mut self) -> Self {
+        self.font = RowFont::Mono;
+        self
+    }
+
+    /// Overrides the row height (a size token of the list it belongs to).
+    #[must_use]
+    pub fn height(mut self, height: f32) -> Self {
+        self.height = Some(height);
         self
     }
 
@@ -145,7 +164,7 @@ impl RenderOnce for ListRow {
             colors.text_selected.into()
         } else if self.ignored {
             colors.text_ignored.into()
-        } else if self.font == RowFont::Code {
+        } else if self.font != RowFont::Interface {
             colors.text_subtle.into()
         } else {
             colors.text_secondary.into()
@@ -177,12 +196,12 @@ impl RenderOnce for ListRow {
         let label = StyledText::new(self.label)
             .with_highlights(self.highlights.into_iter().map(|range| (range, highlight)));
         let indent = metrics.space.md + metrics.size.tree_indent * depth_factor(self.depth);
-        let code = self.font == RowFont::Code;
-        let height = if code {
+        let code = self.font != RowFont::Interface;
+        let height = self.height.unwrap_or(if self.font == RowFont::Code {
             metrics.size.outline_row_height
         } else {
             metrics.size.list_row_height
-        };
+        });
         let mono = gpui::SharedString::from(theme.fonts.mono.clone());
         let code_size = metrics.font_size.md;
         let (radius, gap, right) = (metrics.radius.md, metrics.space.sm, metrics.space.xl);

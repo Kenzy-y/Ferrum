@@ -10,7 +10,15 @@ the UI asks of language support. ADR 0006.
   `without_grammar` exists for languages a server serves as plain text,
   `with_server` adds the server. `with_pairs` replaces the auto-closing pairs
   (`text::DEFAULT_PAIRS` by default; Rust drops `'`), and the editor gets them
-  from `LanguageEntry::pairs`.
+  from `LanguageEntry::pairs`. `with_toolchain` adds a `Toolchain` and
+  `with_file_icon` a `FileIconSpec` (ADR 0011).
+- `Toolchain` (ADR 0011): `version(root, process)` gives the toolchain
+  version of a folder (or the default one), `file_detail(file, fs)` a
+  `FileDetail` (an i18n message id and a value, such as the edition).
+  Both are futures that may block, so they run on a background executor.
+  The shell shows them in the status bar and the breadcrumbs.
+- `FileIconSpec`: a letter and a color token. The shell registers it for
+  the pack's extensions and file names in `workbench::FileIcons`.
 - `LanguageRegistry`: packs by id and by path (exact name wins over the
   extension, case ignored). It registers each pack's grammar in its
   `GrammarRegistry` (`grammars()`), the pack's identity overriding the
@@ -35,7 +43,8 @@ the UI asks of language support. ADR 0006.
   `text::Point` (row, byte column), documents are paths. `Diagnostic`
   (`Severity`), `Hover` (markdown), `Completion` (`CompletionEdit`,
   additional `TextReplacement`s, an opaque `ResolveToken`), `Location`,
-  `InlayHint`, `CodeLens` (`LensAction`), `ServerStatus`.
+  `InlayHint`, `CodeLens` (`LensAction`), `ServerStatus` (`Failed` carries
+  the server's last error output and an optional i18n hint id).
 
 **Extending.** A new language is a crate with `pack()` (see `lang_toml`)
 and one line in `shell/src/languages.rs`. A server is a `ServerFactory`.

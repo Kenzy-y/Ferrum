@@ -9,7 +9,7 @@ use text::AutoPair;
 
 use syntax::{GrammarEntry, GrammarRegistry, SyntaxError};
 
-use crate::{LanguagePack, ServerFactory};
+use crate::{FileIconSpec, LanguagePack, ServerFactory, Toolchain};
 
 /// Why a pack could not be registered.
 #[derive(Debug, thiserror::Error)]
@@ -29,6 +29,10 @@ pub struct LanguageEntry {
     grammar: Option<Arc<GrammarEntry>>,
     server: Option<Arc<dyn ServerFactory>>,
     pairs: Arc<[AutoPair]>,
+    extensions: Vec<String>,
+    file_names: Vec<String>,
+    toolchain: Option<Arc<dyn Toolchain>>,
+    file_icon: Option<FileIconSpec>,
 }
 
 impl fmt::Debug for LanguageEntry {
@@ -64,6 +68,26 @@ impl LanguageEntry {
     /// The language server, if the language has one.
     pub fn server(&self) -> Option<&Arc<dyn ServerFactory>> {
         self.server.as_ref()
+    }
+
+    /// The toolchain, if the pack declares one.
+    pub fn toolchain(&self) -> Option<&Arc<dyn Toolchain>> {
+        self.toolchain.as_ref()
+    }
+
+    /// How the language's files are marked, if the pack says.
+    pub fn file_icon(&self) -> Option<FileIconSpec> {
+        self.file_icon
+    }
+
+    /// File extensions of the language, without the dot.
+    pub fn extensions(&self) -> &[String] {
+        &self.extensions
+    }
+
+    /// Exact file names of the language (`Cargo.lock`).
+    pub fn file_names(&self) -> &[String] {
+        &self.file_names
     }
 }
 
@@ -116,6 +140,10 @@ impl LanguageRegistry {
             grammar,
             server: pack.server,
             pairs: pack.pairs.into(),
+            extensions: pack.extensions,
+            file_names: pack.file_names,
+            toolchain: pack.toolchain,
+            file_icon: pack.file_icon,
         }));
         Ok(())
     }

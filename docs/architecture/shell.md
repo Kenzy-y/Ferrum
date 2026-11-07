@@ -35,6 +35,27 @@ binary only sets up logging and calls `shell::run()`.
   service the window starts gets a task that passes its diagnostics, for
   all files, to the panel; opening another folder drops the tasks and
   clears the panel. `OpenProblem` opens the file at the position.
+- `shell/search.rs`: the window's `workbench::SearchView`. A
+  `SearchRequest` drops the running search (its `AtomicBool` cancels it)
+  and starts `search::run` on the background executor with `[search]`,
+  `[files] hidden` and the text of unsaved editors (ropes cloned on the UI
+  thread, turned into strings in the background); files reach the view in
+  batches tagged with the request's generation. `OpenMatch` opens the file
+  with the match selected (`open_file` takes a range of points). Opening a
+  folder re-runs the query there.
+- `crash_report.rs`: `run` installs a panic hook first. A panic in a
+  window callback aborts the process (`0xc0000409` on Windows) and the
+  message would be lost without a console. The hook logs it with a
+  backtrace and writes it to `last-crash.txt` in the data directory.
+- `shell/keyboard.rs`: a held shortcut runs once, except commands made to
+  repeat (`command_repeats`: paste, undo and redo, deletes, moves and
+  selections, `terminal.paste`); never in the middle of a key sequence.
+- `shell/language_status.rs` (ADR 0011): gives the workbench the language
+  names, finds each pack's `Toolchain::version` in the background (again
+  for every folder), passes every started service's status to the status
+  bar (the tasks go with the problem tasks), and finds the
+  `file_detail` of every opened file. `file_icons()` in `shell/mod.rs`
+  registers the packs' `FileIconSpec`s.
 - `shell/terminals.rs`: the window's `workbench::TerminalPanel` with the
   real process runner; opening a folder sets where terminals start,
   settings and keyboard layout changes reach every terminal. Keys of a

@@ -11,6 +11,7 @@
 
 mod app_commands;
 mod config;
+mod crash_report;
 // Development aid: the component gallery exists only in debug builds.
 #[cfg(debug_assertions)]
 mod gallery;
@@ -37,6 +38,9 @@ const INITIAL_WINDOW_SIZE: (f32, f32) = (1280.0, 800.0);
 ///
 /// Fails if the built-in settings or commands cannot be registered.
 pub fn run() -> anyhow::Result<()> {
+    crash_report::install(
+        settings::paths::ConfigPaths::from_platform().map(|paths| paths.data_dir().to_path_buf()),
+    );
     let settings_registry = Arc::new(config::settings_registry()?);
     let command_registry = Arc::new(app_commands::registry()?);
     let fs: Arc<dyn fs::Fs> = Arc::new(fs::RealFs);

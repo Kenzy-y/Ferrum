@@ -28,6 +28,11 @@ mod tests {
         /// Versions and texts of `change_document`.
         changes: Mutex<Vec<(i32, String)>>,
         completions: Vec<Completion>,
+        /// How many of the next completion requests are cancelled, as a
+        /// server drops requests an edit outdates.
+        cancelled_completions: Mutex<usize>,
+        /// Completion requests asked for.
+        completion_requests: Mutex<usize>,
         definition: Option<Location>,
     }
 
@@ -94,6 +99,12 @@ mod tests {
             _: Point,
             _: CompletionTrigger,
         ) -> BoxFuture<Result<CompletionList, ServiceError>> {
+            *self.completion_requests.lock().unwrap() += 1;
+            let mut cancelled = self.cancelled_completions.lock().unwrap();
+            if *cancelled > 0 {
+                *cancelled -= 1;
+                return Box::pin(async { Err(ServiceError::Cancelled) });
+            }
             let items = self.completions.clone();
             Box::pin(async move {
                 Ok(CompletionList {
@@ -143,6 +154,8 @@ mod tests {
             label: label.to_owned(),
             kind: None,
             detail: None,
+            label_detail: None,
+            description: None,
             documentation: None,
             filter_text: None,
             sort_text: None,
@@ -264,6 +277,49 @@ mod tests {
         let text = text_of(window, cx);
         assert!(text == "println" || text == "print", "{text}");
         assert!(!text.contains('\n'), "Enter accepted instead of a new line");
+    }
+
+    fn type_text(window: WindowHandle<Editor>, text: &str, cx: &mut TestAppContext) {
+        window
+            .update(cx, |editor, _, cx| {
+                editor.edit_document(cx, |document| document.insert(text));
+            })
+            .unwrap();
+    }
+
+    fn print_service() -> Arc<FakeService> {
+        Arc::new(FakeService {
+            completions: vec![completion("print")],
+            cancelled_completions: Mutex::new(1),
+            ..FakeService::default()
+        })
+    }
+
+    #[gpui::test]
+    fn typing_on_asks_again_when_the_server_drops_the_request(cx: &mut TestAppContext) {
+        let service = print_service();
+        let window = open("", &service, cx);
+        // The request for "p" is outdated by "r" and dropped; the list
+        // opens all the same.
+        type_text(window, "p", cx);
+        type_text(window, "r", cx);
+        settle(cx);
+        assert_eq!(*service.completion_requests.lock().unwrap(), 2);
+        command(window, "editor.newline", cx);
+        assert_eq!(text_of(window, cx), "print");
+    }
+
+    #[gpui::test]
+    fn a_request_dropped_after_the_last_edit_is_sent_again(cx: &mut TestAppContext) {
+        let service = print_service();
+        let window = open("", &service, cx);
+        type_text(window, "p", cx);
+        // Not typing: no new request, but the dropped one is repeated.
+        type_text(window, "ri", cx);
+        settle(cx);
+        assert_eq!(*service.completion_requests.lock().unwrap(), 2);
+        command(window, "editor.newline", cx);
+        assert_eq!(text_of(window, cx), "print");
     }
 
     fn snippet(label: &str, source: &str) -> Completion {

@@ -68,10 +68,13 @@ impl DisplayLine {
         let mut pieces = Vec::new();
         let mut column = start_column;
         let mut next_insert = inserts.iter().peekable();
+        let source_end = source.len();
         let mut insert_before = |offset: usize, text: &mut String, pieces: &mut Vec<Piece>| {
             while let Some((_, inserted)) = next_insert.next_if(|(at, _)| *at <= offset) {
                 pieces.push(Piece {
-                    source: offset,
+                    // Inserts after the last character (`usize::MAX` below)
+                    // go at the end of the line.
+                    source: offset.min(source_end),
                     source_len: 0,
                     display: text.len(),
                     display_len: inserted.len(),
@@ -143,6 +146,18 @@ impl DisplayLine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn text_inserted_at_the_end_maps_to_the_end() {
+        // Regression: a hint after the last character got offset
+        // `usize::MAX`, and hovering it overflowed.
+        let line = DisplayLine::with_inserts("let x = 5;", 4, 0, &[(10, ": i32")]);
+        assert_eq!(line.text, "let x = 5;: i32");
+        for display in 10..line.text.len() {
+            assert_eq!(line.to_source(display), 10, "{display}");
+        }
+        assert_eq!(line.to_display(10), 10);
+    }
 
     #[test]
     fn text_without_tabs_is_unchanged() {

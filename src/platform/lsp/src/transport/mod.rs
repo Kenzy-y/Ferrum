@@ -33,7 +33,7 @@ pub(crate) struct Streams {
 
 /// Starts the threads of a server named `name`. `on_message` runs on the
 /// reader thread for every message; `on_closed` once the server's output
-/// ends. Dropping every sender of the returned channel closes the
+/// ends; `on_error_output` for every line of standard error. Dropping every sender of the returned channel closes the
 /// server's input.
 ///
 /// # Errors
@@ -44,6 +44,7 @@ pub(crate) fn start(
     streams: Streams,
     mut on_message: impl FnMut(Incoming) + Send + 'static,
     on_closed: impl FnOnce() + Send + 'static,
+    mut on_error_output: impl FnMut(&str) + Send + 'static,
 ) -> std::io::Result<mpsc::Sender<WriterJob>> {
     let Streams {
         mut stdin,
@@ -99,6 +100,7 @@ pub(crate) fn start(
             for line in BufReader::new(stderr).lines() {
                 let Ok(line) = line else { break };
                 tracing::debug!(target: "lsp::stderr", %server, "{line}");
+                on_error_output(&line);
             }
         })?;
 

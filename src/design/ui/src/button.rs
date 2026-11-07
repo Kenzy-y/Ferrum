@@ -206,3 +206,74 @@ impl RenderOnce for IconButton {
             .child(Icon::new(self.icon).color(icon_color))
     }
 }
+
+/// A small text toggle inside a field (match case "Aa", whole word "ab",
+/// regular expression ".*"): subtle text when off, accent text on a
+/// pressed background when on.
+#[derive(IntoElement)]
+pub struct ToggleButton {
+    interactivity: Interactivity,
+    label: SharedString,
+    active: bool,
+}
+
+impl ToggleButton {
+    /// Creates a toggle showing `label`.
+    pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Self {
+        Self {
+            interactivity: Interactivity::new(id),
+            label: label.into(),
+            active: false,
+        }
+    }
+
+    /// Whether the option is on.
+    #[must_use]
+    pub fn active(mut self, active: bool) -> Self {
+        self.active = active;
+        self
+    }
+}
+
+interactive_builders!(ToggleButton);
+
+impl RenderOnce for ToggleButton {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let theme = cx.theme();
+        let colors = &theme.colors;
+        let metrics = &theme.metrics;
+        let side = metrics.size.icon_small + metrics.space.xs * ICON_BUTTON_PADDING_STEPS;
+        let background = if self.active {
+            StateColors {
+                normal: colors.bg_ghost_pressed.into(),
+                hover: colors.bg_ghost_pressed.into(),
+                pressed: colors.bg_ghost_hover.into(),
+            }
+        } else {
+            StateColors {
+                normal: transparent_black(),
+                hover: colors.bg_ghost_hover.into(),
+                pressed: colors.bg_ghost_pressed.into(),
+            }
+        };
+        let color: Hsla = if self.active {
+            colors.text_accent.into()
+        } else {
+            colors.text_subtle.into()
+        };
+        let (padding, radius, font_size) =
+            (metrics.space.xs, metrics.radius.sm, metrics.font_size.xs);
+        let font = SharedString::from(theme.fonts.mono.clone());
+        self.interactivity
+            .root(background, window, cx)
+            .h(px(side))
+            .min_w(px(side))
+            .px(px(padding))
+            .justify_center()
+            .rounded(px(radius))
+            .font_family(font)
+            .text_size(px(font_size))
+            .text_color(color)
+            .child(self.label)
+    }
+}

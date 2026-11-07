@@ -2,6 +2,7 @@
 //! and connected to the language service of the folder; files that are not
 //! UTF-8 text get a tab that says why.
 
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use editor::{Editor, EditorEvent};
@@ -14,11 +15,12 @@ use super::Shell;
 
 impl Shell {
     /// Shows `path` in an editor: its tab if it is open, otherwise a new
-    /// one once the file is read. With `target`, the cursor goes there.
+    /// one once the file is read. With `target`, that range is selected (an
+    /// empty range puts the cursor there).
     pub(super) fn open_file(
         &mut self,
         path: PathBuf,
-        target: Option<Point>,
+        target: Option<Range<Point>>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -90,7 +92,7 @@ impl Shell {
                 if let EditorEvent::OpenLocation(location) = event {
                     shell.open_file(
                         location.path.clone(),
-                        Some(location.range.start),
+                        Some(location.range.start..location.range.start),
                         window,
                         cx,
                     );
@@ -98,6 +100,10 @@ impl Shell {
             },
         )
         .detach();
+        if let (Some(entry), Some(path)) = (entry, editor.read(cx).path()) {
+            let path = path.to_path_buf();
+            self.find_file_detail(&path, entry, cx);
+        }
         let (Some(entry), Some(workspace)) = (entry, &self.workspace) else {
             return;
         };
@@ -109,6 +115,7 @@ impl Shell {
         };
         if started {
             self.watch_problems(&service, cx);
+            self.watch_server_status(&service, cx);
         }
         editor.update(cx, |editor, cx| {
             editor.set_language_service(service, entry.id(), cx);
@@ -133,12 +140,18 @@ impl Shell {
     }
 }
 
-/// Puts the cursor of `editor` at `target`, if given.
-fn go_to(editor: &Entity<Editor>, target: Option<Point>, cx: &mut gpui::App) {
+/// Selects `target` in `editor`, if given; an empty range is a cursor.
+fn go_to(editor: &Entity<Editor>, target: Option<Range<Point>>, cx: &mut gpui::App) {
     if let Some(target) = target {
         editor.update(cx, |editor, cx| {
-            let offset = editor.document().buffer().point_to_offset(target);
-            editor.go_to(offset, cx);
+            let buffer = editor.document().buffer();
+            let start = buffer.point_to_offset(target.start);
+            let end = buffer.point_to_offset(target.end);
+            if start == end {
+                editor.go_to(start, cx);
+            } else {
+                editor.select(start..end, cx);
+            }
         });
     }
 }

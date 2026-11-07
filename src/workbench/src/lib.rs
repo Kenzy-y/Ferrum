@@ -30,6 +30,7 @@ pub use crate::contrib::explorer::file_tree_view::{
     FileTreeTexts, FileTreeView, OpenFile, WorkspaceSettingsChanged,
 };
 pub use crate::contrib::problems::{OpenProblem, ProblemsTexts, ProblemsView};
+pub use crate::contrib::search::{OpenMatch, SearchRequest, SearchView};
 pub use crate::contrib::terminal::{TerminalPanel, TerminalPanelEvent};
 pub use crate::layout::{PanelKind, SidebarView};
 pub use crate::parts::resize::PanelSizesChanged;

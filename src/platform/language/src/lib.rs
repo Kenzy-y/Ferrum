@@ -1,6 +1,8 @@
 //! Language support as the UI sees it.
 //!
 //! - [`LanguagePack`]: what a language declares (files, grammar, server).
+//! - [`Toolchain`]: a pack's tools (version, file details), for the status
+//!   bar and the breadcrumbs.
 //! - [`LanguageRegistry`]: packs by id and by file, filled at startup and
 //!   read-only afterwards.
 //! - [`LanguageService`]: what the editor asks a language for (hover,
@@ -16,6 +18,7 @@ mod pack;
 mod registry;
 mod service;
 mod snippet;
+mod toolchain;
 mod types;
 
 pub use pack::{LanguagePack, ServerContext, ServerFactory};
@@ -26,6 +29,7 @@ pub use service::{
 };
 pub use snippet::{Snippet, TabStop};
 pub use text::{AutoPair, DEFAULT_PAIRS};
+pub use toolchain::{FileDetail, FileIconSpec, Toolchain};
 pub use types::{
     CodeLens, Completion, CompletionEdit, CompletionKind, CompletionList, Diagnostic, Hover,
     InlayHint, InlayHintKind, LensAction, Location, ResolveToken, ServerStatus, Severity,

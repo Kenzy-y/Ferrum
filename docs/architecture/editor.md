@@ -142,11 +142,19 @@ dropping the state closes it. Only what `capabilities()` allows is offered.
   Space), after a trigger character, or when a word starts
   (`[editor] suggest_on_type`). Typing filters it with
   `commands::fuzzy_match`, and an incomplete list is asked for again.
+  Servers drop requests an edit outdates (rust-analyzer does), so while
+  a request is in flight every typed letter of its word asks again, and
+  a request dropped after the last edit is repeated.
   While it is open, `Editor::popup_takes` routes Up, Down, Page Up and
   Page Down to it, Enter and Tab accept, Escape closes. The keymap has no
   "list open" context, so the editor decides. Accepting replaces the
   item's range (or the typed word) and applies its additional edits.
   Without them, resolving the item fills them in afterwards (imports).
+  A row is one line: the kind as a glyph on a tile in the Outline symbol
+  colors (`!` for a label ending in `!`), the label in the code font with
+  the typed letters in `accent`, the `labelDetails` detail dimmed after it,
+  and its description (else the detail) on the right. Long texts end in an
+  ellipsis. The selected row has the accent marker of the file tree.
 - `navigation.rs`: `editor.goToDefinition` (F12), or a click with the
   modifier that does not add cursors (Ctrl/Cmd, or Alt when
   `multi_cursor_modifier = "ctrl"`). A definition in the same file moves

@@ -1,0 +1,32 @@
+[package]
+name = "search"
+description = "Project-wide search: walks a folder through Fs and matches text with grep."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+fs.workspace = true
+futures.workspace = true
+grep-matcher.workspace = true
+grep-regex.workspace = true
+grep-searcher.workspace = true
+ignore.workspace = true
+schemars.workspace = true
+serde.workspace = true
+settings.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+futures = { workspace = true, features = ["executor"] }
+
+[[bench]]
+name = "search"
+harness = false
+
+[lints]
+workspace = true

@@ -1,6 +1,6 @@
-//! The status bar. Items will be contributed by services (git, language
-//! servers); for now it shows the folder, the problems of the project and
-//! the active editor's position and text format.
+//! The status bar: the folder, the problems of the project, the language
+//! servers (or the ready toolchains), the active editor's position and
+//! text format, its language and toolchain version.
 
 use editor::EditorStatus;
 use gpui::{
@@ -12,6 +12,7 @@ use theme::ActiveTheme as _;
 use ui::{Icon, IconName};
 
 use crate::Workbench;
+use crate::contrib::language_status;
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -21,15 +22,20 @@ pub(crate) fn render(
         .active_editor()
         .map(|editor| editor.read(cx).status());
     let items = status.map(|status| editor_items(workbench, &status));
+    // Without a folder there is nothing to count (`welcome.svg`).
     let problems = workbench
         .problem_counts(cx)
+        .filter(|_| workbench.workspace.is_some())
         .map(|counts| problem_items(workbench, counts, cx));
+    let languages = language_status::left_items(workbench, cx);
+    let language = language_status::right_items(workbench, cx);
     let theme = cx.theme();
     let metrics = &theme.metrics;
     let mut right = div().flex().items_center().gap(px(metrics.space.xxl));
     for item in items.into_iter().flatten() {
         right = right.child(item);
     }
+    right = right.children(language);
     div()
         .flex()
         .flex_none()
@@ -50,7 +56,8 @@ pub(crate) fn render(
                     Some(workspace) => workspace.path.clone(),
                     None => workbench.text("status-no-folder"),
                 }))
-                .children(problems.into_iter().flatten()),
+                .children(problems.into_iter().flatten())
+                .children(languages),
         )
         .child(right)
 }

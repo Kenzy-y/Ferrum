@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 futures.workspace = true
+fs.workspace = true
 process.workspace = true
 settings.workspace = true
 syntax.workspace = true

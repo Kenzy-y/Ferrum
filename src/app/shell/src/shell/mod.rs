@@ -4,7 +4,9 @@
 mod config_files;
 mod files;
 mod keyboard;
+mod language_status;
 mod problems;
+mod search;
 mod settings_sync;
 mod terminals;
 mod window_sizes;
@@ -56,6 +58,10 @@ pub(crate) struct Shell {
     languages: Arc<language::LanguageRegistry>,
     /// Running language services of the open folder.
     language_servers: LanguageServers,
+    /// Runs programs: language servers, toolchains.
+    process: Arc<dyn process::ProcessRunner>,
+    /// Finding the toolchain versions of the open folder.
+    toolchain_tasks: Vec<Task<()>>,
     /// Where the user configuration lives; `None` without a home directory.
     config_paths: Option<settings::paths::ConfigPaths>,
     /// The file tree of the open folder.
@@ -73,14 +79,31 @@ pub(crate) struct Shell {
     problems: Entity<workbench::ProblemsView>,
     /// Opens what is activated in the Problems panel.
     _problems_open: gpui::Subscription,
-    /// Pass each running service's diagnostics to `problems`.
+    /// Pass each running service's diagnostics to `problems` and its
+    /// state to the status bar.
     problem_watches: Vec<Task<()>>,
+    /// The Search view of the sidebar.
+    search: Entity<workbench::SearchView>,
+    /// Run the view's searches and open its matches.
+    _search_watches: [gpui::Subscription; 2],
+    /// The search in progress; dropping it cancels it.
+    running_search: Option<search::RunningSearch>,
     /// The terminals of the window.
     terminal: Entity<workbench::TerminalPanel>,
     /// Saves panel sizes the user drags to.
     _sizes_watch: gpui::Subscription,
     #[cfg(debug_assertions)]
     gallery: Option<Entity<Gallery>>,
+}
+
+/// Closing the window asks about unsaved files first.
+fn ask_before_closing(workbench: &Entity<Workbench>, window: &mut Window, cx: &mut Context<Shell>) {
+    let closing = workbench.downgrade();
+    window.on_window_should_close(cx, move |window, cx| {
+        closing
+            .update(cx, |workbench, cx| workbench.should_close(window, cx))
+            .unwrap_or(true)
+    });
 }
 
 impl Shell {
@@ -121,7 +144,8 @@ impl Shell {
         let workbench_i18n = i18n.clone();
         let workbench_keymap = keymap.clone();
         let entries = workspace::recent_entries(&recent);
-        let file_icons = Arc::new(workbench::FileIcons::new());
+        let file_icons = Arc::new(file_icons(&languages));
+        let process: Arc<dyn process::ProcessRunner> = Arc::new(process::RealProcessRunner);
         let workbench_icons = file_icons.clone();
         let workbench = cx.new(|cx| {
             let mut workbench = Workbench::new(
@@ -136,15 +160,11 @@ impl Shell {
             workbench.set_file_icons(workbench_icons, cx);
             workbench
         });
-        // Closing the window asks about unsaved files first.
-        let closing = workbench.downgrade();
-        window.on_window_should_close(cx, move |window, cx| {
-            closing
-                .update(cx, |workbench, cx| workbench.should_close(window, cx))
-                .unwrap_or(true)
-        });
+        ask_before_closing(&workbench, window, cx);
         let (problems, problems_open) =
             problems::create(&i18n, file_icons.clone(), &workbench, window, cx);
+        let (search, search_watches) =
+            search::create(&i18n, file_icons.clone(), &settings, &workbench, window, cx);
         let keyboard = KeyboardDispatcher::new(keymap, chord_timeout, cx);
         let sizes_watch = window_sizes::watch(fs.clone(), window_state_file, &workbench, cx);
         let terminal = terminals::create(&i18n, fs.clone(), &settings, &workbench, window, cx);
@@ -156,7 +176,7 @@ impl Shell {
         let layout_watch = cx.on_keyboard_layout_change(move |cx| {
             let _ = shell.update(cx, Self::keyboard_layout_changed);
         });
-        Self {
+        let mut shell = Self {
             focus_handle,
             keyboard,
             handlers,
@@ -170,7 +190,9 @@ impl Shell {
             file_icons,
             languages,
             config_paths,
-            language_servers: LanguageServers::new(Arc::new(process::RealProcessRunner)),
+            language_servers: LanguageServers::new(process.clone()),
+            process,
+            toolchain_tasks: Vec::new(),
             workspace_watch: None,
             file_tree: None,
             hidden: Vec::new(),
@@ -180,11 +202,16 @@ impl Shell {
             problems,
             _problems_open: problems_open,
             problem_watches: Vec::new(),
+            search,
+            _search_watches: search_watches,
+            running_search: None,
             terminal,
             _sizes_watch: sizes_watch,
             #[cfg(debug_assertions)]
             gallery: None,
-        }
+        };
+        shell.start_language_status(cx);
+        shell
     }
 
     /// The active keyboard layout changed: shortcuts follow.
@@ -342,6 +369,28 @@ fn language_registry() -> Arc<language::LanguageRegistry> {
         },
         Arc::new,
     )
+}
+
+/// File icons the language packs declare, for their extensions and file
+/// names.
+fn file_icons(languages: &language::LanguageRegistry) -> workbench::FileIcons {
+    let mut icons = workbench::FileIcons::new();
+    for entry in languages.iter() {
+        let Some(spec) = entry.file_icon() else {
+            continue;
+        };
+        let icon = workbench::FileIcon::Letter {
+            text: spec.letter.into(),
+            color_token: spec.color_token,
+        };
+        for extension in entry.extensions() {
+            icons.register_extension(extension, icon.clone());
+        }
+        for name in entry.file_names() {
+            icons.register_name(name, icon.clone());
+        }
+    }
+    icons
 }
 
 /// The handlers of every command in a window: the shell's own and the

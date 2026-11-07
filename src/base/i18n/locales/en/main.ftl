@@ -86,9 +86,9 @@ welcome-recent-empty-title = A clean slate
 welcome-recent-empty-text = Your recently opened projects will appear here.
 welcome-get-started = Get started
 welcome-start-palette = Command palette
-welcome-start-search = Search files and commands
-welcome-start-open-folder = Open a folder
-welcome-start-panel = Toggle panel
+welcome-start-find-file = Find a file
+welcome-start-settings = Open settings
+welcome-start-terminal = Toggle terminal
 welcome-workflow-title = Built for your workflow
 welcome-workflow-text = Rust-analyzer, Cargo and Git. Ready when you are.
 welcome-docs-link = Read the documentation
@@ -260,6 +260,13 @@ status-warnings = { $count ->
     [one] { $count } warning
    *[other] { $count } warnings
 }
+status-toolchain-ready = { $language } toolchain ready
+status-server-starting = { $name }: starting
+status-server-indexing = { $name }: { $detail }
+status-server-failed = { $name } stopped.
+status-server-not-found = { $name } was not found: { $program }
+lang-rust-analyzer-not-installed = rust-analyzer is not installed for this toolchain. Run: rustup component add rust-analyzer
+lang-rust-edition = { $value } edition
 problems-empty = No problems have been detected in the workspace.
 problems-position = Ln { $line }, Col { $column }
 terminal-no-shell = No shell was found on this computer.
@@ -275,3 +282,42 @@ new-file-error-empty = Type a file name.
 new-file-error-outside = The file must stay inside the selected folder.
 new-file-error-exists = A file or folder with this name already exists.
 new-file-error-failed = Cannot create the file: { $error }
+
+## Search view
+search-placeholder = Search
+search-match-case = Match case
+search-whole-word = Match whole word
+search-regex = Use regular expression
+search-replace = Replace
+search-include = Files to include
+search-include-placeholder = e.g. src/**/*.rs, !target
+search-searching = Searching…
+search-no-results = No results found
+search-no-folder = Open a folder to search its files.
+search-summary = { $results ->
+    [one] { $results } result
+   *[other] { $results } results
+} in { $files ->
+    [one] { $files } file
+   *[other] { $files } files
+}
+search-summary-limited = First { $results } results in { $files ->
+    [one] { $files } file
+   *[other] { $files } files
+} (search stopped at the limit)
+search-invalid-pattern = Invalid regular expression: { $error }
+search-invalid-glob = Invalid file pattern: { $error }
+search-in = Search in { $name }
+
+## Run and Debug view
+debug-no-configuration = No launch configuration
+debug-variables = Variables
+debug-variables-empty = Not paused.
+debug-watch = Watch
+debug-watch-empty = No watch expressions.
+debug-call-stack = Call stack
+debug-call-stack-empty = No debug session.
+debug-breakpoints = Breakpoints
+debug-breakpoints-empty = No breakpoints.
+debug-all-exceptions = All exceptions
+debug-uncaught-exceptions = Uncaught exceptions

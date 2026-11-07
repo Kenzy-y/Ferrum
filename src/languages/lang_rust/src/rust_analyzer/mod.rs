@@ -106,6 +106,10 @@ impl LspAdapter for RustAnalyzerAdapter {
         (method == "experimental/serverStatus").then(|| server_status(params))
     }
 
+    fn failure_hint(&self, message: &str) -> Option<String> {
+        failure_hint(message).map(str::to_owned)
+    }
+
     fn lens_action(
         &self,
         command: &lsp_types::Command,
@@ -147,6 +151,20 @@ impl LspAdapter for RustAnalyzerAdapter {
 
 /// `experimental/serverStatus`: `health` is `ok`, `warning` or `error`,
 /// `quiescent` is false while the project loads, `message` explains.
+/// The rustup proxy runs, but the toolchain of the folder has no
+/// rust-analyzer: `rustup component add rust-analyzer` fixes it.
+pub(crate) const HINT_NOT_INSTALLED: &str = "lang-rust-analyzer-not-installed";
+
+/// Recognizes a failure from the server's last error output.
+fn failure_hint(message: &str) -> Option<&'static str> {
+    // rustup: "error: Unknown binary 'rust-analyzer.exe' in official
+    // toolchain 'stable-…'" or "'rust-analyzer' is not installed for the
+    // toolchain '…'".
+    let rustup = message.contains("rust-analyzer")
+        && (message.contains("Unknown binary") || message.contains("is not installed"));
+    rustup.then_some(HINT_NOT_INSTALLED)
+}
+
 fn server_status(params: &Value) -> ServerStatus {
     let message = params
         .get("message")

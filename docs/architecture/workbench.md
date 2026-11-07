@@ -10,7 +10,7 @@ state; `overlays.rs` quick open and the path dialog with focus restore;
 regions of the window (one file each, `editor_area/` with tabs, closing
 and the message view). `contrib/` are features, one folder each:
 `explorer/` (with the file tree and file icons), `outline/`,
-`quick_open/`, `welcome/`. `dialogs/` holds modal dialogs. A new region
+`quick_open/`, `search/`, `run_debug/`, `welcome/`. `dialogs/` holds modal dialogs. A new region
 goes to `parts/`, a new feature to its own `contrib/<name>/` folder.
 
 **Parts.** `title_bar` (logo, menus, search, actions: Run project,
@@ -31,9 +31,19 @@ Cancel), `workbench.nextTab` / `previousTab` cycle. Editor commands
 (`editor.*`) go to the active editor. The editor area draws the tab strip
 (`ui::EditorTab` with the file icon, the unsaved dot and a close button),
 the breadcrumbs of the file from the workspace root, and the tab. The
-status bar shows the project's errors and warnings and the active
+status bar shows the project's errors and warnings (only with a folder) and the active
 editor's position, indentation, encoding and line endings (LF, CRLF or
 Mixed).
+
+**Language status** (`contrib/language_status`, ADR 0011). The application
+calls `set_language_names`, `set_toolchain_version`, `set_server_status`
+(`clear_server_statuses` for a new folder) and `set_file_detail`. The
+status bar shows every server on the left: ✓ when ready, ↻ while
+starting or indexing, ⚠ or ✗ with the reason and hint in a tooltip.
+Without servers it shows the ready toolchains. On the right it shows the
+active file's language (`text.accent`) and toolchain version, and without
+an editor `Rust 1.82.0` for every toolchain. The breadcrumbs end with
+`Rust  /  2021 edition`.
 
 **Problems** (`contrib/problems`, ADR 0009). `ProblemsView` lists every
 file with problems and its problems below it (a virtualized list; Up,
@@ -124,6 +134,27 @@ editor's `OutlineItem`s, indented by depth. Each item has a kind glyph
 editor. The commands are `workbench.focusOutline` and
 `workbench.toggleOutline`. The breadcrumbs end with the items around the
 cursor (`ƒ main`).
+
+**Search** (`contrib/search/`, ADR 0012, see `search.md`). `SearchView`
+(given by the application with `Workbench::set_search`) is the Search
+sidebar view from `search.svg`: the raised query field with the Aa / ab /
+.* toggles (`ui::ToggleButton`), the disabled Replace row, Files to
+include (comma-separated globs), the summary, a virtualized tree of files
+and matching lines (`ui::ListRow::mono` previews with highlights) and
+"Search in <folder>". Typing waits `[search] debounce_ms`, Enter searches
+at once; every search emits `SearchRequest` with a new generation, results
+come back with `push_results` / `finish` and stale ones are dropped.
+Keyboard: Down from the query enters the list; Up/Down/Home/End, Left
+collapses (or goes to the file), Right expands, Enter opens the match
+(`OpenMatch`) or toggles a file. `workbench.showSearch` focuses the
+query. Without a folder it shows an empty state.
+
+**Run and Debug** (`contrib/run_debug/`, ADR 0012). Layout of `debug.svg`
+without a debugger: a disabled launch configuration picker and the
+collapsible Variables, Watch (disabled +), Call stack and Breakpoints
+(disabled All / Uncaught exceptions) sections with empty states.
+Headers toggle on click, Enter or Space; collapsed state lives in
+`DebugSections`. Stage 8 fills the sections from the DAP client.
 
 **Menus** (`contrib/menu_bar/`, ADR 0008). `MENUS` lists File, Edit,
 View and Go as rows of existing command ids and separators. Rows whose

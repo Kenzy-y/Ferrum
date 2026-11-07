@@ -1,5 +1,6 @@
 //! The completion list: asked for with `editor.triggerSuggest`, after a
-//! trigger character, or when a word starts (`[editor] suggest_on_type`).
+//! trigger character, or when a word starts (`[editor] suggest_on_type`);
+//! a request an edit outdates is sent again while the word is typed.
 //! Typing filters it (fuzzy, like the palette); an incomplete list is
 //! asked for again. While it is open, Up, Down, Page Up and Page Down
 //! choose, Enter and Tab accept, Escape closes.
@@ -10,7 +11,7 @@ use gpui::{
     AnyElement, Context, FontWeight, HighlightStyle, InteractiveElement as _, MouseButton,
     ParentElement as _, ScrollEvent, SharedString, Styled as _, StyledText, div, px,
 };
-use language::{Completion, CompletionKind, CompletionTrigger};
+use language::{Completion, CompletionKind, CompletionTrigger, ServiceError};
 use text::Selection;
 use theme::Theme;
 
@@ -146,11 +147,33 @@ impl Editor {
             return;
         }
         let request = language.service.completions(&language.path, point, trigger);
+        let version = language.version;
+        language.completion_pending = Some(word_start);
         language.completion_task = Some(cx.spawn(async move |editor, cx| {
-            let Ok(list) = request.await else {
-                return;
-            };
+            let result = request.await;
             let _ = editor.update(cx, |editor, cx| {
+                if let Some(language) = &mut editor.language {
+                    language.completion_pending = None;
+                }
+                let list = match result {
+                    Ok(list) => list,
+                    Err(ServiceError::Cancelled) => {
+                        // An edit outdated the request and the server
+                        // dropped it: ask again while the word goes on.
+                        let edited = editor
+                            .language
+                            .as_ref()
+                            .is_some_and(|language| language.version != version);
+                        if edited && editor.completion_word(word_start).is_some() {
+                            editor.trigger_completion(CompletionTrigger::Invoked, cx);
+                        }
+                        return;
+                    }
+                    Err(error) => {
+                        tracing::debug!(%error, "completion request failed");
+                        return;
+                    }
+                };
                 let mut menu = CompletionMenu {
                     items: list.items,
                     incomplete: list.incomplete,
@@ -226,6 +249,13 @@ impl Editor {
             return;
         };
         let head = self.document.selections().primary().head;
+        // A request still in flight for this word is outdated by the
+        // edit; servers drop such requests, so it is asked again.
+        let word_in_flight = self
+            .language
+            .as_ref()
+            .and_then(|language| language.completion_pending)
+            .is_some_and(|start| self.completion_word(start).is_some());
         if capabilities
             .trigger_characters
             .iter()
@@ -234,7 +264,8 @@ impl Editor {
             self.trigger_completion(CompletionTrigger::Character(typed.to_string()), cx);
         } else if self.settings.suggest_on_type
             && is_identifier_char(typed)
-            && identifier_start(self.document.buffer(), head) + typed.len_utf8() == head
+            && (word_in_flight
+                || identifier_start(self.document.buffer(), head) + typed.len_utf8() == head)
         {
             self.trigger_completion(CompletionTrigger::Invoked, cx);
         }
@@ -244,6 +275,7 @@ impl Editor {
     pub(crate) fn close_completion(&mut self, cx: &mut Context<Self>) {
         if let Some(language) = &mut self.language {
             language.completion_task = None;
+            language.completion_pending = None;
             language.completion_docs = super::completion_docs::CompletionDocs::default();
             if language.completion.take().is_some() {
                 cx.notify();
@@ -274,6 +306,7 @@ impl Editor {
             return;
         };
         language.completion_task = None;
+        language.completion_pending = None;
         let Some((index, _)) = menu.matches.get(pick.unwrap_or(menu.selected)) else {
             return;
         };
@@ -354,6 +387,8 @@ impl Editor {
                 let label = item.label.clone();
                 let filter = item.filter_text.as_deref().unwrap_or(&item.label);
                 let highlights = label_highlights(&label, filter, matched, theme);
+                // The right column: the short description, else the detail.
+                let aside = item.description.clone().or_else(|| item.detail.clone());
                 div()
                     .id(position)
                     .flex()
@@ -362,6 +397,7 @@ impl Editor {
                     .h(px(row_height))
                     .px(px(metrics.space.sm))
                     .rounded(px(metrics.radius.sm))
+                    .whitespace_nowrap()
                     .when_selected(selected, theme)
                     .on_mouse_down(
                         MouseButton::Left,
@@ -370,30 +406,37 @@ impl Editor {
                             editor.accept_completion(Some(position), cx);
                         }),
                     )
+                    .child(kind_tile(item, &mono, theme))
                     .child(
                         div()
-                            .w(px(metrics.font_size.md))
-                            .flex_none()
-                            .text_color(theme.colors.text_subtle)
-                            .child(kind_glyph(item.kind)),
-                    )
-                    .child(
-                        div()
+                            .flex()
                             .flex_1()
                             .min_w_0()
                             .overflow_hidden()
                             .font_family(mono.clone())
-                            .text_color(theme.colors.text_primary)
-                            .child(StyledText::new(label).with_highlights(highlights)),
+                            .child(
+                                div()
+                                    .min_w_0()
+                                    .truncate()
+                                    .text_color(theme.colors.text_primary)
+                                    .child(StyledText::new(label).with_highlights(highlights)),
+                            )
+                            .children(item.label_detail.clone().map(|detail| {
+                                div()
+                                    .min_w_0()
+                                    .truncate()
+                                    .text_color(theme.colors.text_muted)
+                                    .child(detail)
+                            })),
                     )
-                    .children(item.detail.clone().map(|detail| {
+                    .children(aside.map(|aside| {
                         div()
                             .flex_none()
                             .max_w(px(sizes.completion_width / 2.0))
-                            .overflow_hidden()
-                            .text_color(theme.colors.text_muted)
+                            .truncate()
+                            .text_color(theme.colors.text_subtle)
                             .text_size(px(metrics.font_size.sm))
-                            .child(detail)
+                            .child(aside)
                     }))
             });
         let body = popup::container(theme)
@@ -440,10 +483,14 @@ trait SelectedRow {
 
 impl SelectedRow for gpui::Stateful<gpui::Div> {
     fn when_selected(self, selected: bool, theme: &Theme) -> Self {
+        // A marker on the left, as the selected file of the tree.
+        let row = self.border_l_2();
         if selected {
-            self.bg(theme.colors.bg_list_selected)
+            row.bg(theme.colors.bg_list_selected)
+                .border_color(theme.colors.accent)
         } else {
-            self.hover(|style| style.bg(theme.colors.bg_list_hover))
+            row.border_color(gpui::transparent_black())
+                .hover(|style| style.bg(theme.colors.bg_list_hover))
         }
     }
 }
@@ -473,22 +520,52 @@ fn label_highlights(
         .collect()
 }
 
-/// A one-character mark of what an item inserts.
-fn kind_glyph(kind: Option<CompletionKind>) -> &'static str {
-    match kind {
-        Some(CompletionKind::Function | CompletionKind::Method) => "ƒ",
-        Some(CompletionKind::Field) => "▪",
-        Some(CompletionKind::Variable) => "x",
-        Some(CompletionKind::Constant) => "c",
-        Some(CompletionKind::Struct) => "S",
-        Some(CompletionKind::Enum) => "E",
-        Some(CompletionKind::EnumMember) => "e",
-        Some(CompletionKind::Interface) => "T",
-        Some(CompletionKind::Module) => "M",
-        Some(CompletionKind::Keyword) => "k",
-        Some(CompletionKind::Snippet) => "◇",
-        Some(CompletionKind::TypeParameter) => "τ",
-        Some(CompletionKind::Text) | None => "·",
+/// Opacity of the tile behind a kind glyph, over the glyph's color.
+const KIND_TILE_OPACITY: f32 = 0.14;
+
+/// The kind of an item as a glyph on a tile in the kind's color, the
+/// same colors as the Outline symbols (`S` a type, `ƒ` a function).
+fn kind_tile(item: &Completion, mono: &SharedString, theme: &Theme) -> gpui::Div {
+    let (glyph, color) = kind_mark(item, theme);
+    let size = theme.metrics.size.icon_small;
+    div()
+        .flex()
+        .flex_none()
+        .items_center()
+        .justify_center()
+        .size(px(size))
+        .rounded(px(theme.metrics.radius.xs))
+        .bg(color.with_opacity(KIND_TILE_OPACITY))
+        .font_family(mono.clone())
+        .font_weight(FontWeight::MEDIUM)
+        .text_size(px(theme.metrics.font_size.xs))
+        .text_color(color)
+        .child(glyph)
+}
+
+/// A one-character mark of what an item inserts, and its color. Servers
+/// have no kind for macros; their labels end with `!`.
+fn kind_mark(item: &Completion, theme: &Theme) -> (&'static str, theme::Color) {
+    let syntax = &theme.syntax;
+    if item.label.trim_end_matches("(…)").ends_with('!') {
+        return ("!", syntax.macro_name);
+    }
+    match item.kind {
+        Some(CompletionKind::Function | CompletionKind::Method) => {
+            ("ƒ", theme.colors.icon_symbol_function)
+        }
+        Some(CompletionKind::Field) => ("▪", syntax.attribute),
+        Some(CompletionKind::Variable) => ("x", syntax.number),
+        Some(CompletionKind::Constant) => ("C", syntax.constant),
+        Some(CompletionKind::Struct) => ("S", syntax.type_name),
+        Some(CompletionKind::Enum) => ("E", syntax.type_name),
+        Some(CompletionKind::EnumMember) => ("e", syntax.constant),
+        Some(CompletionKind::Interface) => ("T", syntax.type_name),
+        Some(CompletionKind::TypeParameter) => ("τ", syntax.lifetime),
+        Some(CompletionKind::Module) => ("M", syntax.keyword),
+        Some(CompletionKind::Keyword) => ("k", syntax.keyword),
+        Some(CompletionKind::Snippet) => ("◇", theme.colors.accent),
+        Some(CompletionKind::Text) | None => ("·", theme.colors.text_subtle),
     }
 }
 
@@ -572,6 +649,8 @@ mod tests {
             label: label.to_owned(),
             kind: None,
             detail: None,
+            label_detail: None,
+            description: None,
             documentation: None,
             filter_text: None,
             sort_text: None,
@@ -615,5 +694,25 @@ mod tests {
         assert_eq!(identifier_start(&buffer, 18), 16);
         assert_eq!(identifier_start(&buffer, 15), 14);
         assert_eq!(identifier_start(&buffer, 16), 16, "after a dot");
+    }
+
+    #[test]
+    fn kinds_take_the_outline_colors_and_macros_their_own() {
+        let theme = Theme::built_in(theme::DEFAULT_THEME, theme::Density::default()).unwrap();
+        let mut macro_item = item("print!(…)");
+        macro_item.kind = Some(CompletionKind::Function);
+        assert_eq!(
+            kind_mark(&macro_item, &theme),
+            ("!", theme.syntax.macro_name)
+        );
+        let mut function = item("parse");
+        function.kind = Some(CompletionKind::Function);
+        assert_eq!(
+            kind_mark(&function, &theme),
+            ("ƒ", theme.colors.icon_symbol_function)
+        );
+        let mut structure = item("PathBuf");
+        structure.kind = Some(CompletionKind::Struct);
+        assert_eq!(kind_mark(&structure, &theme), ("S", theme.syntax.type_name));
     }
 }

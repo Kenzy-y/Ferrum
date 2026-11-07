@@ -55,6 +55,9 @@ impl Shell {
                 editor.set_syntax_settings(self.settings.get::<syntax::SyntaxSettings>(language));
             });
         }
+        let debounce = super::search::debounce(&self.settings);
+        self.search
+            .update(cx, |search, _| search.set_debounce(debounce));
         let terminal_settings = self.settings.get::<terminal::TerminalSettings>(None);
         self.terminal.update(cx, |terminal, cx| {
             terminal.set_settings(terminal_settings, cx);

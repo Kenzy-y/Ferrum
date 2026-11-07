@@ -211,6 +211,16 @@ impl Editor {
         });
     }
 
+    /// Selects `range` (byte offsets) and scrolls to it (opening a search
+    /// result); the cursor ends at its end.
+    pub fn select(&mut self, range: Range<usize>, cx: &mut Context<Self>) {
+        let buffer = self.document.buffer();
+        let (start, end) = (buffer.clamp(range.start), buffer.clamp(range.end));
+        self.change(cx, |document| {
+            document.set_selections(&Selections::single(Selection::new(start, end)));
+        });
+    }
+
     /// Moves keyboard focus to the editor.
     pub fn focus(&self, window: &mut Window, cx: &mut gpui::App) {
         self.focus_handle.focus(window, cx);

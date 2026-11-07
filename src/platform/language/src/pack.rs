@@ -10,6 +10,7 @@ use settings::SettingsStore;
 use syntax::GrammarSpec;
 
 use crate::LanguageService;
+use crate::toolchain::{FileIconSpec, Toolchain};
 
 /// What a service starts with.
 pub struct ServerContext<'a> {
@@ -47,6 +48,8 @@ pub struct LanguagePack {
     pub(crate) grammar: Option<GrammarSpec>,
     pub(crate) server: Option<Arc<dyn ServerFactory>>,
     pub(crate) pairs: Vec<AutoPair>,
+    pub(crate) toolchain: Option<Arc<dyn Toolchain>>,
+    pub(crate) file_icon: Option<FileIconSpec>,
 }
 
 impl fmt::Debug for LanguagePack {
@@ -71,6 +74,8 @@ impl LanguagePack {
             grammar: Some(grammar),
             server: None,
             pairs: DEFAULT_PAIRS.to_vec(),
+            toolchain: None,
+            file_icon: None,
         }
     }
 
@@ -90,6 +95,8 @@ impl LanguagePack {
             grammar: None,
             server: None,
             pairs: DEFAULT_PAIRS.to_vec(),
+            toolchain: None,
+            file_icon: None,
         }
     }
 
@@ -97,6 +104,20 @@ impl LanguagePack {
     #[must_use]
     pub fn with_server(mut self, server: Arc<dyn ServerFactory>) -> Self {
         self.server = Some(server);
+        self
+    }
+
+    /// Adds the toolchain: its version and details of files (ADR 0011).
+    #[must_use]
+    pub fn with_toolchain(mut self, toolchain: Arc<dyn Toolchain>) -> Self {
+        self.toolchain = Some(toolchain);
+        self
+    }
+
+    /// Marks the language's files with `icon`.
+    #[must_use]
+    pub fn with_file_icon(mut self, icon: FileIconSpec) -> Self {
+        self.file_icon = Some(icon);
         self
     }
 

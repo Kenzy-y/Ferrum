@@ -2954,6 +2954,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "grep-matcher"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9417543f4870fc8f1c8e1af870afae2431007626d9e703fce6471c468d33847"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "grep-regex"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ce0c256c3ad82bcc07b812c15a45ec1d398122e8e15124f96695234db7112ef"
+dependencies = [
+ "bstr",
+ "grep-matcher",
+ "log",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "grep-searcher"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72348823a0eafc4bc2e9051064f28b5b42cc100b571b3a35d67918d711efcbc6"
+dependencies = [
+ "bstr",
+ "encoding_rs",
+ "encoding_rs_io",
+ "grep-matcher",
+ "log",
+ "memchr",
+ "memmap2",
+]
+
+[[package]]
 name = "h2"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3734,6 +3771,7 @@ name = "lang_rust"
 version = "0.0.0"
 dependencies = [
  "criterion",
+ "fs",
  "language",
  "lsp",
  "lsp-types",
@@ -3744,6 +3782,7 @@ dependencies = [
  "settings",
  "syntax",
  "text",
+ "toml 1.1.8+spec-1.1.0",
  "tree-sitter-rust",
 ]
 
@@ -3761,6 +3800,7 @@ dependencies = [
 name = "language"
 version = "0.0.0"
 dependencies = [
+ "fs",
  "futures",
  "process",
  "settings",
@@ -6262,6 +6302,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
+name = "search"
+version = "0.0.0"
+dependencies = [
+ "criterion",
+ "fs",
+ "futures",
+ "grep-matcher",
+ "grep-regex",
+ "grep-searcher",
+ "ignore",
+ "schemars",
+ "serde",
+ "settings",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6495,6 +6553,7 @@ dependencies = [
  "lsp",
  "process",
  "project",
+ "search",
  "settings",
  "syntax",
  "terminal",
@@ -8879,6 +8938,7 @@ dependencies = [
  "language",
  "process",
  "project",
+ "search",
  "syntax",
  "terminal",
  "text",

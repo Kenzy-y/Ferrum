@@ -64,6 +64,10 @@ token_struct! {
         outline_row_height = "outline.row_height",
         /// Tallest the Outline list grows before it scrolls.
         outline_max_height = "outline.max_height",
+        /// Rows of the search results.
+        search_row_height = "search.row_height",
+        /// Line number column of a search result.
+        search_line_number = "search.line_number",
         button_small_height = "button.small.height",
         button_medium_height = "button.medium.height",
         input_height = "input.height",
@@ -133,6 +137,8 @@ token_struct! {
         terminal_tabs_width = "terminal_tabs.width",
         /// The shortcut hints in the corner of the terminal.
         terminal_hint_height = "terminal_hint.height",
+        /// Widest a status bar item with a server message gets.
+        status_item_max_width = "status_item.max_width",
         /// Gap between the buttons of the bottom panel header.
         panel_actions_gap = "panel_actions.gap",
         /// Narrowest the sidebar can be dragged to.

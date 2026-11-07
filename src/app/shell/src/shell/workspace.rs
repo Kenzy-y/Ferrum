@@ -137,6 +137,8 @@ impl Shell {
             }
         }
         self.problem_watches.clear();
+        self.workbench
+            .update(cx, workbench::Workbench::clear_server_statuses);
         let root = workspace.root().to_path_buf();
         self.problems
             .update(cx, |problems, cx| problems.set_root(Some(root), cx));
@@ -179,6 +181,7 @@ impl Shell {
                 shell.reload_workspace_settings(window, cx);
             },
         ));
+        let name = info.name.clone();
         self.workbench.update(cx, |workbench, cx| {
             workbench.set_workspace(Some((info, tree)), cx);
         });
@@ -186,6 +189,10 @@ impl Shell {
         self.recent.record(workspace.root(), SystemTime::now());
         self.recent_changed(cx);
         self.workspace = Some(workspace);
+        // After the folder is set: the view searches the new one.
+        self.search
+            .update(cx, |search, cx| search.set_workspace(Some(name), cx));
+        self.find_toolchains(cx);
     }
 
     fn apply_workspace_layer(

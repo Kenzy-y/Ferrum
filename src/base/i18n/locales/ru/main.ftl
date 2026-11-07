@@ -86,9 +86,9 @@ welcome-recent-empty-title = С чистого листа
 welcome-recent-empty-text = Здесь появятся недавно открытые проекты.
 welcome-get-started = Начало работы
 welcome-start-palette = Палитра команд
-welcome-start-search = Поиск файлов и команд
-welcome-start-open-folder = Открыть папку
-welcome-start-panel = Нижняя панель
+welcome-start-find-file = Найти файл
+welcome-start-settings = Открыть настройки
+welcome-start-terminal = Показать терминал
 welcome-workflow-title = Создано для вашей работы
 welcome-workflow-text = Rust-analyzer, Cargo и Git. Готовы, когда готовы вы.
 welcome-docs-link = Читать документацию
@@ -262,6 +262,13 @@ status-warnings = { $count ->
     [few] { $count } предупреждения
    *[many] { $count } предупреждений
 }
+status-toolchain-ready = Toolchain { $language } готов
+status-server-starting = { $name }: запуск
+status-server-indexing = { $name }: { $detail }
+status-server-failed = { $name } остановлен.
+status-server-not-found = { $name } не найден: { $program }
+lang-rust-analyzer-not-installed = Для этого toolchain не установлен rust-analyzer. Выполните: rustup component add rust-analyzer
+lang-rust-edition = редакция { $value }
 problems-empty = В рабочей области проблем не найдено.
 problems-position = Стр { $line }, стлб { $column }
 terminal-no-shell = На этом компьютере не найдено ни одной оболочки.
@@ -277,3 +284,43 @@ new-file-error-empty = Введите имя файла.
 new-file-error-outside = Файл должен быть внутри выбранной папки.
 new-file-error-exists = Файл или папка с таким именем уже есть.
 new-file-error-failed = Не удалось создать файл: { $error }
+
+## Search view
+search-placeholder = Поиск
+search-match-case = С учётом регистра
+search-whole-word = Слово целиком
+search-regex = Регулярное выражение
+search-replace = Заменить
+search-include = Включить файлы
+search-include-placeholder = например, src/**/*.rs, !target
+search-searching = Идёт поиск…
+search-no-results = Ничего не найдено
+search-no-folder = Откройте папку, чтобы искать по её файлам.
+search-summary = { $results ->
+    [one] { $results } совпадение
+    [few] { $results } совпадения
+   *[many] { $results } совпадений
+} в { $files ->
+    [one] { $files } файле
+   *[other] { $files } файлах
+}
+search-summary-limited = Первые { $results } совпадений в { $files ->
+    [one] { $files } файле
+   *[other] { $files } файлах
+} (поиск остановлен на пределе)
+search-invalid-pattern = Неверное регулярное выражение: { $error }
+search-invalid-glob = Неверный шаблон файлов: { $error }
+search-in = Поиск в { $name }
+
+## Run and Debug view
+debug-no-configuration = Нет конфигурации запуска
+debug-variables = Переменные
+debug-variables-empty = Программа не приостановлена.
+debug-watch = Отслеживание
+debug-watch-empty = Нет выражений для отслеживания.
+debug-call-stack = Стек вызовов
+debug-call-stack-empty = Нет сеанса отладки.
+debug-breakpoints = Точки останова
+debug-breakpoints-empty = Нет точек останова.
+debug-all-exceptions = Все исключения
+debug-uncaught-exceptions = Необработанные исключения

@@ -1,8 +1,8 @@
 //! Text fields and the title bar search field.
 
 use gpui::{
-    App, ElementId, Entity, Focusable as _, Hsla, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, Styled as _, Window, div, px, transparent_black,
+    AnyElement, App, ElementId, Entity, Focusable as _, Hsla, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, Styled as _, Window, div, px, transparent_black,
 };
 use gpui_component::input::{Input, InputState, Textarea, TextareaState};
 use theme::ActiveTheme as _;
@@ -129,6 +129,8 @@ pub struct TextField {
     disabled: bool,
     forced: Option<InteractionState>,
     embedded: bool,
+    raised: bool,
+    trailing: Vec<AnyElement>,
 }
 
 impl TextField {
@@ -140,7 +142,24 @@ impl TextField {
             disabled: false,
             forced: None,
             embedded: false,
+            raised: false,
+            trailing: Vec::new(),
         }
+    }
+
+    /// The main field of a sidebar view (search query): the input
+    /// background with its border, at the height of the title bar search.
+    #[must_use]
+    pub fn raised(mut self) -> Self {
+        self.raised = true;
+        self
+    }
+
+    /// Adds an element after the text (option toggles).
+    #[must_use]
+    pub fn trailing(mut self, element: impl IntoElement) -> Self {
+        self.trailing.push(element.into_any_element());
+        self
     }
 
     /// Draws only the text and icon, without background or border, at the
@@ -207,19 +226,41 @@ impl RenderOnce for TextField {
                 .gap(px(gap))
                 .text_size(px(cx.theme().metrics.font_size.md))
                 .text_color(cx.theme().colors.text_primary)
+        } else if self.raised {
+            let colors = &cx.theme().colors;
+            let border: Hsla = if state == InteractionState::Focused {
+                colors.border_focus.into()
+            } else {
+                colors.border_input.into()
+            };
+            field_container(state, true, cx)
+                .h(px(size.input_inset_height + 2.0))
+                .bg(colors.bg_input)
+                .border_color(border)
         } else {
             let height = size.input_inset_height;
             field_container(state, false, cx).h(px(height))
         };
-        container.children(icon).child(
-            Input::new(&self.state)
-                .appearance(false)
-                // The frame owns the padding; the text sits right after the
-                // icon, as in `SearchField`.
-                .px_0()
-                .text_size(px(font_size))
-                .disabled(self.disabled || state == InteractionState::Disabled),
-        )
+        let trailing = (!self.trailing.is_empty()).then(|| {
+            div()
+                .flex()
+                .flex_none()
+                .items_center()
+                .gap(px(cx.theme().metrics.space.xs))
+                .children(self.trailing)
+        });
+        container
+            .children(icon)
+            .child(
+                Input::new(&self.state)
+                    .appearance(false)
+                    // The frame owns the padding; the text sits right after the
+                    // icon, as in `SearchField`.
+                    .px_0()
+                    .text_size(px(font_size))
+                    .disabled(self.disabled || state == InteractionState::Disabled),
+            )
+            .children(trailing)
     }
 }
 

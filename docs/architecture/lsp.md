@@ -10,7 +10,10 @@ once and starts the server on a `lsp-start-<name>` thread:
 2. `initialize`, then `initialized`;
 3. `didOpen` for every document opened meanwhile.
 
-The status goes Starting → Ready (or NotFound / Failed).
+The status goes Starting → Ready (or NotFound / Failed). The stderr thread
+keeps the server's last error line. `Failed` shows it instead of a generic
+error, even when the line arrives after the failure, and
+`LspAdapter::failure_hint` may add an i18n hint id (ADR 0011).
 
 **Threads** (`transport/`), per server, each blocked on its stream, so an
 idle server costs no CPU:

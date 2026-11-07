@@ -59,6 +59,10 @@ pub(crate) struct LanguageState {
     pub(crate) completion_docs: CompletionDocs,
     /// The completion request in flight.
     pub(crate) completion_task: Option<Task<()>>,
+    /// Start of the word the request in flight completes; typing on in
+    /// that word asks again, since servers drop requests an edit
+    /// outdates.
+    pub(crate) completion_pending: Option<usize>,
     /// The go to definition request in flight.
     pub(crate) definition_task: Option<Task<()>>,
     /// The open list of places of a code lens.
@@ -122,6 +126,7 @@ impl Editor {
             completion: None,
             completion_docs: CompletionDocs::default(),
             completion_task: None,
+            completion_pending: None,
             definition_task: None,
             locations: None,
             snippet: None,
@@ -230,6 +235,7 @@ impl Editor {
         language.completion_docs = CompletionDocs::default();
         language.locations = None;
         language.completion_task = None;
+        language.completion_pending = None;
         if open {
             cx.notify();
         }

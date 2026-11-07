@@ -43,6 +43,8 @@
 "list_row.height" = 26
 "outline.row_height" = 24
 "outline.max_height" = 240
+"search.row_height" = 28            # rows of search results, search.svg
+"search.line_number" = 30           # line number column of a search result
 "button.small.height" = 28
 "button.medium.height" = 32
 "input.height" = 28
@@ -86,6 +88,7 @@
 "terminal.top" = 14
 "terminal_tabs.width" = 160          # not in the mockups (ADR 0010)
 "terminal_hint.height" = 28
+"status_item.max_width" = 280
 "panel_actions.gap" = 4
 "sidebar.min_width" = 160           # not in the mockups: limits of dragging panel borders
 "bottom_panel.min_height" = 100

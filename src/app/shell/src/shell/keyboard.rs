@@ -90,13 +90,27 @@ impl KeyboardDispatcher {
     /// Feeds a key press to the keymap. `None`: a held key that does not
     /// repeat, ignored entirely.
     pub(super) fn key_down(&mut self, event: &KeyDownEvent, window: &Window) -> Option<KeyOutcome> {
-        if event.is_held && !repeats(&event.keystroke) {
-            return None;
-        }
-        self.chord_timer = None;
         let keystroke = to_keystroke(&event.keystroke, &self.layout_keys);
         let contexts = focus_contexts(window);
         let context_names: Vec<&str> = contexts.iter().map(String::as_str).collect();
+        if event.is_held && !repeats(&event.keystroke) {
+            // A held shortcut repeats only a command made for it (Ctrl+V
+            // pastes again, Ctrl+B does not flicker), never inside a
+            // sequence.
+            if !self.matcher.pending().is_empty() {
+                return None;
+            }
+            return match self.matcher.push(&self.keymap, keystroke, &context_names) {
+                MatchResult::Command(id) if command_repeats(id.as_str()) => {
+                    Some(KeyOutcome::Run(id))
+                }
+                _ => {
+                    self.matcher.reset();
+                    None
+                }
+            };
+        }
+        self.chord_timer = None;
         Some(
             match self.matcher.push(&self.keymap, keystroke, &context_names) {
                 MatchResult::Command(id) => KeyOutcome::Run(id),
@@ -189,6 +203,35 @@ fn repeats(keystroke: &gpui::Keystroke) -> bool {
         )
 }
 
+/// Commands a held shortcut runs again: edits and moves, as in a text
+/// field. Others (saving, toggling panels) run once per press.
+fn command_repeats(id: &str) -> bool {
+    const REPEATING: &[&str] = &[
+        "editor.paste",
+        "editor.cut",
+        "editor.undo",
+        "editor.redo",
+        "editor.indent",
+        "editor.outdent",
+        "editor.newline",
+        "terminal.paste",
+        "terminal.scrollPageUp",
+        "terminal.scrollPageDown",
+    ];
+    const REPEATING_PREFIXES: &[&str] = &[
+        "editor.move",
+        "editor.delete",
+        "editor.addCursor",
+        "editor.pageUp",
+        "editor.pageDown",
+    ];
+    REPEATING.contains(&id)
+        || REPEATING_PREFIXES
+            .iter()
+            .any(|prefix| id.starts_with(prefix))
+        || (id.starts_with("editor.select") && id != "editor.selectAll")
+}
+
 /// Converts a GPUI keystroke into the keymap representation; the key is
 /// translated to the US key on the same physical key.
 fn to_keystroke(keystroke: &gpui::Keystroke, layout: &LayoutKeys) -> commands::Keystroke {
@@ -208,5 +251,34 @@ fn to_keystroke(keystroke: &gpui::Keystroke, layout: &LayoutKeys) -> commands::K
             platform,
         },
         key: layout.translate(&key).to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn held_shortcuts_repeat_edits_but_not_toggles() {
+        for id in [
+            "editor.paste",
+            "editor.undo",
+            "editor.deleteWordLeft",
+            "editor.moveWordRight",
+            "editor.selectWordLeft",
+            "editor.addCursorBelow",
+            "terminal.paste",
+        ] {
+            assert!(command_repeats(id), "{id}");
+        }
+        for id in [
+            "editor.save",
+            "editor.selectAll",
+            "editor.triggerSuggest",
+            "workbench.toggleSidebar",
+            "workbench.toggleTerminal",
+        ] {
+            assert!(!command_repeats(id), "{id}");
+        }
     }
 }
