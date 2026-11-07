@@ -21,6 +21,7 @@ pub(crate) fn title(view: SidebarView) -> &'static str {
 
 pub(crate) fn render(
     workbench: &Workbench,
+    width: f32,
     cx: &mut Context<Workbench>,
 ) -> impl IntoElement + use<> {
     let theme = cx.theme();
@@ -28,7 +29,7 @@ pub(crate) fn render(
     // The header sits at the height of the first activity button.
     let header_top = size.activity_bar_top - size.layout_gap_top;
     Panel::new(PanelSurface::Sidebar)
-        .w(px(size.sidebar_width))
+        .w(px(width))
         .flex_none()
         .pb(px(theme.metrics.space.sm))
         .pt(px(header_top))

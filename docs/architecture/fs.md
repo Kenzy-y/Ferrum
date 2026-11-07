@@ -16,6 +16,9 @@ written and the link stays. Leftover temporary files are removed on error.
 **Metadata.** `Metadata.kind` describes the target of a link,
 `is_symlink` the path itself; a dangling link is `EntryKind::Other`.
 `canonicalize` resolves links and is how tree walkers detect link cycles.
+On Windows `RealFs` returns the plain form (`C:\a`, `\\server\share`)
+instead of the verbatim one (`\\?\C:\a`) unless the path needs it, because
+language servers and path comparisons expect the plain form.
 
 **Watching.** `watch(root, mode, filter)` watches with `notify`, either
 recursively or only the direct entries of `root` (`WatchMode`). The

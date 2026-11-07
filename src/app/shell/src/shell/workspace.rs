@@ -136,7 +136,15 @@ impl Shell {
                 cx.background_executor().spawn(stopping).detach();
             }
         }
+        self.problem_watches.clear();
+        let root = workspace.root().to_path_buf();
+        self.problems
+            .update(cx, |problems, cx| problems.set_root(Some(root), cx));
         self.apply_workspace_layer(layer, window, cx);
+        let directory = workspace.root().to_path_buf();
+        self.terminal.update(cx, |terminal, cx| {
+            terminal.set_working_directory(Some(directory), window, cx);
+        });
 
         window.set_window_title(&super::window_title(&self.i18n, Some(&workspace)));
         let info = WorkspaceInfo {

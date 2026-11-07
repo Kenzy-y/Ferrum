@@ -55,6 +55,10 @@ impl Shell {
                 editor.set_syntax_settings(self.settings.get::<syntax::SyntaxSettings>(language));
             });
         }
+        let terminal_settings = self.settings.get::<terminal::TerminalSettings>(None);
+        self.terminal.update(cx, |terminal, cx| {
+            terminal.set_settings(terminal_settings, cx);
+        });
         let hidden = self.settings.get::<project::FilesSettings>(None).hidden;
         if hidden != self.hidden
             && let Some(tree) = &self.file_tree

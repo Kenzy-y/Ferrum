@@ -1,15 +1,24 @@
 //! Language support in the editor. The document is kept in sync with a
-//! [`language::LanguageService`], whose diagnostics are underlined.
+//! [`language::LanguageService`], whose diagnostics are underlined, whose
+//! inlay hints are drawn in the lines and whose code lenses end them.
 //! Hover, completions and go to definition ask the same service. Only
 //! what the service's capabilities allow is offered.
 
+pub(crate) mod code_lens;
 pub(crate) mod completion;
+pub(crate) mod completion_docs;
 pub(crate) mod diagnostics;
 pub(crate) mod hover;
+pub(crate) mod inlay_hints;
+pub(crate) mod locations;
 pub(crate) mod markdown;
 mod navigation;
 pub(crate) mod popup;
+mod popup_keys;
 pub(crate) mod snippet;
+
+#[cfg(test)]
+mod tests;
 
 use std::ops::Range;
 use std::path::{Path, PathBuf};
@@ -17,15 +26,19 @@ use std::sync::Arc;
 
 use futures::StreamExt as _;
 use gpui::{AnyElement, Context, Task};
-use language::{Capabilities, LanguageService, ServiceEvent};
+use language::{Capabilities, LanguageService, ServerStatus, ServiceEvent};
 use text::{Buffer, TextChanges};
 use theme::Theme;
 
 use crate::editor::{Editor, EditorEvent};
 
+use self::code_lens::CodeLenses;
 use self::completion::CompletionMenu;
+use self::completion_docs::CompletionDocs;
 use self::diagnostics::PlacedDiagnostic;
 use self::hover::HoverState;
+use self::inlay_hints::InlayHints;
+use self::locations::LocationList;
 
 /// The editor's link to a language service.
 pub(crate) struct LanguageState {
@@ -34,19 +47,33 @@ pub(crate) struct LanguageState {
     pub(crate) path: PathBuf,
     language_id: String,
     /// Version of the text last sent.
-    version: i32,
+    pub(crate) version: i32,
     pub(crate) capabilities: Capabilities,
     /// Problems of the text, sorted by start, in current offsets.
     pub(crate) diagnostics: Vec<PlacedDiagnostic>,
+    pub(crate) inlay_hints: InlayHints,
+    pub(crate) code_lenses: CodeLenses,
     pub(crate) hover: HoverState,
     pub(crate) completion: Option<CompletionMenu>,
+    /// Documentation of the selected completion.
+    pub(crate) completion_docs: CompletionDocs,
     /// The completion request in flight.
     pub(crate) completion_task: Option<Task<()>>,
     /// The go to definition request in flight.
     pub(crate) definition_task: Option<Task<()>>,
+    /// The open list of places of a code lens.
+    pub(crate) locations: Option<LocationList>,
     /// The snippet being filled in.
     pub(crate) snippet: Option<self::snippet::SnippetSession>,
     _events: Task<()>,
+}
+
+impl LanguageState {
+    /// Inlay hints and code lenses are asked for again by the next frame.
+    pub(crate) fn invalidate_decorations(&mut self) {
+        self.inlay_hints.invalidate();
+        self.code_lenses.invalidate();
+    }
 }
 
 impl Drop for LanguageState {
@@ -89,10 +116,14 @@ impl Editor {
             language_id: language_id.to_owned(),
             version: 1,
             diagnostics: Vec::new(),
+            inlay_hints: InlayHints::default(),
+            code_lenses: CodeLenses::default(),
             hover: HoverState::default(),
             completion: None,
+            completion_docs: CompletionDocs::default(),
             completion_task: None,
             definition_task: None,
+            locations: None,
             snippet: None,
             _events: task,
         });
@@ -124,6 +155,11 @@ impl Editor {
             self.document.buffer().clone(),
         );
         diagnostics::follow(&mut language.diagnostics, changes, self.document.buffer());
+        language.inlay_hints.follow(changes, self.document.buffer());
+        language.code_lenses.follow(changes, self.document.buffer());
+        if language.locations.take().is_some() {
+            cx.notify();
+        }
         self.follow_snippet(changes);
         self.dismiss_hover(cx);
         self.update_completion_after_edit(changes, cx);
@@ -160,6 +196,21 @@ impl Editor {
             }
             ServiceEvent::CapabilitiesChanged => {
                 language.capabilities = language.service.capabilities();
+                language.invalidate_decorations();
+                cx.notify();
+            }
+            // A server that finished loading answers differently now;
+            // requests that failed are tried again.
+            ServiceEvent::Status(ServerStatus::Ready) => {
+                language.invalidate_decorations();
+                cx.notify();
+            }
+            ServiceEvent::InlayHintsChanged => {
+                language.inlay_hints.invalidate();
+                cx.notify();
+            }
+            ServiceEvent::CodeLensesChanged => {
+                language.code_lenses.invalidate();
                 cx.notify();
             }
             _ => {}
@@ -171,9 +222,13 @@ impl Editor {
         let Some(language) = &mut self.language else {
             return false;
         };
-        let open = language.hover.popup.is_some() || language.completion.is_some();
+        let open = language.hover.popup.is_some()
+            || language.completion.is_some()
+            || language.locations.is_some();
         language.hover = HoverState::default();
         language.completion = None;
+        language.completion_docs = CompletionDocs::default();
+        language.locations = None;
         language.completion_task = None;
         if open {
             cx.notify();
@@ -181,14 +236,23 @@ impl Editor {
         open
     }
 
-    /// The open popups: the completion list, else the hover.
+    /// The open popups: the completion list or the list of places, else
+    /// the hover.
     pub(crate) fn render_popups(
         &self,
         theme: &Theme,
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
         self.render_completion(theme, cx)
+            .or_else(|| self.render_locations(theme, cx))
             .or_else(|| self.render_hover(theme, cx))
+    }
+
+    /// After a frame that showed `visible` rows: asks for the inlay hints
+    /// and code lenses there.
+    pub(crate) fn request_decorations(&mut self, visible: &Range<usize>, cx: &mut Context<Self>) {
+        self.request_inlay_hints(visible.clone(), cx);
+        self.request_code_lenses(visible, cx);
     }
 
     /// Colors of the grammar's highlights in `theme` (empty without one).

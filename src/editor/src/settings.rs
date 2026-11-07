@@ -45,6 +45,15 @@ pub struct EditorSettings {
     /// Typing an opening bracket or quote also inserts its closing one;
     /// the language decides which characters pair.
     pub auto_close_pairs: bool,
+    /// Shows the language service's inlay hints inside lines: types of
+    /// bindings, names of parameters.
+    pub inlay_hints: bool,
+    /// Shows the language service's code lenses at the end of lines
+    /// (implementations, references); a click goes there.
+    pub code_lens: bool,
+    /// How long after an edit or a scroll inlay hints and code lenses are
+    /// asked for again, in milliseconds.
+    pub language_decorations_delay_ms: u64,
 }
 
 impl Default for EditorSettings {
@@ -60,6 +69,9 @@ impl Default for EditorSettings {
             hover_delay_ms: 300,
             suggest_on_type: true,
             auto_close_pairs: true,
+            inlay_hints: true,
+            code_lens: true,
+            language_decorations_delay_ms: 150,
         }
     }
 }

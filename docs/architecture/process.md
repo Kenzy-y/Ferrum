@@ -18,5 +18,7 @@ a background executor; on Windows no console window is shown) and
 `FakeProcessRunner::serve` registers a scripted program that `spawn` runs
 on a thread, talking through in-memory pipes (`pipe.rs`).
 
-**Extending.** A pseudo-terminal for the terminal (stage 6) is a further
-trait method.
+**Pseudo-terminals.** `spawn_pty(command, PtySize)` starts an interactive
+program in a pseudo-terminal from `alacritty_terminal` (ConPTY, openpty;
+ADR 0010) and returns `Pty`, which the `terminal` crate hands to the
+emulator's event loop. `FakeProcessRunner` records the command and fails.

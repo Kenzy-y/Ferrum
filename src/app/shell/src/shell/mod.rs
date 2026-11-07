@@ -4,7 +4,10 @@
 mod config_files;
 mod files;
 mod keyboard;
+mod problems;
 mod settings_sync;
+mod terminals;
+mod window_sizes;
 mod workspace;
 
 use std::path::PathBuf;
@@ -66,6 +69,16 @@ pub(crate) struct Shell {
     /// Re-reads the configuration files when they change.
     _config_watch: Option<Task<()>>,
     workbench: Entity<Workbench>,
+    /// The Problems panel, fed by every running language service.
+    problems: Entity<workbench::ProblemsView>,
+    /// Opens what is activated in the Problems panel.
+    _problems_open: gpui::Subscription,
+    /// Pass each running service's diagnostics to `problems`.
+    problem_watches: Vec<Task<()>>,
+    /// The terminals of the window.
+    terminal: Entity<workbench::TerminalPanel>,
+    /// Saves panel sizes the user drags to.
+    _sizes_watch: gpui::Subscription,
     #[cfg(debug_assertions)]
     gallery: Option<Entity<Gallery>>,
 }
@@ -77,13 +90,7 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let languages = match crate::languages::language_registry() {
-            Ok(registry) => Arc::new(registry),
-            Err(error) => {
-                tracing::error!("{error:#}");
-                Arc::new(language::LanguageRegistry::new())
-            }
-        };
+        let languages = language_registry();
         let LoadedConfig {
             settings,
             keymap,
@@ -92,6 +99,8 @@ impl Shell {
             paths,
             recent,
             recent_file,
+            window_state,
+            window_state_file,
         } = config;
         let keymap = Arc::new(keymap);
         let chord_timeout = config::chord_timeout(&settings);
@@ -123,6 +132,7 @@ impl Shell {
                 open_path,
             );
             workbench.set_recent(entries, cx);
+            workbench.set_panel_sizes(window_state, cx);
             workbench.set_file_icons(workbench_icons, cx);
             workbench
         });
@@ -133,20 +143,22 @@ impl Shell {
                 .update(cx, |workbench, cx| workbench.should_close(window, cx))
                 .unwrap_or(true)
         });
+        let (problems, problems_open) =
+            problems::create(&i18n, file_icons.clone(), &workbench, window, cx);
+        let keyboard = KeyboardDispatcher::new(keymap, chord_timeout, cx);
+        let sizes_watch = window_sizes::watch(fs.clone(), window_state_file, &workbench, cx);
+        let terminal = terminals::create(&i18n, fs.clone(), &settings, &workbench, window, cx);
         let handlers = Rc::new(command_handlers(
             &cx.entity().downgrade(),
             &workbench.downgrade(),
         ));
         let shell = cx.entity().downgrade();
         let layout_watch = cx.on_keyboard_layout_change(move |cx| {
-            let _ = shell.update(cx, |shell, cx| {
-                shell.keyboard.layout_changed(cx);
-                tracing::debug!("keyboard layout changed");
-            });
+            let _ = shell.update(cx, Self::keyboard_layout_changed);
         });
         Self {
             focus_handle,
-            keyboard: KeyboardDispatcher::new(keymap, chord_timeout, cx),
+            keyboard,
             handlers,
             _layout_watch: Some(layout_watch),
             open_file_watch: None,
@@ -165,9 +177,20 @@ impl Shell {
             recent_file,
             _config_watch: config_watch,
             workbench,
+            problems,
+            _problems_open: problems_open,
+            problem_watches: Vec::new(),
+            terminal,
+            _sizes_watch: sizes_watch,
             #[cfg(debug_assertions)]
             gallery: None,
         }
+    }
+
+    /// The active keyboard layout changed: shortcuts follow.
+    fn keyboard_layout_changed(&mut self, cx: &mut Context<Self>) {
+        self.keyboard.layout_changed(cx);
+        tracing::debug!("keyboard layout changed");
     }
 
     /// Registers the handlers of the commands the shell owns.
@@ -234,7 +257,27 @@ impl Shell {
         });
     }
 
+    /// Keys typed in a terminal: the keymap first, except keys that belong
+    /// to the terminal's program; whatever is left goes on to the terminal.
+    fn on_key_down_capture(
+        &mut self,
+        event: &KeyDownEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if keyboard::terminal_focused(window) && !self.keyboard.goes_to_terminal_program(event) {
+            self.dispatch_key(event, window, cx);
+        }
+    }
+
     fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
+        // A terminal's keys went through the keymap in the capture phase.
+        if !keyboard::terminal_focused(window) {
+            self.dispatch_key(event, window, cx);
+        }
+    }
+
+    fn dispatch_key(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         match self.keyboard.key_down(event, window) {
             Some(KeyOutcome::Run(id)) => {
                 cx.stop_propagation();
@@ -276,6 +319,7 @@ impl Render for Shell {
         let theme = cx.theme();
         let content = div()
             .track_focus(&self.focus_handle)
+            .capture_key_down(cx.listener(Self::on_key_down_capture))
             .on_key_down(cx.listener(Self::on_key_down))
             .size_full()
             .font_family(SharedString::from(theme.fonts.ui.clone()))
@@ -287,6 +331,17 @@ impl Render for Shell {
         // (Linux); a plain container elsewhere.
         gpui_component::window_border().child(content)
     }
+}
+
+/// The built-in language packs; empty (and logged) if one is broken.
+fn language_registry() -> Arc<language::LanguageRegistry> {
+    crate::languages::language_registry().map_or_else(
+        |error| {
+            tracing::error!("{error:#}");
+            Arc::new(language::LanguageRegistry::new())
+        },
+        Arc::new,
+    )
 }
 
 /// The handlers of every command in a window: the shell's own and the

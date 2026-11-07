@@ -16,10 +16,14 @@ futures.workspace = true
 gpui.workspace = true
 gpui-component.workspace = true
 i18n.workspace = true
+language.workspace = true
+process.workspace = true
 project.workspace = true
 text.workspace = true
 syntax.workspace = true
+terminal.workspace = true
 theme.workspace = true
+thiserror.workspace = true
 tracing.workspace = true
 ui.workspace = true
 

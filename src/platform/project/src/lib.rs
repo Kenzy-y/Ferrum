@@ -9,6 +9,7 @@ mod git_excludes;
 mod ignore_rules;
 mod project_settings;
 mod recent;
+mod window_state;
 mod workspace;
 
 pub use file_tree::{DirListing, FileTree, RowState, TreeEntry, TreeRow, load_dir};
@@ -16,6 +17,7 @@ pub use git_excludes::{GitEnvironment, RepositoryExcludes, read_repository_exclu
 pub use ignore_rules::{DEFAULT_HIDDEN, IGNORE_FILE_NAME, IgnoreRules, Visibility};
 pub use project_settings::{FilesSettings, ProjectSettings};
 pub use recent::{RECENT_PROJECTS_FILE_NAME, RecentProject, RecentProjects};
+pub use window_state::{WINDOW_STATE_FILE_NAME, WindowState};
 pub use workspace::Workspace;
 
 use std::path::PathBuf;

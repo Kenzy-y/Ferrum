@@ -40,6 +40,46 @@ pub const FOCUS_OUTLINE: &str = "workbench.focusOutline";
 /// Expands or collapses the Outline section of the Explorer.
 pub const TOGGLE_OUTLINE: &str = "workbench.toggleOutline";
 
+/// Creates a file in the folder selected in the Explorer (or the root)
+/// and opens it.
+pub const NEW_FILE: &str = "explorer.newFile";
+
+/// Shows the terminal and focuses it, starting one if none runs; hides
+/// the panel when the terminal already has the focus.
+pub const TOGGLE_TERMINAL: &str = "workbench.toggleTerminal";
+/// Lets the bottom panel take the whole height of the editor area, or
+/// gives the editor its place back.
+pub const TOGGLE_MAXIMIZED_PANEL: &str = "workbench.toggleMaximizedPanel";
+
+/// Opens a new terminal tab with the default shell.
+pub const TERMINAL_NEW: &str = "terminal.new";
+/// Opens a terminal next to the active one.
+pub const TERMINAL_SPLIT: &str = "terminal.split";
+/// Ends the active terminal's shell and closes it.
+pub const TERMINAL_KILL: &str = "terminal.kill";
+/// Opens the list of shells for a new terminal.
+pub const TERMINAL_SELECT_SHELL: &str = "terminal.selectShell";
+/// Shows the next terminal tab.
+pub const TERMINAL_FOCUS_NEXT: &str = "terminal.focusNext";
+/// Shows the previous terminal tab.
+pub const TERMINAL_FOCUS_PREVIOUS: &str = "terminal.focusPrevious";
+/// Copies the terminal selection.
+pub const TERMINAL_COPY: &str = "terminal.copy";
+/// Pastes into the terminal.
+pub const TERMINAL_PASTE: &str = "terminal.paste";
+/// Selects the whole terminal buffer.
+pub const TERMINAL_SELECT_ALL: &str = "terminal.selectAll";
+/// Clears the terminal and its scrollback.
+pub const TERMINAL_CLEAR: &str = "terminal.clear";
+/// Scrolls the terminal a screen up.
+pub const TERMINAL_SCROLL_PAGE_UP: &str = "terminal.scrollPageUp";
+/// Scrolls the terminal a screen down.
+pub const TERMINAL_SCROLL_PAGE_DOWN: &str = "terminal.scrollPageDown";
+/// Scrolls the terminal to its oldest line.
+pub const TERMINAL_SCROLL_TO_TOP: &str = "terminal.scrollToTop";
+/// Scrolls the terminal back to the live screen.
+pub const TERMINAL_SCROLL_TO_BOTTOM: &str = "terminal.scrollToBottom";
+
 /// Opens a folder with the system folder picker. Owned by the
 /// application (it knows projects); the workbench shows buttons for it.
 pub const OPEN_FOLDER: &str = "workspace.openFolder";
@@ -73,6 +113,32 @@ pub(crate) const ALL: &[(&str, &str)] = &[
     (FOCUS_OUTLINE, "command-workbench-focus-outline"),
     (TOGGLE_OUTLINE, "command-workbench-toggle-outline"),
     (OPEN_MENU_BAR, "command-workbench-open-menu-bar"),
+    (NEW_FILE, "command-explorer-new-file"),
+    (TOGGLE_TERMINAL, "command-workbench-toggle-terminal"),
+    (
+        TOGGLE_MAXIMIZED_PANEL,
+        "command-workbench-toggle-maximized-panel",
+    ),
+    (TERMINAL_NEW, "command-terminal-new"),
+    (TERMINAL_SPLIT, "command-terminal-split"),
+    (TERMINAL_KILL, "command-terminal-kill"),
+    (TERMINAL_SELECT_SHELL, "command-terminal-select-shell"),
+    (TERMINAL_FOCUS_NEXT, "command-terminal-focus-next"),
+    (TERMINAL_FOCUS_PREVIOUS, "command-terminal-focus-previous"),
+    (TERMINAL_COPY, "command-terminal-copy"),
+    (TERMINAL_PASTE, "command-terminal-paste"),
+    (TERMINAL_SELECT_ALL, "command-terminal-select-all"),
+    (TERMINAL_CLEAR, "command-terminal-clear"),
+    (TERMINAL_SCROLL_PAGE_UP, "command-terminal-scroll-page-up"),
+    (
+        TERMINAL_SCROLL_PAGE_DOWN,
+        "command-terminal-scroll-page-down",
+    ),
+    (TERMINAL_SCROLL_TO_TOP, "command-terminal-scroll-to-top"),
+    (
+        TERMINAL_SCROLL_TO_BOTTOM,
+        "command-terminal-scroll-to-bottom",
+    ),
 ];
 
 /// The command that shows `view`.

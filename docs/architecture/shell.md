@@ -31,6 +31,18 @@ binary only sets up logging and calls `shell::run()`.
   go to every service with `configure`. The table belongs to the window
   for now; it moves to the application when there are several windows
   (ADR 0006: one server per folder).
+- `shell/problems.rs`: the window's `workbench::ProblemsView`. Every
+  service the window starts gets a task that passes its diagnostics, for
+  all files, to the panel; opening another folder drops the tasks and
+  clears the panel. `OpenProblem` opens the file at the position.
+- `shell/terminals.rs`: the window's `workbench::TerminalPanel` with the
+  real process runner; opening a folder sets where terminals start,
+  settings and keyboard layout changes reach every terminal. Keys of a
+  focused terminal go through the keymap in the capture phase
+  (`keyboard::terminal_focused`, `goes_to_terminal_program`).
+- `shell/window_sizes.rs`: saves the panel sizes after every drag to
+  `window-state.toml` in the data directory; `config.rs` reads them at
+  startup.
 - `shell/config_files.rs`: `preferences.openSettings` (the settings
   button, Ctrl+,) and `preferences.openKeymap` open the user
   `settings.toml` and `keymap.toml` in an editor. A missing file is first

@@ -101,12 +101,15 @@ impl Shell {
         let (Some(entry), Some(workspace)) = (entry, &self.workspace) else {
             return;
         };
-        let Some(service) = self
-            .language_servers
-            .service(entry, workspace.root(), &self.settings)
+        let Some((service, started)) =
+            self.language_servers
+                .service(entry, workspace.root(), &self.settings)
         else {
             return;
         };
+        if started {
+            self.watch_problems(&service, cx);
+        }
         editor.update(cx, |editor, cx| {
             editor.set_language_service(service, entry.id(), cx);
         });

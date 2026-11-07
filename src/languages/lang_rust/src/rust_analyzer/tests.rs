@@ -53,7 +53,11 @@ fn configuration_comes_from_settings() {
     adapter.extend_capabilities(&mut capabilities);
     assert_eq!(
         capabilities.experimental,
-        Some(json!({"serverStatusNotification": true}))
+        Some(json!({
+            "serverStatusNotification": true,
+            // Lenses carry only the commands listed here.
+            "commands": {"commands": ["rust-analyzer.showReferences"]},
+        }))
     );
 }
 

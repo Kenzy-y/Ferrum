@@ -46,6 +46,31 @@ impl KeyboardDispatcher {
         }
     }
 
+    /// Whether a key typed in a focused terminal goes to its program
+    /// instead of the keymap: Ctrl or Alt with a character (`Ctrl C`,
+    /// `Ctrl R`) unless the `terminal` context binds it or a key sequence
+    /// is pending.
+    pub(super) fn goes_to_terminal_program(&self, event: &KeyDownEvent) -> bool {
+        if !self.matcher.pending().is_empty() {
+            return false;
+        }
+        let keystroke = to_keystroke(&event.keystroke, &self.layout_keys);
+        let modifiers = terminal::keys::Modifiers {
+            control: keystroke.modifiers.control,
+            alt: keystroke.modifiers.alt,
+            shift: keystroke.modifiers.shift,
+            platform: keystroke.modifiers.platform,
+        };
+        if !terminal::keys::belongs_to_program(&keystroke.key, modifiers) {
+            return false;
+        }
+        let bound_in_terminal = self.keymap.bindings().iter().any(|binding| {
+            binding.context.as_str() == TERMINAL_CONTEXT
+                && binding.keys.0.first() == Some(&keystroke)
+        });
+        !bound_in_terminal
+    }
+
     /// Replaces the bindings and drops any pending sequence.
     pub(super) fn set_keymap(&mut self, keymap: Arc<Keymap>) {
         self.keymap = keymap;
@@ -108,6 +133,20 @@ impl KeyboardDispatcher {
 
 /// Context active everywhere in the main window, after the focused ones.
 const WORKBENCH_CONTEXT: &str = "workbench";
+
+/// Context of a focused terminal (`workbench`'s terminal view).
+const TERMINAL_CONTEXT: &str = "terminal";
+
+/// Whether a terminal has the keyboard focus. Its keys go through the
+/// keymap before the terminal sees them (capture phase), so that the
+/// terminal gets only what no binding takes.
+pub(super) fn terminal_focused(window: &Window) -> bool {
+    window.context_stack().iter().any(|context| {
+        context
+            .primary()
+            .is_some_and(|entry| entry.key == TERMINAL_CONTEXT)
+    })
+}
 
 /// Keybinding contexts of the focused view and its parents, innermost
 /// first, then `workbench`. Views name their context with `key_context`

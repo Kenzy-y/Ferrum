@@ -124,6 +124,19 @@ pub(crate) fn map_offset(offset: usize, edit: &TextEdit, start_side: bool) -> us
     }
 }
 
+/// `offset` moved through `edit` as an anchor of the text after it: text
+/// inserted right at it goes before it. An offset inside the replaced text
+/// is `None`.
+pub(crate) fn map_anchor(offset: usize, edit: &TextEdit) -> Option<usize> {
+    if offset >= edit.old_end {
+        Some(offset - edit.old_end + edit.new_end)
+    } else if offset <= edit.start {
+        Some(offset)
+    } else {
+        None
+    }
+}
+
 impl Editor {
     /// When full parses of this text are slow, parses just the items
     /// around `edits` in the background, so the edited text is colored

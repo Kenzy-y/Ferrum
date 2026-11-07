@@ -4,6 +4,7 @@
 pub(crate) mod display;
 pub(crate) mod element;
 pub(crate) mod layout;
+pub(crate) mod lenses;
 pub(crate) mod marks;
 pub(crate) mod runs;
 pub(crate) mod scene;

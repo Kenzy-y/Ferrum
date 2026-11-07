@@ -68,7 +68,15 @@ pub(crate) fn shape_row(
     let start = line_start + line.char_to_byte(columns.start);
     let end = line_start + line.char_to_byte(columns.end);
     let source = line.slice(columns.clone()).to_string();
-    let display = DisplayLine::new(&source, editor.settings.tab_size, columns.start);
+    // Inlay hints only on lines shaped whole: a window into a long line
+    // maps columns to x without them.
+    let hints = if columns.len() == chars {
+        editor.inlay_hints_in(start..end)
+    } else {
+        Vec::new()
+    };
+    let display =
+        DisplayLine::with_inserts(&source, editor.settings.tab_size, columns.start, &hints);
     let spans = editor
         .syntax
         .as_ref()
@@ -98,21 +106,20 @@ pub(crate) fn shape_row(
 }
 
 /// x of the primary cursor from the text start, for scrolling to it: exact
-/// for normal lines, from the column for long lines.
-pub(crate) fn head_x(
-    buffer: &Buffer,
-    head: usize,
-    tab_size: usize,
-    metrics: &Metrics,
-    window: &Window,
-) -> f32 {
+/// for normal lines (inlay hints included), from the column for long
+/// lines.
+pub(crate) fn head_x(editor: &Editor, metrics: &Metrics, window: &Window) -> f32 {
+    let buffer = editor.document.buffer();
+    let head = editor.document.selections().primary().head;
     let row = buffer.offset_to_point(head).row;
     let line = buffer.line(row);
     if line.len_chars() > LONG_LINE_CHARS {
         return to_f32(buffer.char_column(head)) * metrics.char_width;
     }
-    let start = buffer.line_range(row).start;
-    let display = DisplayLine::new(&line.to_string(), tab_size, 0);
+    let range = buffer.line_range(row);
+    let start = range.start;
+    let hints = editor.inlay_hints_in(range);
+    let display = DisplayLine::with_inserts(&line.to_string(), editor.settings.tab_size, 0, &hints);
     let run = TextRun {
         len: display.text.len(),
         font: metrics.font.clone(),

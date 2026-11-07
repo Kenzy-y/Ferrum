@@ -94,6 +94,11 @@ at most the columns that fit, with one highlight query for all of them.
 The bars are cached until the text, the highlights, the shown lines or
 the colors change. It is hidden when the editor is too narrow.
 
+**Enter** (`Document::newline_paired`) keeps the line's indentation,
+adds a level after an opening bracket of the language's pairs, and
+between an opening bracket and its closing one puts the closing one on a
+third line with the cursor on the indented middle line.
+
 **Benchmarks** (`cargo bench -p editor --bench frame`; a whole prepaint and
 paint on GPUI's test platform, which does not rasterize glyphs; release,
 Windows 11, i5-13600K, 2026-11-05; budget for a frame: 8 ms):
@@ -116,7 +121,7 @@ the theme's `[syntax]` tokens, the input method underline on top).
 `outline()`, `symbols_at_cursor()` and `go_to()` serve the Outline section
 and the breadcrumbs. `language_id()` selects `[lang.<id>]` settings.
 
-**Language support** (`language/`, ADR 0006, 0007). The owner connects a
+**Language support** (`language/`, ADR 0006, 0007, 0009). The owner connects a
 `language::LanguageService` with `Editor::set_language_service`; only
 editors of files can be connected. The document is opened at version 1,
 every edit goes out with `change_document` (from `follow_text_changes`),
@@ -152,6 +157,28 @@ dropping the state closes it. Only what `capabilities()` allows is offered.
   The final stop (`$0`, or the end of the snippet) ends the session, as do
   Escape and an edit away from the current stop. Stops follow edits like
   diagnostics.
+- `inlay_hints.rs` (`[editor] inlay_hints`, ADR 0009): after a frame,
+  `request_decorations` asks for the hints of the visible rows and one
+  screen above and below, `[editor] language_decorations_delay_ms` after
+  the view settles, unless they are current. Hints are byte offsets that
+  follow edits as anchors of the text after them (`patch::map_anchor`);
+  one inside replaced text goes. `render/display.rs` puts them into the
+  drawn line as inserted text (`DisplayLine::with_inserts`): a cursor at
+  a hint stays before it, a click inside it lands on its offset, and
+  `render/runs.rs` colors them `syntax.inlay_hint`. Lines windowed for
+  length show none. A failed request is not repeated until an edit, a
+  refresh (`InlayHintsChanged`) or the server becoming ready.
+- `code_lens.rs` (`[editor] code_lens`): the lenses of the whole document
+  after the same delay; the visible ones are resolved once each. Only
+  lenses with a title and `LensAction::ShowLocations` are drawn
+  (`render/lenses.rs`): at the end of the line, `code_lens.gap` after the
+  code, `font_size.xs`, `syntax.inlay_hint`, with a pointing hand. A
+  click (`LayoutSnapshot::lens_at`) goes to the one place, or opens
+  `locations.rs`: a list of places styled like the completion list (Up,
+  Down, Enter, Escape, click). `go_to_location` moves the cursor in this
+  file or emits `EditorEvent::OpenLocation`.
+- `popup_keys.rs`: `Editor::popup_takes`, the keys open popups take
+  before the text.
 - `markdown.rs` reduces hover and documentation Markdown to paragraphs,
   code blocks and rules. Code in the editor's language is highlighted with
   its grammar in the background. `popup.rs` styles popups like the palette
@@ -159,6 +186,7 @@ dropping the state closes it. Only what `capabilities()` allows is offered.
   view (`deferred` + `anchored`, which also switches sides at the window
   edge).
 
-**Extending.** Decorations (inlay hints) become further
-layers in `render/scene.rs`. New commands: a row in `actions::COMMANDS`, a title
+**Extending.** Decorations drawn over the text become further layers in
+`render/scene.rs`; text drawn inside a line goes through
+`DisplayLine::with_inserts`. New commands: a row in `actions::COMMANDS`, a title
 in every locale, a binding in the default keymaps.

@@ -3,6 +3,7 @@
 pub(crate) mod activity_bar;
 pub(crate) mod bottom_panel;
 pub(crate) mod editor_area;
+pub(crate) mod resize;
 pub(crate) mod sidebar;
 pub(crate) mod status_bar;
 pub(crate) mod title_bar;

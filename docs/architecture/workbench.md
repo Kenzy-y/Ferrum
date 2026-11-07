@@ -31,8 +31,40 @@ Cancel), `workbench.nextTab` / `previousTab` cycle. Editor commands
 (`editor.*`) go to the active editor. The editor area draws the tab strip
 (`ui::EditorTab` with the file icon, the unsaved dot and a close button),
 the breadcrumbs of the file from the workspace root, and the tab. The
-status bar shows the active editor's position, indentation, encoding and
-line endings (LF, CRLF or Mixed).
+status bar shows the project's errors and warnings and the active
+editor's position, indentation, encoding and line endings (LF, CRLF or
+Mixed).
+
+**Problems** (`contrib/problems`, ADR 0009). `ProblemsView` lists every
+file with problems and its problems below it (a virtualized list; Up,
+Down, Enter, click) and emits `OpenProblem` with the file and position.
+The application feeds it with `set_diagnostics(source, path, ...)` per
+language service and resets it with `set_root` for a new folder; hints
+are not listed. `Workbench::set_problems` shows it in the bottom panel,
+the tab count is the number of problems, the status bar shows errors
+and warnings (a check `icon.success` while there are no errors).
+
+**Terminal** (`contrib/terminal`, ADR 0010, see `terminal.md`).
+`Workbench::set_terminal` shows the application's `TerminalPanel` in the
+Terminal tab. The header has the shell picker, new, split and kill
+buttons; maximize (`workbench.toggleMaximizedPanel`) and close are shown
+for every tab. `workbench.toggleTerminal` (Ctrl `) shows and focuses the
+terminal, starting one if none runs, or hides the panel when the
+terminal has the focus. Killing the last terminal hides the panel. A
+shortcut hint card sits in the corner as in `editor.svg`.
+
+**Resizing** (`parts/resize.rs`). The gaps between the sidebar and the
+editor area and between the editor area and the bottom panel are drag
+handles; sizes are clamped by `sidebar.min_width`, `editor.min_width`,
+`bottom_panel.min_height` and `editor.min_height`, a double click resets.
+A finished drag emits `PanelSizesChanged(project::WindowState)`; the
+application saves it and restores it with `set_panel_sizes`.
+
+**New file** (`contrib/explorer/new_file.rs`). `explorer.newFile` (the
+Explorer's plus button, the File menu) asks for a name in the path dialog
+and creates the file in the selected folder, the folder of the selected
+file or the root; names may contain folders but cannot leave the folder.
+The tree selects the file and emits `OpenFile`.
 
 **Closing** (`closing.rs`). `workbench.closeWindow`, the platform's
 close (`Workbench::should_close`, registered by the application), our

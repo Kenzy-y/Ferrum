@@ -54,9 +54,19 @@ pub(crate) struct LayoutSnapshot {
     pub(crate) scrollbar: Option<Scrollbar>,
     /// The minimap, if it is shown.
     pub(crate) minimap: Option<Minimap>,
+    /// Window bounds of the code lenses drawn, with their index.
+    pub(crate) lenses: Vec<(Bounds<Pixels>, usize)>,
 }
 
 impl LayoutSnapshot {
+    /// The code lens under window position `position`.
+    pub(crate) fn lens_at(&self, position: Point<Pixels>) -> Option<usize> {
+        self.lenses
+            .iter()
+            .find(|(bounds, _)| bounds.contains(&position))
+            .map(|(_, index)| *index)
+    }
+
     /// Rows moved by Page Up / Page Down.
     pub(crate) fn page_rows(&self) -> usize {
         to_index((self.text_height / self.line_height).floor()).saturating_sub(1)

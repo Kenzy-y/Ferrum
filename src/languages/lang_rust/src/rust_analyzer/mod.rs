@@ -22,6 +22,12 @@ const NAME: &str = "rust-analyzer";
 /// The section rust-analyzer asks `workspace/configuration` for.
 const SECTION: &str = "rust-analyzer";
 
+/// The code lens command the IDE carries out (see `lens_action`).
+/// rust-analyzer gives lenses only the commands a client lists in
+/// `experimental.commands`; run and debug wait for the terminal and the
+/// debugger.
+const SHOW_REFERENCES: &str = "rust-analyzer.showReferences";
+
 /// Starts rust-analyzer for a workspace.
 pub(crate) struct RustAnalyzerFactory;
 
@@ -89,6 +95,10 @@ impl LspAdapter for RustAnalyzerAdapter {
         if let Value::Object(experimental) = experimental {
             // `experimental/serverStatus`: whether the project loaded.
             experimental.insert("serverStatusNotification".to_owned(), Value::Bool(true));
+            experimental.insert(
+                "commands".to_owned(),
+                json!({ "commands": [SHOW_REFERENCES] }),
+            );
         }
     }
 
@@ -104,7 +114,7 @@ impl LspAdapter for RustAnalyzerAdapter {
         // `rust-analyzer.showReferences`: [uri, position, locations] for
         // the implementations and references lenses. Run and debug lenses
         // wait for the terminal and the debugger (ROADMAP).
-        if command.command != "rust-analyzer.showReferences" {
+        if command.command != SHOW_REFERENCES {
             return LensAction::Unsupported;
         }
         let Some(found) = command

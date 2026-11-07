@@ -122,6 +122,27 @@ token_struct! {
         editor_popup_gap = "editor.popup_gap",
         /// Smallest width of a title bar menu.
         menu_width = "menu.width",
+        /// Gap between the end of a line's code and its code lenses.
+        code_lens_gap = "code_lens.gap",
+        /// Rows of the terminal.
+        terminal_line_height = "terminal.line_height",
+        /// Bottom panel tabs to the first terminal row.
+        terminal_top = "terminal.top",
+        /// Width of the terminal tabs list when a split shows several
+        /// terminals.
+        terminal_tabs_width = "terminal_tabs.width",
+        /// The shortcut hints in the corner of the terminal.
+        terminal_hint_height = "terminal_hint.height",
+        /// Gap between the buttons of the bottom panel header.
+        panel_actions_gap = "panel_actions.gap",
+        /// Narrowest the sidebar can be dragged to.
+        sidebar_min_width = "sidebar.min_width",
+        /// Lowest the bottom panel can be dragged to.
+        bottom_panel_min_height = "bottom_panel.min_height",
+        /// Width the editor area keeps when the sidebar grows.
+        editor_min_width = "editor.min_width",
+        /// Height the editor area keeps when the bottom panel grows.
+        editor_min_height = "editor.min_height",
     }
 }
 

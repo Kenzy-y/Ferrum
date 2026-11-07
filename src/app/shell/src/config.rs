@@ -7,7 +7,10 @@ use std::time::Duration;
 use commands::{CommandRegistry, KeyboardSettings, Keymap, KeymapDiagnostic, Platform};
 use fs::Fs;
 use i18n::{I18n, LocalizationSettings};
-use project::{FilesSettings, ProjectSettings, RECENT_PROJECTS_FILE_NAME, RecentProjects};
+use project::{
+    FilesSettings, ProjectSettings, RECENT_PROJECTS_FILE_NAME, RecentProjects,
+    WINDOW_STATE_FILE_NAME, WindowState,
+};
 use settings::paths::ConfigPaths;
 use settings::{LayerKind, SettingsLayer, SettingsRegistry, SettingsStore, load};
 
@@ -20,6 +23,9 @@ pub(crate) struct LoadedConfig {
     pub(crate) paths: Option<ConfigPaths>,
     pub(crate) recent: RecentProjects,
     pub(crate) recent_file: Option<PathBuf>,
+    /// Panel sizes of the last run, and where they are saved.
+    pub(crate) window_state: WindowState,
+    pub(crate) window_state_file: Option<PathBuf>,
 }
 
 /// Registers the settings of every crate linked into the application.
@@ -31,6 +37,7 @@ pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
         .register::<FilesSettings>()?
         .register::<editor::EditorSettings>()?
         .register::<syntax::SyntaxSettings>()?
+        .register::<terminal::TerminalSettings>()?
         .register::<lsp::LspSettings>()?
         .register::<lang_rust::RustAnalyzerSettings>()?
         .build())
@@ -62,6 +69,13 @@ pub(crate) async fn load(
         Some(file) => RecentProjects::load(fs.as_ref(), file, limit).await,
         None => RecentProjects::new(limit),
     };
+    let window_state_file = paths
+        .as_ref()
+        .map(|paths| paths.data_dir().join(WINDOW_STATE_FILE_NAME));
+    let window_state = match &window_state_file {
+        Some(file) => WindowState::load(fs.as_ref(), file).await,
+        None => WindowState::default(),
+    };
     LoadedConfig {
         settings,
         keymap,
@@ -70,6 +84,8 @@ pub(crate) async fn load(
         paths,
         recent,
         recent_file,
+        window_state,
+        window_state_file,
     }
 }
 

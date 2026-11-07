@@ -204,6 +204,22 @@ command-workbench-close-window = Закрыть окно
 command-workbench-focus-outline = Перейти к структуре
 command-workbench-toggle-outline = Свернуть или развернуть структуру
 command-workbench-open-menu-bar = Открыть меню
+command-workbench-toggle-terminal = Показать или скрыть терминал
+command-workbench-toggle-maximized-panel = Развернуть или восстановить панель
+command-terminal-new = Новый терминал
+command-terminal-split = Разделить терминал
+command-terminal-kill = Закрыть терминал
+command-terminal-select-shell = Выбрать оболочку
+command-terminal-focus-next = Следующий терминал
+command-terminal-focus-previous = Предыдущий терминал
+command-terminal-copy = Копировать из терминала
+command-terminal-paste = Вставить в терминал
+command-terminal-select-all = Выделить всё в терминале
+command-terminal-clear = Очистить терминал
+command-terminal-scroll-page-up = Прокрутить терминал на страницу вверх
+command-terminal-scroll-page-down = Прокрутить терминал на страницу вниз
+command-terminal-scroll-to-top = Прокрутить терминал в начало
+command-terminal-scroll-to-bottom = Прокрутить терминал в конец
 editor-close-unsaved = Сохранить изменения в { $name }?
 editor-close-unsaved-detail = Если не сохранить, изменения пропадут.
 editor-untitled = Без имени
@@ -236,3 +252,28 @@ status-encoding = UTF-8
 status-line-ending-lf = LF
 status-line-ending-crlf = CRLF
 status-line-ending-mixed = Смешанные
+status-errors = { $count ->
+    [one] { $count } ошибка
+    [few] { $count } ошибки
+   *[many] { $count } ошибок
+}
+status-warnings = { $count ->
+    [one] { $count } предупреждение
+    [few] { $count } предупреждения
+   *[many] { $count } предупреждений
+}
+problems-empty = В рабочей области проблем не найдено.
+problems-position = Стр { $line }, стлб { $column }
+terminal-no-shell = На этом компьютере не найдено ни одной оболочки.
+terminal-finding-shells = Поиск оболочек…
+terminal-start-failed = Не удалось запустить { $shell }: { $error }
+terminal-hint-toggle = Показать терминал
+terminal-hint-palette = Палитра команд
+command-explorer-new-file = Новый файл
+new-file-title = Новый файл
+new-file-placeholder = Имя файла, например src/main.rs
+new-file-create = Создать
+new-file-error-empty = Введите имя файла.
+new-file-error-outside = Файл должен быть внутри выбранной папки.
+new-file-error-exists = Файл или папка с таким именем уже есть.
+new-file-error-failed = Не удалось создать файл: { $error }

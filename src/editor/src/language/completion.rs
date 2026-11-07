@@ -74,6 +74,26 @@ impl CompletionMenu {
         self.first_row = 0;
     }
 
+    /// The selected item and its index in `items`.
+    pub(crate) fn selected_item(&self) -> Option<(usize, &Completion)> {
+        let (index, _) = self.matches.get(self.selected)?;
+        Some((*index, &self.items[*index]))
+    }
+
+    /// Whether item `index` is still the one labelled `label`.
+    pub(crate) fn has_item(&self, index: usize, label: &str) -> bool {
+        self.items
+            .get(index)
+            .is_some_and(|item| item.label == label)
+    }
+
+    /// Puts the resolved form of item `index` in its place.
+    pub(crate) fn replace_item(&mut self, index: usize, item: Completion) {
+        if let Some(slot) = self.items.get_mut(index) {
+            *slot = item;
+        }
+    }
+
     fn step(&mut self, step: Step, rows: usize) {
         let count = self.matches.len();
         if count == 0 {
@@ -147,6 +167,7 @@ impl Editor {
                     language.completion = (!menu.matches.is_empty()).then_some(menu);
                     cx.notify();
                 }
+                editor.sync_completion_docs(cx);
             });
         }));
     }
@@ -193,6 +214,7 @@ impl Editor {
                             self.close_completion(cx);
                         }
                     }
+                    self.sync_completion_docs(cx);
                     cx.notify();
                     return;
                 }
@@ -222,6 +244,7 @@ impl Editor {
     pub(crate) fn close_completion(&mut self, cx: &mut Context<Self>) {
         if let Some(language) = &mut self.language {
             language.completion_task = None;
+            language.completion_docs = super::completion_docs::CompletionDocs::default();
             if language.completion.take().is_some() {
                 cx.notify();
             }
@@ -239,6 +262,7 @@ impl Editor {
             menu.step(step, theme_rows);
             cx.notify();
         }
+        self.sync_completion_docs(cx);
     }
 
     /// Inserts the selected item (or item `pick`) and closes the list.
@@ -383,7 +407,18 @@ impl Editor {
                 editor.step_completion(step, rows, cx);
             }))
             .children(list);
-        Some(popup::place(body, anchor, side))
+        // The documentation of the selected item, beside the list.
+        let docs = self.render_completion_docs(theme);
+        let row = div()
+            .flex()
+            .gap(px(sizes.editor_popup_gap))
+            .child(body)
+            .children(docs);
+        let row = match side {
+            popup::Side::Below => row.items_start(),
+            popup::Side::Above => row.items_end(),
+        };
+        Some(popup::place(row, anchor, side))
     }
 }
 

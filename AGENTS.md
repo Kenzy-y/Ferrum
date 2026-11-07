@@ -307,6 +307,7 @@ There are no intermediaries between the owner and the agent. Stages and tasks li
 
 - Small, coherent changes. Do not rewrite working code without a reason.
 - Before finishing: `cargo fmt`, `cargo clippy` with no warnings, `cargo test` for the affected crates.
+- If a running Ferrum instance locks the binary and blocks a build, close it (stop the `ferrum` process) and build again; say so in the reply to the owner. No need to ask first.
 - When a stage is split into parts, push at the end of each part once the local checks pass (fmt, clippy, tests, `cargo deny`), then check CI.
 - No `TODO` without an entry in `ROADMAP.md`.
 - When you create a new subsystem, briefly describe it in `docs/architecture/<subsystem>.md` (purpose, key types, how to extend).

@@ -106,6 +106,7 @@ mono = "JetBrains Mono"
 "icon" = "#7C828C"
 "icon.active" = "#E0B19B"             # selected activity bar item
 "icon.strong" = "#9BA2AD"             # window controls
+"icon.success" = "#9DADA1"            # status bar checks: no errors, server ready
 "icon.file.rust" = "#D49C7D"
 "icon.symbol.function" = "#D6B482"     # outline and breadcrumbs (#D7B887 merged)
 "marker.dirty" = "#D6AC7E"            # unsaved-changes dot on a tab
@@ -127,6 +128,28 @@ lifetime = "#B6AED3"
 comment = "#6E877D"
 doc_comment = "#667B73"
 inlay_hint = "#56616F"
+
+[terminal]
+# Default text, the cursor and green come from editor.svg; the other ANSI
+# colors are not in the mockups and follow the syntax colors (ADR 0010).
+foreground = "#B0B7C2"
+cursor = "#B3B7BF"
+black = "#3A3F47"
+red = "#D28B7F"                       # diagnostic.error
+green = "#A8BC9C"                     # syntax.string
+yellow = "#D8C295"                    # syntax.function
+blue = "#8FB4C9"                      # syntax.number
+magenta = "#B6AED3"                   # syntax.type
+cyan = "#8EC1BD"
+white = "#A1A5AD"                     # text.secondary
+bright_black = "#777E88"              # text.muted
+bright_red = "#E3A397"
+bright_green = "#BCD0B0"
+bright_yellow = "#E6D3A8"
+bright_blue = "#A8C7DA"
+bright_magenta = "#C9C2E3"
+bright_cyan = "#A5D3CF"
+bright_white = "#ECEDEE"              # text.primary
 
 [opacity]
 disabled = 0.45

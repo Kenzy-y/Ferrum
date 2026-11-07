@@ -19,6 +19,12 @@ pub(crate) fn path_to_uri(path: &Path) -> Option<Uri> {
     }
     let text = path.to_str()?;
     let slashed = if cfg!(windows) {
+        // A verbatim path on a drive (`\\?\C:\a`) names the same file as
+        // `C:\a`; servers do not understand the verbatim form.
+        let text = match text.strip_prefix(r"\\?\") {
+            Some(rest) if rest.as_bytes().get(1) == Some(&b':') => rest,
+            _ => text,
+        };
         // `C:\a` → `/C:/a`.
         format!("/{}", text.replace('\\', "/"))
     } else {
@@ -118,5 +124,14 @@ mod tests {
         assert_eq!(uri_to_path(&uri).unwrap(), expected);
         assert!(uri_to_path(&Uri::from_str("untitled:1").unwrap()).is_none());
         assert!(path_to_uri(Path::new("relative.rs")).is_none());
+    }
+
+    /// Regression: `\\?\C:\...` became `file:////%3F/C:/...`, which
+    /// servers do not map to any file.
+    #[cfg(windows)]
+    #[test]
+    fn verbatim_paths_become_plain_uris() {
+        let uri = path_to_uri(Path::new(r"\\?\C:\Projects\a.rs")).unwrap();
+        assert_eq!(uri.as_str(), "file:///C:/Projects/a.rs");
     }
 }

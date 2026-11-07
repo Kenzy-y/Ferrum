@@ -241,6 +241,9 @@ impl Editor {
     pub fn set_settings(&mut self, settings: EditorSettings, cx: &mut Context<Self>) {
         if settings != self.settings {
             self.settings = settings;
+            if let Some(language) = &mut self.language {
+                language.invalidate_decorations();
+            }
             self.restart_blink(cx);
             cx.notify();
         }
@@ -303,7 +306,10 @@ impl Editor {
             Action::DeleteRight => self.change(cx, Document::delete_forward),
             Action::DeleteWordLeft => self.change(cx, Document::delete_word_backward),
             Action::DeleteWordRight => self.change(cx, Document::delete_word_forward),
-            Action::Newline => self.change(cx, Document::newline),
+            Action::Newline => {
+                let pairs = self.auto_pairs.clone();
+                self.change(cx, |document| document.newline_paired(&pairs, indent));
+            }
             Action::Indent => self.change(cx, |document| document.indent(indent)),
             Action::Outdent => self.change(cx, |document| document.outdent(indent)),
             Action::Save => self.save(cx).detach(),
@@ -321,47 +327,6 @@ impl Editor {
                 self.go_to_definition(head, cx);
             }
         }
-    }
-
-    /// Keys an open popup handles instead of the text: the completion list
-    /// takes moves up and down, Enter, Tab and Escape; Escape also closes
-    /// the hover. Returns `true` if the action was taken.
-    fn popup_takes(&mut self, action: Action, cx: &mut Context<Self>) -> bool {
-        use crate::actions::Motion;
-        use crate::language::completion::{Step, completion_rows};
-        if self.completion_open() {
-            let rows = completion_rows(&theme::shared_theme(cx));
-            let step = match action {
-                Action::Move(Motion::Up, false) => Some(Step::Up),
-                Action::Move(Motion::Down, false) => Some(Step::Down),
-                Action::Move(Motion::PageUp, false) => Some(Step::PageUp),
-                Action::Move(Motion::PageDown, false) => Some(Step::PageDown),
-                _ => None,
-            };
-            if let Some(step) = step {
-                self.step_completion(step, rows, cx);
-                return true;
-            }
-            match action {
-                Action::Newline | Action::Indent => {
-                    self.accept_completion(None, cx);
-                    return true;
-                }
-                Action::SingleCursor => {
-                    self.close_completion(cx);
-                    return true;
-                }
-                Action::Move(..) => self.close_completion(cx),
-                _ => {}
-            }
-        }
-        match action {
-            Action::Indent => return self.snippet_step(true, cx),
-            Action::Outdent => return self.snippet_step(false, cx),
-            Action::SingleCursor if self.end_snippet() => return true,
-            _ => {}
-        }
-        action == Action::SingleCursor && self.dismiss_hover(cx)
     }
 
     fn paste(&mut self, cx: &mut Context<Self>) {

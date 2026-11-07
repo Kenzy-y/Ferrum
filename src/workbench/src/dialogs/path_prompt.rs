@@ -1,6 +1,7 @@
-//! A small dialog to type a folder path: the fallback when the system
-//! folder picker is unavailable (Linux without xdg-desktop-portal), and the
-//! place to report why a folder could not be opened.
+//! A small dialog to type a path: a folder to open (the fallback when the
+//! system folder picker is unavailable, as on Linux without
+//! xdg-desktop-portal) or the name of a new file. It also reports why the
+//! last attempt failed.
 
 use gpui::{
     AppContext as _, Context, Entity, EventEmitter, InteractiveElement as _, IntoElement,
@@ -25,6 +26,8 @@ pub(crate) struct PathPromptTexts {
     pub(crate) placeholder: SharedString,
     pub(crate) open: SharedString,
     pub(crate) cancel: SharedString,
+    /// Icon of the field.
+    pub(crate) icon: IconName,
 }
 
 pub(crate) struct PathPrompt {
@@ -135,7 +138,7 @@ impl Render for PathPrompt {
                     .color(colors.text_primary),
             )
             .children(error)
-            .child(TextField::new(&self.input).icon(IconName::Folder))
+            .child(TextField::new(&self.input).icon(self.texts.icon))
             .child(buttons)
     }
 }

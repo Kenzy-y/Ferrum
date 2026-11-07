@@ -80,7 +80,9 @@ impl Fs for RealFs {
 
     fn canonicalize<'a>(&'a self, path: &'a Path) -> BoxFuture<'a, Result<PathBuf, FsError>> {
         Box::pin(async move {
-            std::fs::canonicalize(path).map_err(|error| FsError::from_io(path, error))
+            std::fs::canonicalize(path)
+                .map(without_verbatim_prefix)
+                .map_err(|error| FsError::from_io(path, error))
         })
     }
 
@@ -200,6 +202,38 @@ fn write_atomic(path: &Path, contents: &[u8]) -> Result<(), FsError> {
     Ok(())
 }
 
+/// `MAX_PATH` (260) less the terminating null: longer paths need the
+/// verbatim form.
+const MAX_PLAIN_PATH: usize = 259;
+
+/// Windows canonical paths are verbatim (`\\?\C:\a`); the rest of the IDE,
+/// language servers and users expect `C:\a`, and `\\server\share` for
+/// network paths. Paths that need the verbatim form (too long, or not on a
+/// drive or share) keep it.
+fn without_verbatim_prefix(path: PathBuf) -> PathBuf {
+    let Some(text) = path.to_str() else {
+        return path;
+    };
+    let plain = if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else if let Some(rest) = text.strip_prefix(r"\\?\") {
+        let on_drive = matches!(
+            rest.as_bytes(),
+            [drive, b':', b'\\', ..] if drive.is_ascii_alphabetic()
+        ) || matches!(rest.as_bytes(), [drive, b':'] if drive.is_ascii_alphabetic());
+        if !on_drive {
+            return path;
+        }
+        rest.to_owned()
+    } else {
+        return path;
+    };
+    if plain.len() > MAX_PLAIN_PATH {
+        return path;
+    }
+    PathBuf::from(plain)
+}
+
 #[cfg(test)]
 mod tests {
     use std::future::Future;
@@ -214,6 +248,37 @@ mod tests {
             Poll::Ready(value) => value,
             Poll::Pending => panic!("RealFs futures complete on first poll"),
         }
+    }
+
+    #[test]
+    fn canonical_paths_lose_the_verbatim_prefix() {
+        let plain = |text: &str| without_verbatim_prefix(PathBuf::from(text));
+        assert_eq!(plain(r"\\?\C:\Projects\a"), PathBuf::from(r"C:\Projects\a"));
+        assert_eq!(
+            plain(r"\\?\UNC\host\share\a"),
+            PathBuf::from(r"\\host\share\a")
+        );
+        assert_eq!(plain(r"\\?\Volume{1}\a"), PathBuf::from(r"\\?\Volume{1}\a"));
+        assert_eq!(plain("/home/a"), PathBuf::from("/home/a"));
+        let long = format!(r"\\?\C:\{}", "a".repeat(300));
+        assert_eq!(
+            plain(&long),
+            PathBuf::from(&long),
+            "too long for the plain form"
+        );
+    }
+
+    /// Regression: a verbatim root made language servers ignore every
+    /// document (`file:////%3F/C:/...`).
+    #[cfg(windows)]
+    #[test]
+    fn real_canonical_paths_are_plain() {
+        let canonical = poll_ready(RealFs.canonicalize(&std::env::temp_dir())).unwrap();
+        assert!(
+            !canonical.to_string_lossy().starts_with(r"\\?\"),
+            "{}",
+            canonical.display()
+        );
     }
 
     struct TempDir(PathBuf);

@@ -301,6 +301,21 @@ mod tests {
     }
 
     #[gpui::test]
+    fn enter_between_braces_opens_a_middle_line(cx: &mut TestAppContext) {
+        let window = open("fn f() {}", &Arc::new(FakeService::default()), cx);
+        window
+            .update(cx, |editor, _, cx| {
+                editor.edit_document(cx, |document| {
+                    document.set_primary_selection(text::Selection::cursor(8));
+                });
+            })
+            .unwrap();
+        command(window, "editor.newline", cx);
+        assert_eq!(text_of(window, cx), "fn f() {\n    \n}");
+        assert_eq!(cursor(window, cx), (13, 13));
+    }
+
+    #[gpui::test]
     fn a_macro_snippet_puts_the_cursor_inside(cx: &mut TestAppContext) {
         let service = Arc::new(FakeService {
             completions: vec![snippet("println!", "println!($0)")],

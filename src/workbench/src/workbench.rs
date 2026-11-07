@@ -5,6 +5,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use commands::{CommandId, CommandRegistry, Keymap, Platform, RegistryError};
+use gpui::prelude::FluentBuilder as _;
 use gpui::{
     App, Context, Entity, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
     Render, SharedString, Styled as _, WeakEntity, Window, WindowDecorations, WindowOptions, div,
@@ -18,10 +19,13 @@ use crate::command_ids;
 use crate::contrib::explorer::file_icons::FileIcons;
 use crate::contrib::explorer::file_tree_view::FileTreeView;
 use crate::contrib::outline;
+use crate::contrib::problems::ProblemsView;
 use crate::contrib::quick_open::{QuickOpenContext, QuickOpenMode};
+use crate::contrib::terminal::TerminalPanel;
 use crate::layout::{PanelKind, SidebarView};
 use crate::overlays::{OpenMenu, OpenPathPrompt, OpenQuickOpen};
 use crate::parts::editor_area::{closing, tabs};
+use crate::parts::resize::{ResizeDrag, ResizeEdge};
 use crate::parts::{activity_bar, bottom_panel, editor_area, sidebar, status_bar, title_bar};
 
 /// Runs a command by id. Provided by the application, which knows every
@@ -71,11 +75,24 @@ pub struct Workbench {
     pub(crate) sidebar_visible: bool,
     pub(crate) panel_visible: bool,
     pub(crate) panel: PanelKind,
+    /// The bottom panel takes the editor area's place.
+    pub(crate) panel_maximized: bool,
+    /// Panel sizes the user dragged to.
+    pub(crate) sizes: project::WindowState,
+    /// A panel border being dragged.
+    pub(crate) resize: Option<ResizeDrag>,
     pub(crate) tabs: Vec<tabs::Tab>,
     pub(crate) active_tab: Option<usize>,
     pub(crate) file_icons: Arc<FileIcons>,
     pub(crate) outline: outline::OutlineSection,
     pub(crate) closing: closing::Closing,
+    /// The Problems panel, once the application provides it.
+    pub(crate) problems: Option<Entity<ProblemsView>>,
+    problems_watch: Option<gpui::Subscription>,
+    /// The terminals, once the application provides them.
+    pub(crate) terminal: Option<Entity<TerminalPanel>>,
+    pub(crate) terminal_watch: Option<gpui::Subscription>,
+    pub(crate) terminal_observe: Option<gpui::Subscription>,
 }
 
 impl Workbench {
@@ -110,11 +127,19 @@ impl Workbench {
             sidebar_visible: true,
             panel_visible: false,
             panel: PanelKind::Terminal,
+            panel_maximized: false,
+            sizes: project::WindowState::default(),
+            resize: None,
             tabs: Vec::new(),
             active_tab: None,
             file_icons: Arc::new(FileIcons::new()),
             outline: outline::OutlineSection::default(),
             closing: closing::Closing::default(),
+            problems: None,
+            problems_watch: None,
+            terminal: None,
+            terminal_watch: None,
+            terminal_observe: None,
         }
     }
 
@@ -153,8 +178,15 @@ impl Workbench {
             this.toggle_sidebar();
             cx.notify();
         })?;
-        handlers.register_entity(command_ids::TOGGLE_PANEL, this, |this, _, cx| {
+        handlers.register_entity(command_ids::TOGGLE_PANEL, this, |this, window, cx| {
             this.toggle_panel();
+            let empty_terminal = this
+                .terminal
+                .as_ref()
+                .is_some_and(|panel| panel.read(cx).is_empty());
+            if this.panel_visible && this.panel == PanelKind::Terminal && empty_terminal {
+                this.show_terminal(window, cx);
+            }
             cx.notify();
         })?;
         for view in SidebarView::ALL {
@@ -180,6 +212,8 @@ impl Workbench {
         handlers.register_entity(command_ids::TOGGLE_OUTLINE, this, |this, _, cx| {
             this.toggle_outline(cx);
         })?;
+        Self::register_terminal_handlers(handlers, this)?;
+        handlers.register_entity(command_ids::NEW_FILE, this, Self::new_file)?;
         handlers.register_entity(editor::SAVE, this, |this, window, cx| {
             if let Some(editor) = this.active_editor() {
                 this.save_editor(&editor, window, cx).detach();
@@ -201,9 +235,28 @@ impl Workbench {
         cx.notify();
     }
 
+    /// Shows `problems` in the Problems panel; its counts go to the
+    /// status bar and the panel tab.
+    pub fn set_problems(&mut self, problems: Entity<ProblemsView>, cx: &mut Context<Self>) {
+        self.problems_watch = Some(cx.observe(&problems, |_, _, cx| cx.notify()));
+        self.problems = Some(problems);
+        cx.notify();
+    }
+
+    /// Errors and warnings of the project, if problems are shown.
+    pub(crate) fn problem_counts(&self, cx: &App) -> Option<(usize, usize)> {
+        self.problems
+            .as_ref()
+            .map(|problems| problems.read(cx).counts())
+    }
+
     /// Switches the interface language.
     pub fn set_i18n(&mut self, i18n: Arc<I18n>, cx: &mut Context<Self>) {
         self.quick_open_context.i18n = i18n.clone();
+        if let Some(panel) = &self.terminal {
+            let i18n = i18n.clone();
+            panel.update(cx, |panel, cx| panel.set_i18n(i18n, cx));
+        }
         self.i18n = i18n;
         self.sync_outline(cx);
         cx.notify();
@@ -244,21 +297,20 @@ impl Workbench {
             .map(|binding| binding.keys.label(Platform::current()).into())
     }
 
-    pub(crate) fn text(&self, id: &str) -> SharedString {
-        self.i18n.text(id).into()
+    /// Localized title of `command`, for tooltips.
+    pub(crate) fn command_title(&self, command: &str) -> SharedString {
+        CommandId::new(command)
+            .ok()
+            .and_then(|id| self.quick_open_context.registry.get(&id))
+            .map_or_else(
+                || SharedString::from(command.to_owned()),
+                |descriptor| self.i18n.text(&descriptor.title_message).into(),
+            )
     }
-}
 
-impl Render for Workbench {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        self.ensure_outline(window, cx);
-        let title_bar = title_bar::render(self, window, cx);
-        let activity_bar = activity_bar::render(self, cx);
-        let sidebar = self.sidebar_visible.then(|| sidebar::render(self, cx));
-        let editor = editor_area::render(self, cx);
-        let panel = self.panel_visible.then(|| bottom_panel::render(self, cx));
-        let status_bar = status_bar::render(self, cx);
-        let dialog = self.path_prompt.as_ref().map(|open| {
+    /// The open path dialog over a backdrop that closes it.
+    fn path_prompt_dialog(&self, cx: &mut Context<Self>) -> Option<impl IntoElement + use<>> {
+        self.path_prompt.as_ref().map(|open| {
             let size = &cx.theme().metrics.size;
             div()
                 .id("path-prompt-backdrop")
@@ -273,7 +325,37 @@ impl Render for Workbench {
                     cx.listener(|this, _, window, cx| this.close_path_prompt(window, cx)),
                 )
                 .child(open.view.clone())
-        });
+        })
+    }
+
+    pub(crate) fn text(&self, id: &str) -> SharedString {
+        self.i18n.text(id).into()
+    }
+}
+
+impl Render for Workbench {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.ensure_outline(window, cx);
+        let title_bar = title_bar::render(self, window, cx);
+        let activity_bar = activity_bar::render(self, cx);
+        let sidebar_width = self.sidebar_width(window, cx);
+        let sidebar = self
+            .sidebar_visible
+            .then(|| sidebar::render(self, sidebar_width, cx));
+        let sidebar_handle = self
+            .sidebar_visible
+            .then(|| Self::resize_handle(ResizeEdge::Sidebar, cx));
+        let maximized = self.panel_visible && self.panel_maximized;
+        let editor = (!maximized).then(|| editor_area::render(self, cx));
+        let panel_height = self.panel_height(window, cx);
+        let panel = self
+            .panel_visible
+            .then(|| bottom_panel::render(self, panel_height, cx));
+        let panel_handle = (self.panel_visible && !maximized)
+            .then(|| Self::resize_handle(ResizeEdge::BottomPanel, cx));
+        let picker_backdrop = self.shell_picker_backdrop(cx);
+        let status_bar = status_bar::render(self, cx);
+        let dialog = self.path_prompt_dialog(cx);
         // Catches clicks outside quick open; the box itself is drawn by the
         // title bar over its search field.
         let backdrop = self.quick_open.is_some().then(|| {
@@ -313,8 +395,8 @@ impl Render for Workbench {
             .flex_col()
             .flex_1()
             .min_w_0()
-            .gap(px(gap))
-            .child(editor)
+            .children(editor)
+            .children(panel_handle)
             .children(panel);
         let body = div()
             .flex()
@@ -328,8 +410,8 @@ impl Render for Workbench {
                     .flex()
                     .flex_1()
                     .min_w_0()
-                    .gap(px(gap))
                     .children(sidebar)
+                    .children(sidebar_handle)
                     .child(main),
             );
         div()
@@ -338,11 +420,18 @@ impl Render for Workbench {
             .flex_col()
             .size_full()
             .bg(theme.colors.bg_app)
+            .when_some(self.resize_cursor(), gpui::Styled::cursor)
+            .on_mouse_move(cx.listener(Self::drag_resize))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, _, _, cx| this.end_resize(cx)),
+            )
             .child(title_bar)
             .child(body)
             .child(status_bar)
             .children(backdrop)
             .children(menu_backdrop)
+            .children(picker_backdrop)
             .children(dialog)
     }
 }

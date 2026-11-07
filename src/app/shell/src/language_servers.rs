@@ -24,16 +24,18 @@ impl LanguageServers {
     }
 
     /// The service for files of `language` in the folder `root`, started
-    /// on first use. `None` if the language has no server.
+    /// on first use, and whether this call started it. `None` if the
+    /// language has no server.
     pub(crate) fn service(
         &mut self,
         language: &LanguageEntry,
         root: &Path,
         settings: &SettingsStore,
-    ) -> Option<Arc<dyn LanguageService>> {
+    ) -> Option<(Arc<dyn LanguageService>, bool)> {
         let factory = language.server()?;
         let key = (factory.id().to_owned(), root.to_path_buf());
         let process = self.process.clone();
+        let started = !self.services.contains_key(&key);
         let service = self.services.entry(key).or_insert_with(|| {
             tracing::info!(server = factory.id(), root = %root.display(), "starting language server");
             factory.start(ServerContext {
@@ -42,7 +44,7 @@ impl LanguageServers {
                 settings,
             })
         });
-        Some(service.clone())
+        Some((service.clone(), started))
     }
 
     /// Stops the services of `root` (all with `None`) and forgets them, so

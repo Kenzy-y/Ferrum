@@ -31,6 +31,8 @@ pub(crate) const MENUS: &[Menu] = &[
     Menu {
         label: "menu-file",
         items: &[
+            Command(command_ids::NEW_FILE),
+            Separator,
             Command(command_ids::OPEN_FOLDER),
             Command(command_ids::OPEN_FOLDER_BY_PATH),
             Separator,

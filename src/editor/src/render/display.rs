@@ -1,15 +1,31 @@
-//! A line as it is drawn: tabs expanded to spaces, with offset mapping in
-//! both directions. Pure logic, tested without a window.
+//! A line as it is drawn: tabs expanded to spaces and inlay hints put in,
+//! with offset mapping in both directions. Pure logic, tested without a
+//! window.
 
-/// A tab in the source text and where its spaces are in the drawn text.
+use std::ops::Range;
+
+/// Drawn text that differs from the source: a tab's spaces, or inserted
+/// text that is not in the source (an inlay hint).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Tab {
-    /// Byte offset of the tab in the source.
+struct Piece {
+    /// Byte offset in the source: of the tab, or where the text goes.
     source: usize,
-    /// Byte offset of its first space in the drawn text.
+    /// Source bytes it stands for: 1 for a tab, 0 for inserted text.
+    source_len: usize,
+    /// Byte offset of its first drawn byte.
     display: usize,
-    /// Number of spaces drawn for it.
-    width: usize,
+    /// Drawn bytes.
+    display_len: usize,
+}
+
+impl Piece {
+    fn display_end(self) -> usize {
+        self.display + self.display_len
+    }
+
+    fn inserted(self) -> bool {
+        self.source_len == 0
+    }
 }
 
 /// The drawn text of (part of) a line.
@@ -17,31 +33,61 @@ struct Tab {
 pub(crate) struct DisplayLine {
     /// The text to shape: no tabs, no line breaks.
     pub(crate) text: String,
-    tabs: Vec<Tab>,
+    /// Sorted by source offset; inserted text before a tab at the same
+    /// offset.
+    pieces: Vec<Piece>,
 }
 
 impl DisplayLine {
     /// Expands tabs in `source` to the next multiple of `tab_size`;
     /// `start_column` is the visual column where `source` starts (non-zero
     /// for a window into a long line).
+    #[cfg(test)]
     pub(crate) fn new(source: &str, tab_size: usize, start_column: usize) -> Self {
+        Self::with_inserts(source, tab_size, start_column, &[])
+    }
+
+    /// Like [`Self::new`], with `inserts` (source offset, text; sorted by
+    /// offset) drawn before the character at their offset. Inserted text
+    /// does not move tab stops.
+    pub(crate) fn with_inserts(
+        source: &str,
+        tab_size: usize,
+        start_column: usize,
+        inserts: &[(usize, &str)],
+    ) -> Self {
         let tab_size = tab_size.max(1);
-        if !source.contains('\t') {
+        if inserts.is_empty() && !source.contains('\t') {
             return Self {
                 text: source.to_owned(),
-                tabs: Vec::new(),
+                pieces: Vec::new(),
             };
         }
-        let mut text = String::with_capacity(source.len() + 8);
-        let mut tabs = Vec::new();
+        let extra: usize = inserts.iter().map(|(_, text)| text.len()).sum();
+        let mut text = String::with_capacity(source.len() + extra + 8);
+        let mut pieces = Vec::new();
         let mut column = start_column;
+        let mut next_insert = inserts.iter().peekable();
+        let mut insert_before = |offset: usize, text: &mut String, pieces: &mut Vec<Piece>| {
+            while let Some((_, inserted)) = next_insert.next_if(|(at, _)| *at <= offset) {
+                pieces.push(Piece {
+                    source: offset,
+                    source_len: 0,
+                    display: text.len(),
+                    display_len: inserted.len(),
+                });
+                text.push_str(inserted);
+            }
+        };
         for (offset, character) in source.char_indices() {
+            insert_before(offset, &mut text, &mut pieces);
             if character == '\t' {
                 let width = tab_size - column % tab_size;
-                tabs.push(Tab {
+                pieces.push(Piece {
                     source: offset,
+                    source_len: 1,
                     display: text.len(),
-                    width,
+                    display_len: width,
                 });
                 text.extend(std::iter::repeat_n(' ', width));
                 column += width;
@@ -50,36 +96,47 @@ impl DisplayLine {
                 column += 1;
             }
         }
-        Self { text, tabs }
+        insert_before(usize::MAX, &mut text, &mut pieces);
+        Self { text, pieces }
     }
 
-    /// The drawn offset of source offset `source`.
+    /// The drawn offset of source offset `source`. At an insert, the
+    /// offset before the inserted text, so a cursor there stays next to
+    /// the source character it follows.
     pub(crate) fn to_display(&self, source: usize) -> usize {
-        let before = self.tabs.partition_point(|tab| tab.source < source);
-        match before.checked_sub(1).map(|index| self.tabs[index]) {
-            // Every byte after a tab is shifted by the tab's extra spaces.
-            Some(tab) => tab.display + tab.width + (source - tab.source - 1),
+        let before = self.pieces.partition_point(|piece| piece.source < source);
+        match before.checked_sub(1).map(|index| self.pieces[index]) {
+            // Every byte after a piece is shifted by its drawn bytes.
+            Some(piece) => piece.display_end() + (source - piece.source - piece.source_len),
             None => source,
         }
     }
 
     /// The source offset drawn at `display`; inside a tab's spaces, the
-    /// nearer edge of the tab.
+    /// nearer edge of the tab; inside inserted text, its offset.
     pub(crate) fn to_source(&self, display: usize) -> usize {
-        let before = self.tabs.partition_point(|tab| tab.display < display);
-        let Some(tab) = before.checked_sub(1).map(|index| self.tabs[index]) else {
+        let before = self.pieces.partition_point(|piece| piece.display < display);
+        let Some(piece) = before.checked_sub(1).map(|index| self.pieces[index]) else {
             return display;
         };
-        let end = tab.display + tab.width;
+        let end = piece.display_end();
         if display < end {
-            if (display - tab.display) * 2 < tab.width {
-                tab.source
+            if piece.inserted() || (display - piece.display) * 2 < piece.display_len {
+                piece.source
             } else {
-                tab.source + 1
+                piece.source + 1
             }
         } else {
-            tab.source + 1 + (display - end)
+            piece.source + piece.source_len + (display - end)
         }
+    }
+
+    /// Drawn ranges of the inserted text, in order.
+    pub(crate) fn inserted(&self) -> impl Iterator<Item = Range<usize>> + '_ {
+        self.pieces
+            .iter()
+            .filter(|piece| piece.inserted())
+            .map(|piece| piece.display..piece.display_end())
     }
 }
 
@@ -112,5 +169,43 @@ mod tests {
     fn a_window_starts_at_its_column() {
         let line = DisplayLine::new("\tx", 4, 2);
         assert_eq!(line.text, "  x");
+    }
+
+    #[test]
+    fn inserted_text_shifts_what_follows() {
+        let line = DisplayLine::with_inserts("let x = 1;", 4, 0, &[(5, ": i32")]);
+        assert_eq!(line.text, "let x: i32 = 1;");
+        assert_eq!(
+            line.to_display(5),
+            5,
+            "a cursor at the hint stays before it"
+        );
+        assert_eq!(
+            line.to_display(6),
+            11,
+            "after the space that follows the hint"
+        );
+        assert_eq!(line.to_source(7), 5, "inside the hint");
+        assert_eq!(line.to_source(11), 6);
+        assert_eq!(line.inserted().collect::<Vec<_>>(), vec![5..10]);
+    }
+
+    #[test]
+    fn inserts_and_tabs_together() {
+        let line = DisplayLine::with_inserts("\tf(a)", 4, 0, &[(3, "x: "), (5, ";")]);
+        assert_eq!(line.text, "    f(x: a);");
+        assert_eq!(line.to_display(1), 4, "after the tab");
+        assert_eq!(line.to_display(4), 10, "the closing parenthesis");
+        assert_eq!(line.to_source(9), 3, "the argument after the insert");
+        assert_eq!(line.to_source(11), 5, "inside the insert at the end");
+        assert_eq!(line.inserted().collect::<Vec<_>>(), vec![6..9, 11..12]);
+    }
+
+    #[test]
+    fn an_insert_before_a_tab_comes_first() {
+        let line = DisplayLine::with_inserts("a\tb", 4, 0, &[(1, ":")]);
+        assert_eq!(line.text, "a:   b", "the tab keeps its stop");
+        assert_eq!(line.to_display(1), 1);
+        assert_eq!(line.to_display(2), 5);
     }
 }

@@ -16,6 +16,8 @@
 # Layout.
 "mod-b" = "workbench.toggleSidebar"
 "mod-j" = "workbench.togglePanel"
+"ctrl-`" = "workbench.toggleTerminal"
+"ctrl-shift-`" = "terminal.new"
 "mod-shift-e" = "workbench.showExplorer"
 "mod-shift-f" = "workbench.showSearch"
 "ctrl-shift-g" = "workbench.showSourceControl"
@@ -78,3 +80,17 @@
 "ctrl-space" = "editor.triggerSuggest"
 "cmd-k cmd-i" = "editor.showHover"
 "f12" = "editor.goToDefinition"
+
+# A focused terminal. Ctrl and Alt with a character go to the shell even
+# when bound above (Ctrl C, Ctrl R); see the terminal architecture notes.
+[terminal]
+"cmd-c" = "terminal.copy"
+"cmd-v" = "terminal.paste"
+"cmd-a" = "terminal.selectAll"
+"cmd-\\" = "terminal.split"
+"shift-pageup" = "terminal.scrollPageUp"
+"shift-pagedown" = "terminal.scrollPageDown"
+"cmd-home" = "terminal.scrollToTop"
+"cmd-end" = "terminal.scrollToBottom"
+"cmd-shift-]" = "terminal.focusNext"
+"cmd-shift-[" = "terminal.focusPrevious"

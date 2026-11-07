@@ -1,0 +1,22 @@
+[package]
+name = "terminal"
+description = "Terminal sessions: shells in a pseudo-terminal, emulation, key encoding, shell profiles."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+alacritty_terminal.workspace = true
+fs.workspace = true
+futures.workspace = true
+process.workspace = true
+schemars.workspace = true
+serde.workspace = true
+settings.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

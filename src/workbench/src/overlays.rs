@@ -2,6 +2,7 @@
 //! remembers the focus to restore when it closes.
 
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use gpui::{AppContext as _, Context, Entity, FocusHandle, SharedString, Subscription, Window};
 
@@ -10,6 +11,11 @@ use crate::contrib::menu_bar::MENUS;
 use crate::contrib::menu_bar::view::{MenuEvent, MenuView};
 use crate::contrib::quick_open::{Dismiss, QuickOpen, QuickOpenMode};
 use crate::dialogs::path_prompt::{PathPrompt, PathPromptEvent, PathPromptTexts};
+use ui::IconName;
+
+/// What confirming the path dialog does with the typed text.
+pub(crate) type PromptConfirm =
+    Rc<dyn Fn(&mut Workbench, String, &mut Window, &mut Context<Workbench>)>;
 
 impl Workbench {
     /// Asks for a folder path, prefilled with `initial`, explaining `error`
@@ -22,27 +28,48 @@ impl Workbench {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let previous_focus = match self.path_prompt.take() {
-            Some(open) => open.previous_focus,
-            None => window.focused(cx),
-        };
         let texts = PathPromptTexts {
             title: self.text("path-prompt-title"),
             placeholder: self.text("path-prompt-placeholder"),
             open: self.text("path-prompt-open"),
             cancel: self.text("path-prompt-cancel"),
+            icon: IconName::Folder,
+        };
+        self.open_prompt(
+            texts,
+            initial,
+            error,
+            Rc::new(|this, path, window, cx| {
+                let path = PathBuf::from(path);
+                this.close_path_prompt(window, cx);
+                let open_path = this.open_path.clone();
+                window.defer(cx, move |window, cx| open_path(path, window, cx));
+            }),
+            window,
+            cx,
+        );
+    }
+
+    /// Shows the path dialog; `confirm` gets the typed text.
+    pub(crate) fn open_prompt(
+        &mut self,
+        texts: PathPromptTexts,
+        initial: Option<String>,
+        error: Option<SharedString>,
+        confirm: PromptConfirm,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let previous_focus = match self.path_prompt.take() {
+            Some(open) => open.previous_focus,
+            None => window.focused(cx),
         };
         let view = cx.new(|cx| PathPrompt::new(texts, initial, error, window, cx));
         let subscription = cx.subscribe_in(
             &view,
             window,
-            |this, _, event: &PathPromptEvent, window, cx| match event {
-                PathPromptEvent::Confirm(path) => {
-                    let path = PathBuf::from(path);
-                    this.close_path_prompt(window, cx);
-                    let open_path = this.open_path.clone();
-                    window.defer(cx, move |window, cx| open_path(path, window, cx));
-                }
+            move |this, _, event: &PathPromptEvent, window, cx| match event {
+                PathPromptEvent::Confirm(text) => confirm(this, text.clone(), window, cx),
                 PathPromptEvent::Dismiss => this.close_path_prompt(window, cx),
             },
         );
@@ -277,8 +304,8 @@ mod tests {
         cx.simulate_keystrokes("right");
 
         // File, as registered here (the shell's own rows are left out):
-        // Save, Close Tab, Close Window. Down picks the second.
-        cx.simulate_keystrokes("down enter");
+        // New File, Save, Close Tab, Close Window. Down picks the third.
+        cx.simulate_keystrokes("down down enter");
         cx.run_until_parked();
         assert_eq!(
             open_index(&workbench, &mut cx),

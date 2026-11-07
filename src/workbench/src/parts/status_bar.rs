@@ -1,12 +1,15 @@
 //! The status bar. Items will be contributed by services (git, language
-//! servers); for now it shows the folder and the active editor's position
-//! and text format.
+//! servers); for now it shows the folder, the problems of the project and
+//! the active editor's position and text format.
 
 use editor::EditorStatus;
-use gpui::{Context, IntoElement, ParentElement as _, SharedString, Styled as _, div, px};
+use gpui::{
+    AnyElement, App, Context, IntoElement, ParentElement as _, SharedString, Styled as _, div, px,
+};
 use i18n::FluentArgs;
 use text::{LineEnding, LineEndings};
 use theme::ActiveTheme as _;
+use ui::{Icon, IconName};
 
 use crate::Workbench;
 
@@ -18,6 +21,9 @@ pub(crate) fn render(
         .active_editor()
         .map(|editor| editor.read(cx).status());
     let items = status.map(|status| editor_items(workbench, &status));
+    let problems = workbench
+        .problem_counts(cx)
+        .map(|counts| problem_items(workbench, counts, cx));
     let theme = cx.theme();
     let metrics = &theme.metrics;
     let mut right = div().flex().items_center().gap(px(metrics.space.xxl));
@@ -34,11 +40,54 @@ pub(crate) fn render(
         .gap(px(metrics.space.xl))
         .text_size(px(metrics.font_size.sm))
         .text_color(theme.colors.text_secondary)
-        .child(div().truncate().child(match &workbench.workspace {
-            Some(workspace) => workspace.path.clone(),
-            None => workbench.text("status-no-folder"),
-        }))
+        .child(
+            div()
+                .flex()
+                .min_w_0()
+                .items_center()
+                .gap(px(metrics.space.xl))
+                .child(div().truncate().child(match &workbench.workspace {
+                    Some(workspace) => workspace.path.clone(),
+                    None => workbench.text("status-no-folder"),
+                }))
+                .children(problems.into_iter().flatten()),
+        )
         .child(right)
+}
+
+/// Errors and warnings of the project, as in `editor.svg`: a check before
+/// the errors while there are none, otherwise the error icon; the warning
+/// icon only while there are warnings.
+fn problem_items(
+    workbench: &Workbench,
+    (errors, warnings): (usize, usize),
+    cx: &App,
+) -> Vec<AnyElement> {
+    let theme = cx.theme();
+    let colors = &theme.colors;
+    let item = |icon: Option<Icon>, id: &str, count: usize| {
+        let mut args = FluentArgs::new();
+        args.set("count", count);
+        div()
+            .flex()
+            .flex_none()
+            .items_center()
+            .gap(px(theme.metrics.space.sm))
+            .children(icon)
+            .child(workbench.i18n.text_with(id, &args))
+            .into_any_element()
+    };
+    let error_icon = if errors == 0 {
+        Icon::new(IconName::Check).color(colors.icon_success)
+    } else {
+        Icon::new(IconName::CircleX).color(colors.diagnostic_error)
+    };
+    let warning_icon =
+        (warnings > 0).then(|| Icon::new(IconName::TriangleAlert).color(colors.diagnostic_warning));
+    vec![
+        item(Some(error_icon), "status-errors", errors),
+        item(warning_icon, "status-warnings", warnings),
+    ]
 }
 
 /// Position, indentation, encoding and line endings.

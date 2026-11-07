@@ -8,8 +8,8 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::pipe::{PipeCloser, pipe};
 use crate::{
-    BoxFuture, ChildProcess, CommandSpec, Output, ProcessControl, ProcessError, ProcessRunner,
-    SpawnOptions,
+    BoxFuture, ChildProcess, CommandSpec, Output, ProcessControl, ProcessError, ProcessRunner, Pty,
+    PtySize, SpawnOptions,
 };
 
 /// A scripted long-running program: called on its own thread with the
@@ -142,6 +142,22 @@ impl ProcessRunner for FakeProcessRunner {
             stdout: Box::new(stdout_reader),
             stderr: Box::new(stderr_reader),
             control,
+        })
+    }
+
+    /// Records the command; fake runners have no pseudo-terminals, so the
+    /// terminal is tested by feeding its emulator directly.
+    fn spawn_pty(&self, command: &CommandSpec, _size: PtySize) -> Result<Pty, ProcessError> {
+        self.runs
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(command.clone());
+        Err(ProcessError::Io {
+            program: command.program().to_owned(),
+            source: std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "fake runners have no pseudo-terminals",
+            ),
         })
     }
 }

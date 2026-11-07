@@ -12,6 +12,7 @@ members = [
     "src/platform/project",
     "src/platform/language",
     "src/platform/lsp",
+    "src/platform/terminal",
     "src/languages/lang_rust",
     "src/languages/lang_toml",
     "src/design/theme",
@@ -49,6 +50,7 @@ project = { path = "src/platform/project" }
 settings = { path = "src/platform/settings" }
 syntax = { path = "src/platform/syntax" }
 text = { path = "src/base/text" }
+terminal = { path = "src/platform/terminal" }
 shell = { path = "src/app/shell" }
 
 # UI. GPUI comes from the `gpui-pre` snapshot that gpui-component is built
@@ -64,6 +66,7 @@ gpui_platform = { package = "gpui-pre-platform", version = "=0.3.11", features =
 gpui-component = { version = "=0.9.0", default-features = false }
 
 # Core.
+alacritty_terminal = { version = "0.26.0", default-features = false }
 anyhow = "1.0.104"
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 directories = "6.0.0"

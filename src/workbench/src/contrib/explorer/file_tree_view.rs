@@ -20,6 +20,7 @@ use theme::ActiveTheme as _;
 use ui::{Icon, IconName, ListRow};
 
 use crate::contrib::explorer::file_icons::{self, FileIcons};
+use crate::contrib::explorer::new_file::{self, NewFileError};
 
 /// Emitted when `.ferrum/settings.toml` of the workspace changed on disk.
 pub struct WorkspaceSettingsChanged;
@@ -42,6 +43,8 @@ pub struct FileTreeView {
     tree: FileTree,
     rows: Rc<Vec<TreeRow>>,
     selected: Option<PathBuf>,
+    /// A just created file to select once its folder is listed again.
+    reveal: Option<PathBuf>,
     /// Latest load request per folder; older results are dropped.
     generations: HashMap<PathBuf, u64>,
     next_generation: u64,
@@ -90,6 +93,7 @@ impl FileTreeView {
             tree,
             rows: Rc::new(Vec::new()),
             selected: None,
+            reveal: None,
             generations: HashMap::new(),
             next_generation: 0,
             icons,
@@ -232,12 +236,68 @@ impl FileTreeView {
     fn refresh_rows(&mut self, cx: &mut Context<Self>) {
         self.rows = Rc::new(self.tree.rows());
         self.sync_ignored_watches(cx);
+        if let Some(reveal) = &self.reveal
+            && let Some(index) = self.rows.iter().position(|row| &row.entry.path == reveal)
+        {
+            self.reveal = None;
+            self.select_index(index, cx);
+        }
         if let Some(selected) = &self.selected
             && !self.rows.iter().any(|row| &row.entry.path == selected)
         {
             self.selected = None;
         }
         cx.notify();
+    }
+
+    /// The folder a new file goes to: the selected folder, the folder of
+    /// the selected file, or the root.
+    pub(crate) fn target_folder(&self) -> PathBuf {
+        let Some(row) = self.selected_index().and_then(|index| self.rows.get(index)) else {
+            return self.tree.root().to_path_buf();
+        };
+        if row.expanded.is_some() {
+            row.entry.path.clone()
+        } else {
+            row.entry
+                .path
+                .parent()
+                .map_or_else(|| self.tree.root().to_path_buf(), Path::to_path_buf)
+        }
+    }
+
+    /// Creates the empty file `name` in [`Self::target_folder`] in the
+    /// background, then selects it and emits [`OpenFile`] for it.
+    pub(crate) fn create_file(
+        &mut self,
+        name: &str,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<PathBuf, NewFileError>> {
+        let folder = self.target_folder();
+        let path = match new_file::target_path(&folder, name) {
+            Ok(path) => path,
+            Err(error) => return Task::ready(Err(error)),
+        };
+        let collapsed = self
+            .rows
+            .iter()
+            .any(|row| row.entry.path == folder && row.expanded == Some(false));
+        if collapsed {
+            self.toggle(&folder, cx);
+        }
+        let fs = self.fs.clone();
+        cx.spawn(async move |view, cx| {
+            let created = path.clone();
+            cx.background_executor()
+                .spawn(async move { new_file::create(fs.as_ref(), &created).await })
+                .await?;
+            let _ = view.update(cx, |view, cx| {
+                view.reveal = Some(path.clone());
+                view.load(folder, cx);
+                cx.emit(OpenFile(path.clone()));
+            });
+            Ok(path)
+        })
     }
 
     fn selected_index(&self) -> Option<usize> {

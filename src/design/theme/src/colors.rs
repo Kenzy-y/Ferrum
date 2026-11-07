@@ -121,6 +121,8 @@ token_struct! {
         icon_active = "icon.active",
         /// Window controls.
         icon_strong = "icon.strong",
+        /// Status bar checks: no errors, a ready server.
+        icon_success = "icon.success",
         icon_file_rust = "icon.file.rust",
         /// Function glyph in the Outline and the breadcrumbs (other symbol
         /// kinds use syntax colors).
@@ -151,5 +153,55 @@ token_struct! {
         comment = "comment",
         doc_comment = "doc_comment",
         inlay_hint = "inlay_hint",
+    }
+}
+
+token_struct! {
+    /// Colors of the integrated terminal. Its background is `bg.editor`,
+    /// its selection `bg.selection`.
+    TerminalTokens: Color {
+        /// Default text.
+        foreground = "foreground",
+        cursor = "cursor",
+        black = "black",
+        red = "red",
+        green = "green",
+        yellow = "yellow",
+        blue = "blue",
+        magenta = "magenta",
+        cyan = "cyan",
+        white = "white",
+        bright_black = "bright_black",
+        bright_red = "bright_red",
+        bright_green = "bright_green",
+        bright_yellow = "bright_yellow",
+        bright_blue = "bright_blue",
+        bright_magenta = "bright_magenta",
+        bright_cyan = "bright_cyan",
+        bright_white = "bright_white",
+    }
+}
+
+impl TerminalTokens {
+    /// The 16 ANSI colors in their standard order.
+    pub fn ansi(&self) -> [Color; 16] {
+        [
+            self.black,
+            self.red,
+            self.green,
+            self.yellow,
+            self.blue,
+            self.magenta,
+            self.cyan,
+            self.white,
+            self.bright_black,
+            self.bright_red,
+            self.bright_green,
+            self.bright_yellow,
+            self.bright_blue,
+            self.bright_magenta,
+            self.bright_cyan,
+            self.bright_white,
+        ]
     }
 }

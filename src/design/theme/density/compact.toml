@@ -81,6 +81,16 @@
 "completion.rows" = 10
 "editor.popup_gap" = 3
 "menu.width" = 240                  # not in the mockups (ADR 0008)
+"code_lens.gap" = 52                 # code end to a code lens, editor.svg line 19
+"terminal.line_height" = 20
+"terminal.top" = 14
+"terminal_tabs.width" = 160          # not in the mockups (ADR 0010)
+"terminal_hint.height" = 28
+"panel_actions.gap" = 4
+"sidebar.min_width" = 160           # not in the mockups: limits of dragging panel borders
+"bottom_panel.min_height" = 100
+"editor.min_width" = 280
+"editor.min_height" = 140
 
 [space]
 "xxs" = 2

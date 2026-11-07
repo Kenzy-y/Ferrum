@@ -5,7 +5,7 @@
 
 use gpui::Context;
 
-use crate::editor::{Editor, EditorEvent};
+use crate::editor::Editor;
 
 impl Editor {
     /// Goes to the definition of the symbol at `offset`.
@@ -25,17 +25,7 @@ impl Editor {
             let Some(location) = locations.into_iter().next() else {
                 return;
             };
-            let _ = editor.update(cx, |editor, cx| {
-                if editor.path() == Some(location.path.as_path()) {
-                    let offset = editor
-                        .document
-                        .buffer()
-                        .point_to_offset(location.range.start);
-                    editor.go_to(offset, cx);
-                } else {
-                    cx.emit(EditorEvent::OpenLocation(location));
-                }
-            });
+            let _ = editor.update(cx, |editor, cx| editor.go_to_location(location, cx));
         }));
     }
 }

@@ -4,8 +4,8 @@ use std::process::{Child, Stdio};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::{
-    BoxFuture, ChildProcess, CommandSpec, Output, ProcessControl, ProcessError, ProcessRunner,
-    SpawnOptions,
+    BoxFuture, ChildProcess, CommandSpec, Output, ProcessControl, ProcessError, ProcessRunner, Pty,
+    PtySize, SpawnOptions,
 };
 
 /// Windows: start console programs without flashing a console window.
@@ -76,6 +76,10 @@ impl ProcessRunner for RealProcessRunner {
             stderr: Box::new(stderr),
             control: Arc::new(RealControl(Mutex::new(child))),
         })
+    }
+
+    fn spawn_pty(&self, command: &CommandSpec, size: PtySize) -> Result<Pty, ProcessError> {
+        crate::pty::spawn(command, size)
     }
 }
 

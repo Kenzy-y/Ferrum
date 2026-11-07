@@ -15,6 +15,7 @@ use crate::decorations::minimap::{Minimap, MinimapView};
 use crate::decorations::scrollbar::{Scrollbar, ScrollbarFrame};
 use crate::editor::Editor;
 use crate::render::layout::{LayoutSnapshot, ShapedRow};
+use crate::render::lenses::{LensLabel, lens_labels};
 use crate::render::marks::Mark;
 use crate::render::runs::RunStyle;
 use crate::render::scene::{Scene, near_rows};
@@ -63,6 +64,10 @@ pub(crate) struct Prepaint {
     minimap: Vec<PaintQuad>,
     /// Areas with the arrow cursor (scrollbar, minimap).
     arrow_areas: Vec<Hitbox>,
+    /// Code lenses at the ends of lines.
+    lenses: Vec<LensLabel>,
+    /// Areas with the pointing hand (code lenses).
+    link_areas: Vec<Hitbox>,
     /// Text origins of the visible rows (same order as the snapshot rows).
     origins: Vec<gpui::Point<Pixels>>,
     snapshot: Option<LayoutSnapshot>,
@@ -134,6 +139,11 @@ impl Element for EditorElement {
                 .map(|area| window.insert_hitbox(area, HitboxBehavior::Normal))
                 .collect();
         }
+        prepaint.link_areas = prepaint
+            .lenses
+            .iter()
+            .map(|lens| window.insert_hitbox(lens.bounds, HitboxBehavior::Normal))
+            .collect();
         prepaint
     }
 
@@ -175,6 +185,16 @@ impl Element for EditorElement {
                         );
                     }
                 }
+                for lens in prepaint.lenses.drain(..) {
+                    let _ = lens.shaped.paint(
+                        lens.origin,
+                        line_height,
+                        TextAlign::Left,
+                        None,
+                        window,
+                        cx,
+                    );
+                }
                 for mark in prepaint.marks.drain(..) {
                     mark.paint(window);
                 }
@@ -203,10 +223,19 @@ impl Element for EditorElement {
         for area in &prepaint.arrow_areas {
             window.set_cursor_style(CursorStyle::Arrow, area);
         }
+        for area in &prepaint.link_areas {
+            window.set_cursor_style(CursorStyle::PointingHand, area);
+        }
         if let Some(snapshot) = snapshot {
-            self.editor.update(cx, |editor, _| {
+            let visible = snapshot.rows.first().map_or(0..0, |first| {
+                first.row..snapshot.rows.last().map_or(first.row, |last| last.row) + 1
+            });
+            self.editor.update(cx, |editor, cx| {
                 editor.scroll_x = snapshot.scroll_x;
                 editor.layout = Some(Rc::new(snapshot));
+                // Asks for what the service shows in these rows, once the
+                // view settles (nothing when it is current).
+                editor.request_decorations(&visible, cx);
             });
         }
     }
@@ -291,6 +320,7 @@ impl Frame {
             font: &metrics.font,
             plain: Hsla::from(theme.syntax.plain),
             colors: &colors,
+            hint: Hsla::from(theme.syntax.inlay_hint),
         };
         rows.map(|row| {
             shape_row(
@@ -358,7 +388,7 @@ impl Frame {
             let row = buffer.offset_to_point(head).row;
             editor.scroll_y =
                 follow_row(editor.scroll_y, self.text_height, metrics.line_height, row);
-            let x = head_x(buffer, head, editor.settings.tab_size, metrics, window);
+            let x = head_x(editor, metrics, window);
             let margin = metrics.char_width * AUTOSCROLL_MARGIN_COLUMNS;
             editor.scroll_x = follow_x(editor.scroll_x, self.text_width, x, margin);
         }
@@ -385,7 +415,7 @@ impl Frame {
         let max_scroll_x = (widest + metrics.char_width * 2.0 - self.text_width).max(0.0);
         let scroll_x = editor.scroll_x.clamp(0.0, max_scroll_x);
         let (scrollbar, minimap) = self.scroll_parts(editor, theme, metrics);
-        let snapshot = LayoutSnapshot {
+        let mut snapshot = LayoutSnapshot {
             scroll_x,
             max_scroll_x,
             text_left: left + self.text_x - scroll_x,
@@ -396,7 +426,13 @@ impl Frame {
             rows: shaped,
             scrollbar,
             minimap,
+            lenses: Vec::new(),
         };
+        let lenses = lens_labels(editor, &snapshot, theme, metrics, window);
+        snapshot.lenses = lenses
+            .iter()
+            .map(|lens| (lens.bounds, lens.index))
+            .collect();
         let selections: Vec<text::Selection> =
             editor.document.selections().iter().copied().collect();
         let scene = Scene {
@@ -448,6 +484,8 @@ impl Frame {
                 .map(|minimap| editor.minimap_quads(&minimap, theme))
                 .unwrap_or_default(),
             arrow_areas: Vec::new(),
+            lenses,
+            link_areas: Vec::new(),
             origins,
             snapshot: Some(snapshot),
         }

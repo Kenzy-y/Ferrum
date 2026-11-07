@@ -204,6 +204,22 @@ command-workbench-close-window = Close window
 command-workbench-focus-outline = Focus outline
 command-workbench-toggle-outline = Toggle outline
 command-workbench-open-menu-bar = Open Menu Bar
+command-workbench-toggle-terminal = Toggle terminal
+command-workbench-toggle-maximized-panel = Maximize or restore panel
+command-terminal-new = New terminal
+command-terminal-split = Split terminal
+command-terminal-kill = Kill terminal
+command-terminal-select-shell = Select shell
+command-terminal-focus-next = Next terminal
+command-terminal-focus-previous = Previous terminal
+command-terminal-copy = Copy from terminal
+command-terminal-paste = Paste into terminal
+command-terminal-select-all = Select all in terminal
+command-terminal-clear = Clear terminal
+command-terminal-scroll-page-up = Scroll terminal page up
+command-terminal-scroll-page-down = Scroll terminal page down
+command-terminal-scroll-to-top = Scroll terminal to top
+command-terminal-scroll-to-bottom = Scroll terminal to bottom
 editor-close-unsaved = Save changes to { $name }?
 editor-close-unsaved-detail = Your changes will be lost if you don't save them.
 editor-untitled = Untitled
@@ -236,3 +252,26 @@ status-encoding = UTF-8
 status-line-ending-lf = LF
 status-line-ending-crlf = CRLF
 status-line-ending-mixed = Mixed
+status-errors = { $count ->
+    [one] { $count } error
+   *[other] { $count } errors
+}
+status-warnings = { $count ->
+    [one] { $count } warning
+   *[other] { $count } warnings
+}
+problems-empty = No problems have been detected in the workspace.
+problems-position = Ln { $line }, Col { $column }
+terminal-no-shell = No shell was found on this computer.
+terminal-finding-shells = Looking for shells…
+terminal-start-failed = Cannot start { $shell }: { $error }
+terminal-hint-toggle = Toggle terminal
+terminal-hint-palette = Command palette
+command-explorer-new-file = New file
+new-file-title = New file
+new-file-placeholder = File name, for example src/main.rs
+new-file-create = Create
+new-file-error-empty = Type a file name.
+new-file-error-outside = The file must stay inside the selected folder.
+new-file-error-exists = A file or folder with this name already exists.
+new-file-error-failed = Cannot create the file: { $error }

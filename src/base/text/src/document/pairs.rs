@@ -7,7 +7,7 @@ use std::ops::Range;
 
 use crate::{EditKind, Selection};
 
-use super::{Document, Placement};
+use super::{Document, Indent, Placement};
 
 /// An opening and a closing character that go together.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -124,6 +124,60 @@ impl Document {
             EditKind::Deletion,
             None,
             &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.start)),
+        );
+    }
+
+    /// Enter at every cursor, keeping the indentation of the line. After
+    /// an opening bracket of `pairs` the new line gets one more level of
+    /// `indent`; between an opening bracket and its closing one the closing
+    /// one moves to a third line at the old indentation and the cursor
+    /// stays on the indented middle line.
+    pub fn newline_paired(&mut self, pairs: &[AutoPair], indent: Indent) {
+        let ending = self.buffer.line_ending().as_str();
+        let unit = if indent.spaces {
+            " ".repeat(indent.tab_size.max(1))
+        } else {
+            "\t".to_owned()
+        };
+        let replacements = self
+            .selections
+            .iter()
+            .map(|selection| {
+                let row = self.buffer.offset_to_point(selection.start()).row;
+                let indentation: String = self
+                    .buffer
+                    .line(row)
+                    .chars()
+                    .take_while(|character| *character == ' ' || *character == '\t')
+                    .collect();
+                let before = self.char_before(selection.start());
+                let after = self.char_after(selection.end());
+                let bracket = pairs
+                    .iter()
+                    .find(|pair| !pair.symmetric() && Some(pair.open) == before);
+                let text = match bracket {
+                    Some(pair) if Some(pair.close) == after => {
+                        format!("{ending}{indentation}{unit}{ending}{indentation}")
+                    }
+                    Some(_) => format!("{ending}{indentation}{unit}"),
+                    None => format!("{ending}{indentation}"),
+                };
+                (selection.range(), text)
+            })
+            .collect();
+        self.apply(
+            replacements,
+            EditKind::Other,
+            None,
+            &Placement::PerEdit(&|edit| {
+                // Three lines: the cursor ends the middle one.
+                let middle_end = (edit.new_text.matches('\n').count() == 2)
+                    .then(|| edit.new_text.rfind(ending))
+                    .flatten();
+                Selection::cursor(
+                    middle_end.map_or(edit.new_range.end, |end| edit.new_range.start + end),
+                )
+            }),
         );
     }
 
@@ -260,5 +314,52 @@ mod tests {
         document.insert_paired('{', DEFAULT_PAIRS);
         assert_eq!(text(&document), "a{}\nb{}\n");
         assert_eq!(heads(&document), vec![2, 6]);
+    }
+
+    #[test]
+    fn enter_between_brackets_opens_an_indented_middle_line() {
+        let mut document = document("    fn f() {}", 12);
+        document.newline_paired(DEFAULT_PAIRS, Indent::default());
+        assert_eq!(text(&document), "    fn f() {\n        \n    }");
+        assert_eq!(heads(&document), vec![21]);
+        document.undo();
+        assert_eq!(text(&document), "    fn f() {}");
+    }
+
+    #[test]
+    fn enter_between_brackets_keeps_crlf() {
+        let mut document = document("{}\r\n", 1);
+        document.newline_paired(DEFAULT_PAIRS, Indent::default());
+        assert_eq!(text(&document), "{\r\n    \r\n}\r\n");
+        assert_eq!(heads(&document), vec![7]);
+    }
+
+    #[test]
+    fn enter_after_an_opening_bracket_indents() {
+        let mut document = document("let v = [", 9);
+        document.newline_paired(DEFAULT_PAIRS, Indent::default());
+        assert_eq!(text(&document), "let v = [\n    ");
+    }
+
+    #[test]
+    fn enter_between_quotes_is_a_plain_newline() {
+        let mut document = document("  \"\"", 3);
+        document.newline_paired(DEFAULT_PAIRS, Indent::default());
+        assert_eq!(text(&document), "  \"\n  \"");
+    }
+
+    #[test]
+    fn enter_at_every_cursor_between_brackets() {
+        let mut document = document("{}\n{}", 1);
+        document.add_selection(Selection::cursor(4));
+        document.newline_paired(
+            DEFAULT_PAIRS,
+            Indent {
+                tab_size: 4,
+                spaces: false,
+            },
+        );
+        assert_eq!(text(&document), "{\n\t\n}\n{\n\t\n}");
+        assert_eq!(heads(&document), vec![3, 9]);
     }
 }

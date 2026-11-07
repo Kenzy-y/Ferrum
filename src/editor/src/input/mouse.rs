@@ -72,6 +72,12 @@ impl Editor {
             cx.stop_propagation();
             return;
         }
+        if let Some(index) = layout.lens_at(event.position) {
+            self.dismiss_popups(cx);
+            self.activate_code_lens(index, cx);
+            cx.stop_propagation();
+            return;
+        }
         let buffer = self.document.buffer();
         let offset = layout.offset_at(buffer, event.position);
         self.dismiss_popups(cx);

@@ -1,5 +1,6 @@
-//! Text runs of a shaped row: syntax colors, and the input method's
-//! composition underlined. Pure logic over display offsets.
+//! Text runs of a shaped row: syntax colors, inlay hints in their own
+//! color, and the input method's composition underlined. Pure logic over
+//! display offsets.
 
 use std::ops::Range;
 
@@ -15,6 +16,8 @@ pub(crate) struct RunStyle<'a> {
     pub(crate) plain: Hsla,
     /// Color of each highlight id; `None` draws it plain.
     pub(crate) colors: &'a [Option<Hsla>],
+    /// Color of inserted text (inlay hints).
+    pub(crate) hint: Hsla,
 }
 
 /// One piece of a row: its length in drawn bytes, color and underline.
@@ -88,7 +91,11 @@ fn pieces(
         .filter(|marked| marked.start < source.end && marked.end > source.start)
         .map(|marked| to_display(marked.start)..to_display(marked.end));
 
+    let inserted: Vec<Range<usize>> = display.inserted().collect();
     let mut cuts = vec![0, total];
+    for range in &inserted {
+        cuts.extend([range.start, range.end]);
+    }
     for (range, _) in &colored {
         cuts.extend([range.start, range.end]);
     }
@@ -100,8 +107,26 @@ fn pieces(
 
     let mut pieces: Vec<Piece> = Vec::new();
     let mut next_colored = 0;
+    let mut next_inserted = 0;
     for window in cuts.windows(2) {
         let (from, to) = (window[0], window[1]);
+        while next_inserted < inserted.len() && inserted[next_inserted].end <= from {
+            next_inserted += 1;
+        }
+        if inserted
+            .get(next_inserted)
+            .is_some_and(|range| range.start <= from)
+        {
+            push_piece(
+                &mut pieces,
+                Piece {
+                    len: to - from,
+                    color: style.hint,
+                    underline: false,
+                },
+            );
+            continue;
+        }
         while next_colored < colored.len() && colored[next_colored].0.end <= from {
             next_colored += 1;
         }
@@ -116,14 +141,19 @@ fn pieces(
                 .as_ref()
                 .is_some_and(|underline| underline.start <= from && to <= underline.end),
         };
-        match pieces.last_mut() {
-            Some(last) if last.color == piece.color && last.underline == piece.underline => {
-                last.len += piece.len;
-            }
-            _ => pieces.push(piece),
-        }
+        push_piece(&mut pieces, piece);
     }
     pieces
+}
+
+/// Appends `piece`, joining it to the last one when they look the same.
+fn push_piece(pieces: &mut Vec<Piece>, piece: Piece) {
+    match pieces.last_mut() {
+        Some(last) if last.color == piece.color && last.underline == piece.underline => {
+            last.len += piece.len;
+        }
+        _ => pieces.push(piece),
+    }
 }
 
 #[cfg(test)]
@@ -150,6 +180,7 @@ mod tests {
             font: &font,
             plain,
             colors: &colors,
+            hint: plain,
         };
         // Row "\tfn x" at buffer offset 10; `fn` is red, `x` has a
         // highlight without a color.
@@ -181,5 +212,28 @@ mod tests {
                 (1, false, false)
             ]
         );
+    }
+
+    #[test]
+    fn inlay_hints_take_their_color_inside_a_span() {
+        let red = hsla(0.0, 1.0, 0.5, 1.0);
+        let grey = hsla(0.0, 0.0, 0.4, 1.0);
+        let font = font("Mono");
+        let colors = [Some(red)];
+        let style = RunStyle {
+            font: &font,
+            plain: hsla(0.0, 0.0, 0.8, 1.0),
+            colors: &colors,
+            hint: grey,
+        };
+        // "ab" all red, with a hint ": T" between the letters.
+        let display = DisplayLine::with_inserts("ab", 4, 0, &[(1, ": T")]);
+        let spans = [span(0..2, 0)];
+        let colored = pieces(&display, 0..2, &spans, None, &style);
+        let shape: Vec<(usize, bool)> = colored
+            .iter()
+            .map(|piece| (piece.len, piece.color == grey))
+            .collect();
+        assert_eq!(shape, [(1, false), (3, true), (1, false)]);
     }
 }

@@ -29,7 +29,10 @@ pub use crate::contrib::explorer::file_icons::{FileIcon, FileIcons};
 pub use crate::contrib::explorer::file_tree_view::{
     FileTreeTexts, FileTreeView, OpenFile, WorkspaceSettingsChanged,
 };
+pub use crate::contrib::problems::{OpenProblem, ProblemsTexts, ProblemsView};
+pub use crate::contrib::terminal::{TerminalPanel, TerminalPanelEvent};
 pub use crate::layout::{PanelKind, SidebarView};
+pub use crate::parts::resize::PanelSizesChanged;
 pub use crate::workbench::{Dispatch, OpenPath, RecentEntry, Workbench, WorkspaceInfo};
 
 /// Registers the workbench commands.

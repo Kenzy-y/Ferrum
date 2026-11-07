@@ -8,6 +8,7 @@
 mod child;
 mod fake;
 mod pipe;
+mod pty;
 mod real;
 
 use std::ffi::{OsStr, OsString};
@@ -16,6 +17,7 @@ use std::pin::Pin;
 
 pub use child::{ChildProcess, ProcessControl, SpawnOptions};
 pub use fake::{FakeProcessRunner, FakeServer, ServerSide};
+pub use pty::{Pty, PtySize};
 pub use real::RealProcessRunner;
 
 /// A boxed, sendable future, used so that [`ProcessRunner`] stays
@@ -154,4 +156,14 @@ pub trait ProcessRunner: Send + Sync {
         command: &CommandSpec,
         options: SpawnOptions,
     ) -> Result<ChildProcess, ProcessError>;
+
+    /// Starts an interactive program (a shell) in a new pseudo-terminal of
+    /// `size`. Call it off the UI thread.
+    ///
+    /// # Errors
+    ///
+    /// [`ProcessError::NotFound`] if the program does not exist,
+    /// [`ProcessError::Io`] if it cannot be started or this runner has no
+    /// pseudo-terminals.
+    fn spawn_pty(&self, command: &CommandSpec, size: PtySize) -> Result<Pty, ProcessError>;
 }

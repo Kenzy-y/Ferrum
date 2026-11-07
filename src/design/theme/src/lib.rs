@@ -17,7 +17,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 
 pub use color::Color;
-pub use colors::{ColorTokens, SyntaxTokens};
+pub use colors::{ColorTokens, SyntaxTokens, TerminalTokens};
 pub use fonts::{EMBEDDED_FONTS, register_fonts};
 pub use metrics::{Density, Metrics};
 pub use metrics_tokens::{FontSizeTokens, RadiusTokens, SizeTokens, SpaceTokens};
@@ -87,6 +87,7 @@ struct ThemeFile {
     fonts: Fonts,
     colors: ColorTokens,
     syntax: SyntaxTokens,
+    terminal: TerminalTokens,
     opacity: OpacityTokens,
 }
 
@@ -103,6 +104,8 @@ pub struct Theme {
     pub colors: ColorTokens,
     /// Syntax colors.
     pub syntax: SyntaxTokens,
+    /// Terminal colors.
+    pub terminal: TerminalTokens,
     /// Opacities.
     pub opacity: OpacityTokens,
     /// Density.
@@ -129,6 +132,7 @@ impl Theme {
             fonts: file.fonts,
             colors: file.colors,
             syntax: file.syntax,
+            terminal: file.terminal,
             opacity: file.opacity,
             density,
             metrics: Metrics::load(density)?,
