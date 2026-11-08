@@ -1,12 +1,12 @@
 //! The sidebar panel: the title of the view and its contents (Explorer,
-//! Search, Run and Debug; Source Control and Extensions arrive in their
-//! stages and show only the title).
+//! Search, Run and Debug, Extensions; Source Control arrives in its stage
+//! and shows only the title).
 
 use gpui::{Context, IntoElement, ParentElement as _, Styled as _, px};
 use theme::ActiveTheme as _;
 use ui::{IconButton, IconName, Panel, PanelSurface, SectionHeader};
 
-use crate::contrib::{explorer, run_debug};
+use crate::contrib::{explorer, extensions, run_debug};
 use crate::{SidebarView, Workbench};
 
 /// Message id of the title of `view`.
@@ -46,6 +46,7 @@ pub(crate) fn render(
                 .clone()
                 .map(gpui::IntoElement::into_any_element),
             SidebarView::RunAndDebug => Some(run_debug::render(workbench, cx).into_any_element()),
-            SidebarView::SourceControl | SidebarView::Extensions => None,
+            SidebarView::Extensions => Some(extensions::render(workbench, cx).into_any_element()),
+            SidebarView::SourceControl => None,
         })
 }

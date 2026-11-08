@@ -298,3 +298,129 @@ impl RenderOnce for ActivityButton {
             .child(icon)
     }
 }
+
+/// A tall entry of a list with an icon tile and up to three lines: title,
+/// subtitle and a status (installed extensions).
+#[derive(IntoElement)]
+pub struct ListCard {
+    interactivity: Interactivity,
+    icon: IconName,
+    title: SharedString,
+    subtitle: Option<SharedString>,
+    status: Option<(SharedString, Hsla)>,
+    selected: bool,
+}
+
+impl ListCard {
+    /// Creates an unselected card.
+    pub fn new(id: impl Into<ElementId>, icon: IconName, title: impl Into<SharedString>) -> Self {
+        Self {
+            interactivity: Interactivity::new(id),
+            icon,
+            title: title.into(),
+            subtitle: None,
+            status: None,
+            selected: false,
+        }
+    }
+
+    /// The line below the title.
+    #[must_use]
+    pub fn subtitle(mut self, subtitle: impl Into<SharedString>) -> Self {
+        self.subtitle = Some(subtitle.into());
+        self
+    }
+
+    /// The last line, in `color` ("Enabled").
+    #[must_use]
+    pub fn status(mut self, status: impl Into<SharedString>, color: impl Into<Hsla>) -> Self {
+        self.status = Some((status.into(), color.into()));
+        self
+    }
+
+    /// Marks the card as selected.
+    #[must_use]
+    pub fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
+        self
+    }
+}
+
+interactive_builders!(ListCard);
+
+impl RenderOnce for ListCard {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let theme = cx.theme();
+        let colors = &theme.colors;
+        let metrics = &theme.metrics;
+        let size = &metrics.size;
+        let background = if self.selected {
+            StateColors::fixed(colors.bg_list_selected.into())
+        } else {
+            StateColors {
+                normal: transparent_black(),
+                hover: colors.bg_list_hover.into(),
+                pressed: colors.bg_list_pressed.into(),
+            }
+        };
+        let (tile_color, icon_color): (Hsla, Hsla) = if self.selected {
+            (colors.bg_tile_accent.into(), colors.accent.into())
+        } else {
+            (colors.bg_tile.into(), colors.icon.into())
+        };
+        let tile = div()
+            .flex()
+            .flex_none()
+            .items_center()
+            .justify_center()
+            .size(px(size.list_card_tile))
+            .rounded(px(metrics.radius.md))
+            .bg(tile_color)
+            .child(Icon::new(self.icon).color(icon_color));
+        let subtitle = self.subtitle.map(|text| {
+            div()
+                .truncate()
+                .text_size(px(metrics.font_size.xs))
+                .text_color(colors.text_subtle)
+                .child(text)
+        });
+        let status = self.status.map(|(text, color)| {
+            div()
+                .text_size(px(metrics.font_size.xs))
+                .text_color(color)
+                .child(text)
+        });
+        let lines = div()
+            .flex()
+            .flex_col()
+            .flex_1()
+            .min_w_0()
+            .gap(px(metrics.space.sm))
+            .child(
+                div()
+                    .truncate()
+                    .text_size(px(metrics.font_size.base))
+                    .font_weight(gpui::FontWeight::MEDIUM)
+                    .text_color(colors.text_primary)
+                    .child(self.title),
+            )
+            .children(subtitle)
+            .children(status);
+        let (height, padding, gap, radius) = (
+            size.list_card_height,
+            metrics.space.md,
+            metrics.space.md,
+            metrics.radius.lg,
+        );
+        self.interactivity
+            .root(background, window, cx)
+            .w_full()
+            .h(px(height))
+            .items_start()
+            .p(px(padding))
+            .gap(px(gap))
+            .rounded(px(radius))
+            .child(tile)
+            .child(lines)
+    }
+}

@@ -28,7 +28,7 @@ pub use icon::{Icon, IconName};
 pub use input::{SearchField, TextArea, TextField};
 pub use interaction::InteractionState;
 pub use kbd::{CountBadge, Kbd, StatusKind, StatusLetter};
-pub use list::{ActivityButton, ListRow};
+pub use list::{ActivityButton, ListCard, ListRow};
 pub use notice::NoticeBar;
 pub use panel::{Card, Panel, PanelSurface, SectionHeader};
 pub use tabs::{EditorTab, PanelTab, SegmentedTab};

@@ -1,5 +1,6 @@
 //! The editor area: the tab strip, the breadcrumbs of the active file and
-//! the active tab; the Welcome page when no tab is open.
+//! the active tab; the Welcome page when no tab is open; an extension page
+//! over both while one is open.
 
 pub(crate) mod closing;
 pub(crate) mod message_view;
@@ -17,6 +18,7 @@ use theme::ActiveTheme as _;
 use ui::{Button, ButtonVariant, EditorTab, Icon, IconName, Label, NoticeBar, Panel, PanelSurface};
 
 use crate::contrib::explorer::file_icons;
+use crate::contrib::extensions;
 use crate::contrib::outline::symbol_icons;
 use crate::contrib::welcome;
 use crate::parts::editor_area::tabs::TabContent;
@@ -27,6 +29,9 @@ pub(crate) fn render(
     cx: &mut Context<Workbench>,
 ) -> impl IntoElement + use<> {
     let panel = Panel::new(PanelSurface::Editor).flex_1().min_h_0();
+    if let Some(page) = workbench.extensions.page {
+        return panel.child(extensions::render_page(workbench, page, cx));
+    }
     let Some(active) = workbench
         .active_tab
         .filter(|index| *index < workbench.tabs.len())

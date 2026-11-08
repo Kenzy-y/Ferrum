@@ -321,3 +321,57 @@ debug-breakpoints = Breakpoints
 debug-breakpoints-empty = No breakpoints.
 debug-all-exceptions = All exceptions
 debug-uncaught-exceptions = Uncaught exceptions
+
+## Extensions view
+extensions-search-placeholder = Search extensions
+extensions-installed = Installed
+extensions-marketplace = Marketplace
+extensions-marketplace-later = The marketplace arrives with the plugin system.
+extensions-none-found = No extensions match.
+extensions-enabled = Enabled
+extensions-disabled = Disabled
+extensions-workspace = Workspace
+extensions-enabled-count = { $count ->
+    [one] { $count } extension enabled
+   *[other] { $count } extensions enabled
+}
+extensions-up-to-date = All extensions are up to date
+extensions-close-page = Close
+extensions-disable = Disable
+extensions-enable = Enable
+extensions-uninstall = Uninstall
+extensions-install = Install
+extensions-installed-enabled = Installed and enabled
+extensions-installed-disabled = Installed, disabled
+extensions-enabled-workspace = Enabled in this workspace
+extensions-disabled-workspace = Disabled in this workspace
+extensions-overview = Overview
+extensions-contributions = Feature contributions
+extensions-no-contributions = This extension contributes nothing yet.
+extensions-more-title = Make your workspace yours
+
+## The sample extension (until the plugin system)
+sample-extension-name = Sample extension
+sample-extension-publisher = { -product-name }
+sample-extension-summary = A preview of plugins
+sample-extension-description = Shows how extensions will look. It does nothing yet.
+sample-extension-overview-title = Make { -product-name } your own
+sample-extension-overview-text = Plugins run in a WebAssembly sandbox and add features without slowing the editor down.
+sample-extension-commands = Commands
+sample-extension-commands-detail = Actions with their own shortcuts and palette entries.
+sample-extension-views = Panels and views
+sample-extension-views-detail = Sidebar views, tabs and status bar items.
+sample-extension-languages = Languages and themes
+sample-extension-languages-detail = Language packs, color themes and icons.
+sample-extension-code-comment = # extension.toml — every plugin starts with a manifest.
+sample-extension-side-title = Inside a plugin
+sample-extension-manifest = Manifest
+sample-extension-manifest-detail = extension.toml with id, version and API
+sample-extension-sandbox = Sandbox
+sample-extension-sandbox-detail = Time and memory limits per plugin
+sample-extension-permissions = Permissions
+sample-extension-permissions-detail = Confirmed by you on install
+sample-extension-contribution-commands = Commands
+sample-extension-contribution-settings = Settings
+sample-extension-contribution-views = Views
+sample-extension-contribution-none = None

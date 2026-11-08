@@ -2,6 +2,7 @@
 //! command owners and hosts the workbench.
 
 mod config_files;
+mod extensions;
 mod files;
 mod keyboard;
 mod language_status;
@@ -158,6 +159,7 @@ impl Shell {
             workbench.set_recent(entries, cx);
             workbench.set_panel_sizes(window_state, cx);
             workbench.set_file_icons(workbench_icons, cx);
+            workbench.set_extensions(vec![extensions::sample(&i18n, true)], cx);
             workbench
         });
         ask_before_closing(&workbench, window, cx);

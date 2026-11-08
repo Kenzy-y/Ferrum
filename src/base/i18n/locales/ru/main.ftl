@@ -21,7 +21,7 @@ view-explorer = Проводник
 view-search = Поиск
 view-source-control = Система контроля версий
 view-run-and-debug = Запуск и отладка
-view-extensions = Расширения
+view-extensions = Плагины
 panel-terminal = Терминал
 panel-problems = Проблемы
 panel-output = Вывод
@@ -33,7 +33,7 @@ command-workbench-show-explorer = Открыть проводник
 command-workbench-show-search = Открыть поиск
 command-workbench-show-source-control = Открыть систему контроля версий
 command-workbench-show-run-and-debug = Открыть запуск и отладку
-command-workbench-show-extensions = Открыть расширения
+command-workbench-show-extensions = Открыть плагины
 command-workbench-quick-open = Поиск файлов, символов и команд
 command-workbench-show-command-palette = Показать все команды
 quick-open-commands-placeholder = Введите название команды
@@ -324,3 +324,58 @@ debug-breakpoints = Точки останова
 debug-breakpoints-empty = Нет точек останова.
 debug-all-exceptions = Все исключения
 debug-uncaught-exceptions = Необработанные исключения
+
+## Extensions view
+extensions-search-placeholder = Поиск плагинов
+extensions-installed = Установленные
+extensions-marketplace = Маркетплейс
+extensions-marketplace-later = Маркетплейс появится вместе с системой плагинов.
+extensions-none-found = Подходящих плагинов нет.
+extensions-enabled = Включён
+extensions-disabled = Отключён
+extensions-workspace = Рабочая область
+extensions-enabled-count = { $count ->
+    [one] Включён { $count } плагин
+    [few] Включено { $count } плагина
+   *[many] Включено { $count } плагинов
+}
+extensions-up-to-date = Все плагины обновлены
+extensions-close-page = Закрыть
+extensions-disable = Отключить
+extensions-enable = Включить
+extensions-uninstall = Удалить
+extensions-install = Установить
+extensions-installed-enabled = Установлен и включён
+extensions-installed-disabled = Установлен, отключён
+extensions-enabled-workspace = Включён в этой рабочей области
+extensions-disabled-workspace = Отключён в этой рабочей области
+extensions-overview = Обзор
+extensions-contributions = Вклады
+extensions-no-contributions = Этот плагин пока ничего не добавляет.
+extensions-more-title = Настройте рабочую область под себя
+
+## The sample extension (until the plugin system)
+sample-extension-name = Пример плагина
+sample-extension-publisher = { -product-name }
+sample-extension-summary = Так будут выглядеть плагины
+sample-extension-description = Показывает, как будут выглядеть плагины. Пока ничего не делает.
+sample-extension-overview-title = { -product-name } под ваши задачи
+sample-extension-overview-text = Плагины работают в песочнице WebAssembly и добавляют возможности, не замедляя редактор.
+sample-extension-commands = Команды
+sample-extension-commands-detail = Действия со своими сочетаниями клавиш и пунктами палитры.
+sample-extension-views = Панели и виды
+sample-extension-views-detail = Виды боковой панели, вкладки и элементы статус-бара.
+sample-extension-languages = Языки и темы
+sample-extension-languages-detail = Языковые пакеты, цветовые темы и иконки.
+sample-extension-code-comment = # extension.toml — любой плагин начинается с манифеста.
+sample-extension-side-title = Что внутри плагина
+sample-extension-manifest = Манифест
+sample-extension-manifest-detail = extension.toml с id, версией и API
+sample-extension-sandbox = Песочница
+sample-extension-sandbox-detail = Пределы времени и памяти для каждого плагина
+sample-extension-permissions = Права
+sample-extension-permissions-detail = Вы подтверждаете их при установке
+sample-extension-contribution-commands = Команды
+sample-extension-contribution-settings = Настройки
+sample-extension-contribution-views = Виды
+sample-extension-contribution-none = Нет

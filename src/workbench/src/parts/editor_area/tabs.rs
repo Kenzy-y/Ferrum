@@ -181,6 +181,8 @@ impl Workbench {
             return;
         }
         self.active_tab = Some(index);
+        // A tab coming forward replaces an open extension page.
+        self.extensions.page = None;
         if let TabContent::Editor(editor) = &self.tabs[index].content {
             let focus = editor.read(cx).focus_handle(cx);
             focus.focus(window, cx);

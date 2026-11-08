@@ -10,7 +10,7 @@ state; `overlays.rs` quick open and the path dialog with focus restore;
 regions of the window (one file each, `editor_area/` with tabs, closing
 and the message view). `contrib/` are features, one folder each:
 `explorer/` (with the file tree and file icons), `outline/`,
-`quick_open/`, `search/`, `run_debug/`, `welcome/`. `dialogs/` holds modal dialogs. A new region
+`quick_open/`, `search/`, `run_debug/`, `extensions/`, `welcome/`. `dialogs/` holds modal dialogs. A new region
 goes to `parts/`, a new feature to its own `contrib/<name>/` folder.
 
 **Parts.** `title_bar` (logo, menus, search, actions: Run project,
@@ -155,6 +155,20 @@ collapsible Variables, Watch (disabled +), Call stack and Breakpoints
 (disabled All / Uncaught exceptions) sections with empty states.
 Headers toggle on click, Enter or Space; collapsed state lives in
 `DebugSections`. Stage 8 fills the sections from the DAP client.
+
+**Extensions** (`contrib/extensions/`, ADR 0013). The application lists
+installed extensions with `Workbench::set_extensions` (`ExtensionEntry`:
+name, publisher, summary, description, icon, enabled, the Overview texts
+and contributions; already localized). The sidebar view from
+`extensions.svg` has a search field that filters by name, publisher and
+summary, Installed / Marketplace (`ui::SegmentedTab`), the entries as
+`ui::ListCard`s and the Workspace summary. Activating an entry opens its
+page (`page.rs`) over the editor area's tabs: header with the path and a
+close button, the icon tile, name, publisher, description, Disable /
+Enable (toggles the entry) and a disabled Uninstall, the install state,
+the Overview (features, code sample, side card, the marketplace card) and
+Feature contributions tabs. Activating any tab closes the page. Until
+stage 9 the shell provides one sample entry (`shell/extensions.rs`).
 
 **Menus** (`contrib/menu_bar/`, ADR 0008). `MENUS` lists File, Edit,
 View and Go as rows of existing command ids and separators. Rows whose

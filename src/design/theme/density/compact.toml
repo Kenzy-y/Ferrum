@@ -45,6 +45,12 @@
 "outline.max_height" = 240
 "search.row_height" = 28            # rows of search results, search.svg
 "search.line_number" = 30           # line number column of a search result
+"list_card.height" = 76              # installed extension entry, extensions.svg
+"list_card.tile" = 30
+"extension.tile" = 72               # icon of the extension page
+"extension.side_width" = 380         # right column card of the extension page
+"extension.card_height" = 80        # cards under "Make your workspace yours"
+"extension.feature_title" = 180      # title column of the feature list
 "button.small.height" = 28
 "button.medium.height" = 32
 "input.height" = 28

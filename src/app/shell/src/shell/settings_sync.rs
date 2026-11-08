@@ -85,7 +85,14 @@ impl Shell {
         let i18n = Arc::new(i18n);
         window.set_window_title(&window_title(&i18n, self.workspace.as_ref()));
         self.i18n = i18n.clone();
-        self.workbench
-            .update(cx, |workbench, cx| workbench.set_i18n(i18n, cx));
+        self.workbench.update(cx, |workbench, cx| {
+            // The sample extension is localized too; it keeps its state.
+            let enabled = workbench
+                .extensions()
+                .first()
+                .is_none_or(|entry| entry.enabled);
+            workbench.set_extensions(vec![super::extensions::sample(&i18n, enabled)], cx);
+            workbench.set_i18n(i18n, cx);
+        });
     }
 }

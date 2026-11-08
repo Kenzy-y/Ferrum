@@ -68,6 +68,18 @@ token_struct! {
         search_row_height = "search.row_height",
         /// Line number column of a search result.
         search_line_number = "search.line_number",
+        /// An entry of the installed extensions list.
+        list_card_height = "list_card.height",
+        /// Icon tile of a list card.
+        list_card_tile = "list_card.tile",
+        /// Icon tile of the extension page.
+        extension_tile = "extension.tile",
+        /// Right column of the extension page.
+        extension_side_width = "extension.side_width",
+        /// Cards of the extension page's last section.
+        extension_card_height = "extension.card_height",
+        /// Title column of the extension page's feature list.
+        extension_feature_title = "extension.feature_title",
         button_small_height = "button.small.height",
         button_medium_height = "button.medium.height",
         input_height = "input.height",

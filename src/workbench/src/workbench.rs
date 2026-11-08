@@ -18,6 +18,7 @@ use crate::command_handlers::CommandHandlers;
 use crate::command_ids;
 use crate::contrib::explorer::file_icons::FileIcons;
 use crate::contrib::explorer::file_tree_view::FileTreeView;
+use crate::contrib::extensions::ExtensionsState;
 use crate::contrib::outline;
 use crate::contrib::problems::ProblemsView;
 use crate::contrib::quick_open::{QuickOpenContext, QuickOpenMode};
@@ -101,6 +102,8 @@ pub struct Workbench {
     pub(crate) search: Option<Entity<SearchView>>,
     /// Collapsed sections of the Run and Debug view.
     pub(crate) debug_sections: DebugSections,
+    /// The Extensions view and the open extension page.
+    pub(crate) extensions: ExtensionsState,
 }
 
 impl Workbench {
@@ -151,6 +154,7 @@ impl Workbench {
             terminal_observe: None,
             search: None,
             debug_sections: DebugSections::default(),
+            extensions: ExtensionsState::default(),
         }
     }
 
@@ -372,6 +376,7 @@ impl Render for Workbench {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.ensure_outline(window, cx);
         self.ensure_debug_sections(cx);
+        self.ensure_extensions(window, cx);
         let title_bar = title_bar::render(self, window, cx);
         let activity_bar = activity_bar::render(self, cx);
         let sidebar_width = self.sidebar_width(window, cx);
