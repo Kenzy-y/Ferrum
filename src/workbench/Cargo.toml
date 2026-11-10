@@ -20,11 +20,13 @@ language.workspace = true
 process.workspace = true
 project.workspace = true
 search.workspace = true
+settings.workspace = true
 text.workspace = true
 syntax.workspace = true
 terminal.workspace = true
 theme.workspace = true
 thiserror.workspace = true
+toml.workspace = true
 tracing.workspace = true
 ui.workspace = true
 

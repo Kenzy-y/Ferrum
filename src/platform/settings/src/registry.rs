@@ -40,9 +40,21 @@ impl SettingsRegistry {
         self.entries.get(namespace).map(|entry| &entry.schema)
     }
 
+    /// Fields of `namespace` in declaration order, with their defaults; empty
+    /// if the namespace is unknown.
+    pub fn fields(&self, namespace: &str) -> Vec<crate::SettingField> {
+        self.entries.get(namespace).map_or_else(Vec::new, |entry| {
+            crate::fields::fields(entry.schema.as_value(), &entry.defaults)
+        })
+    }
+
     /// Whether `namespace` is registered.
     pub fn contains(&self, namespace: &str) -> bool {
         self.entries.contains_key(namespace)
+    }
+
+    pub(crate) fn defaults(&self, namespace: &str) -> Option<&toml::Table> {
+        self.entries.get(namespace).map(|entry| &entry.defaults)
     }
 
     pub(crate) fn entry_for<T: Settings>(&self) -> Option<&Entry> {

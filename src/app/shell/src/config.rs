@@ -32,6 +32,7 @@ pub(crate) struct LoadedConfig {
 pub(crate) fn settings_registry() -> anyhow::Result<SettingsRegistry> {
     Ok(SettingsRegistry::builder()
         .register::<LocalizationSettings>()?
+        .register::<theme::AppearanceSettings>()?
         .register::<KeyboardSettings>()?
         .register::<ProjectSettings>()?
         .register::<FilesSettings>()?

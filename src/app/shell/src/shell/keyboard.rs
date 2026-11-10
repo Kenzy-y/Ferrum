@@ -46,6 +46,17 @@ impl KeyboardDispatcher {
         }
     }
 
+    /// The keymap in use.
+    pub(super) fn keymap(&self) -> &Arc<Keymap> {
+        &self.keymap
+    }
+
+    /// `keystroke` as the keymap writes it, on the US key of the same
+    /// physical key.
+    pub(super) fn keymap_keystroke(&self, keystroke: &gpui::Keystroke) -> commands::Keystroke {
+        to_keystroke(keystroke, &self.layout_keys)
+    }
+
     /// Whether a key typed in a focused terminal goes to its program
     /// instead of the keymap: Ctrl or Alt with a character (`Ctrl C`,
     /// `Ctrl R`) unless the `terminal` context binds it or a key sequence

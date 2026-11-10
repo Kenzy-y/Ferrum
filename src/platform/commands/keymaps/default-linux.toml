@@ -5,6 +5,12 @@
 "ctrl-," = "preferences.openSettings"
 "ctrl-q" = "app.quit"
 
+# Interface zoom ("mod-shift-=" is Ctrl + on most layouts).
+"mod-=" = "workbench.zoomIn"
+"mod-shift-=" = "workbench.zoomIn"
+"mod--" = "workbench.zoomOut"
+"mod-0" = "workbench.zoomReset"
+
 # Search and commands.
 "mod-k" = "workbench.quickOpen"
 "mod-shift-p" = "workbench.showCommandPalette"

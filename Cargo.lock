@@ -6491,8 +6491,10 @@ dependencies = [
  "fs",
  "schemars",
  "serde",
+ "serde_json",
  "thiserror 2.0.21",
  "toml 1.1.8+spec-1.1.0",
+ "toml_edit 0.25.17+spec-1.1.0",
  "tracing",
 ]
 
@@ -6559,6 +6561,7 @@ dependencies = [
  "terminal",
  "text",
  "theme",
+ "toml 1.1.8+spec-1.1.0",
  "tracing",
  "ui",
  "workbench",
@@ -7071,7 +7074,9 @@ name = "theme"
 version = "0.0.0"
 dependencies = [
  "gpui-pre",
+ "schemars",
  "serde",
+ "settings",
  "thiserror 2.0.21",
  "toml 1.1.8+spec-1.1.0",
  "tracing",
@@ -7339,6 +7344,7 @@ dependencies = [
  "indexmap",
  "toml_datetime 1.1.2+spec-1.1.0",
  "toml_parser",
+ "toml_writer",
  "winnow 1.0.4",
 ]
 
@@ -8939,11 +8945,13 @@ dependencies = [
  "process",
  "project",
  "search",
+ "settings",
  "syntax",
  "terminal",
  "text",
  "theme",
  "thiserror 2.0.21",
+ "toml 1.1.8+spec-1.1.0",
  "tracing",
  "ui",
 ]

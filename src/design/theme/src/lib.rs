@@ -5,17 +5,20 @@
 //! read tokens from the active theme via [`ActiveTheme`]. Themes are data,
 //! so new ones (light, high contrast, imported) are added as files.
 
+mod appearance;
 mod color;
 mod colors;
 mod fonts;
 mod macros;
 mod metrics;
 mod metrics_tokens;
+pub mod zoom;
 
 use std::sync::Arc;
 
 use serde::Deserialize;
 
+pub use appearance::AppearanceSettings;
 pub use color::Color;
 pub use colors::{ColorTokens, SyntaxTokens, TerminalTokens};
 pub use fonts::{EMBEDDED_FONTS, register_fonts};
@@ -110,8 +113,11 @@ pub struct Theme {
     pub opacity: OpacityTokens,
     /// Density.
     pub density: Density,
-    /// Sizes, spacing, radii and font sizes of the density.
+    /// Sizes, spacing, radii and font sizes of the density, multiplied by
+    /// [`Theme::zoom`].
     pub metrics: Metrics,
+    /// Interface zoom: 1.0 is the size of the mockups.
+    pub zoom: f32,
 }
 
 impl Theme {
@@ -136,7 +142,21 @@ impl Theme {
             opacity: file.opacity,
             density,
             metrics: Metrics::load(density)?,
+            zoom: 1.0,
         })
+    }
+
+    /// The same theme at interface zoom `zoom` (clamped to
+    /// [`zoom::MIN`]..=[`zoom::MAX`]).
+    ///
+    /// # Errors
+    ///
+    /// Fails only if a built-in density file is broken (caught by tests).
+    pub fn with_zoom(mut self, zoom: f32) -> Result<Self, ThemeError> {
+        let zoom = zoom::clamp(zoom);
+        self.metrics = Metrics::load(self.density)?.scaled(zoom);
+        self.zoom = zoom;
+        Ok(self)
     }
 
     /// A built-in theme by id (see [`DEFAULT_THEME`]).

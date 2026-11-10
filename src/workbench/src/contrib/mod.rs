@@ -9,5 +9,6 @@ pub(crate) mod problems;
 pub(crate) mod quick_open;
 pub(crate) mod run_debug;
 pub(crate) mod search;
+pub(crate) mod settings_page;
 pub(crate) mod terminal;
 pub(crate) mod welcome;

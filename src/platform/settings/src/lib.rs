@@ -14,7 +14,9 @@
 //! The [`SettingsStore`] merges the layers and hands out typed values. This
 //! is the only crate that reads configuration files; see [`load`].
 
+pub mod edit;
 mod error;
+mod fields;
 mod layer;
 pub mod load;
 mod merge;
@@ -23,6 +25,7 @@ mod registry;
 mod store;
 
 pub use error::SettingsError;
+pub use fields::{FieldChoice, FieldKind, SettingField};
 pub use layer::{LANGUAGE_OVERRIDES_KEY, LayerKind, SettingsLayer};
 pub use registry::{RegistryBuilder, SettingsRegistry};
 pub use store::{SettingsChange, SettingsDiagnostic, SettingsStore};

@@ -58,6 +58,36 @@ impl Metrics {
             message: error.to_string(),
         })
     }
+
+    /// Every metric multiplied by `factor` (the interface zoom).
+    #[must_use]
+    pub fn scaled(&self, factor: f32) -> Self {
+        // Rebuilt from the token keys, so a new token is scaled without
+        // touching this code.
+        let mut file = toml::Table::new();
+        let groups = [
+            ("size", self.size.entries()),
+            ("space", self.space.entries()),
+            ("radius", self.radius.entries()),
+            ("font_size", self.font_size.entries()),
+        ];
+        for (group, entries) in groups {
+            let table: toml::Table = entries
+                .into_iter()
+                .map(|(key, value)| {
+                    (
+                        key.to_owned(),
+                        toml::Value::Float(f64::from(value * factor)),
+                    )
+                })
+                .collect();
+            file.insert(group.to_owned(), toml::Value::Table(table));
+        }
+        file.try_into().unwrap_or_else(|error| {
+            tracing::error!("cannot scale metrics: {error}");
+            self.clone()
+        })
+    }
 }
 
 #[cfg(test)]
@@ -80,5 +110,14 @@ mod tests {
             comfortable.font_size, compact.font_size,
             "density does not change font sizes"
         );
+    }
+
+    #[test]
+    fn scaling_multiplies_every_token() {
+        let metrics = Metrics::load(Density::Comfortable).unwrap();
+        let double = metrics.scaled(2.0);
+        assert!((double.size.titlebar_height - metrics.size.titlebar_height * 2.0).abs() < 1e-4);
+        assert!((double.font_size.base - metrics.font_size.base * 2.0).abs() < 1e-4);
+        assert_eq!(metrics.scaled(1.0), metrics);
     }
 }

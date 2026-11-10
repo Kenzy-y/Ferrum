@@ -277,3 +277,83 @@ impl RenderOnce for ToggleButton {
             .child(self.label)
     }
 }
+
+/// An on/off switch (boolean settings): a track with a knob, the accent
+/// color when on.
+#[derive(IntoElement)]
+pub struct Switch {
+    interactivity: Interactivity,
+    on: bool,
+}
+
+impl Switch {
+    /// Creates a switch in the off position.
+    pub fn new(id: impl Into<ElementId>) -> Self {
+        Self {
+            interactivity: Interactivity::new(id),
+            on: false,
+        }
+    }
+
+    /// Whether the switch is on.
+    #[must_use]
+    pub fn on(mut self, on: bool) -> Self {
+        self.on = on;
+        self
+    }
+}
+
+interactive_builders!(Switch);
+
+/// The track is this many knobs wide.
+const SWITCH_TRACK_KNOBS: f32 = 1.8;
+
+impl RenderOnce for Switch {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let theme = cx.theme();
+        let colors = &theme.colors;
+        let metrics = &theme.metrics;
+        let knob = metrics.size.icon_small;
+        let inset = metrics.space.xxs;
+        let track: Hsla = if self.on {
+            colors.accent.into()
+        } else {
+            colors.bg_button_secondary.into()
+        };
+        let hover: Hsla = if self.on {
+            colors.accent.into()
+        } else {
+            colors.bg_button_secondary_hover.into()
+        };
+        let knob_color: Hsla = if self.on {
+            colors.text_on_accent.into()
+        } else {
+            colors.text_secondary.into()
+        };
+        let mut root = self
+            .interactivity
+            .root(
+                StateColors {
+                    normal: track,
+                    hover,
+                    pressed: hover,
+                },
+                window,
+                cx,
+            )
+            .flex_none()
+            .w(px(knob * SWITCH_TRACK_KNOBS + inset * 2.0))
+            .h(px(knob + inset * 2.0))
+            .p(px(inset))
+            .rounded(px(knob));
+        if self.on {
+            root = root.justify_end();
+        }
+        root.child(
+            gpui::div()
+                .size(px(knob))
+                .rounded(px(knob / 2.0))
+                .bg(knob_color),
+        )
+    }
+}

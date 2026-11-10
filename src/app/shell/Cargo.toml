@@ -31,6 +31,7 @@ settings.workspace = true
 syntax.workspace = true
 terminal.workspace = true
 theme.workspace = true
+toml.workspace = true
 tracing.workspace = true
 ui.workspace = true
 

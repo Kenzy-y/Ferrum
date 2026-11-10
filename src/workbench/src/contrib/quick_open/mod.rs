@@ -13,7 +13,7 @@ use gpui::{
     KeyDownEvent, MouseButton, ParentElement as _, Render, ScrollStrategy, SharedString,
     Styled as _, Subscription, UniformListScrollHandle, Window, div, px, uniform_list,
 };
-use gpui_component::input::{InputEvent, InputState};
+use gpui_component::input::{InputEvent, InputState, Position};
 use i18n::I18n;
 use theme::ActiveTheme as _;
 use ui::{IconName, Kbd, ListRow, TextField};
@@ -73,12 +73,17 @@ impl QuickOpen {
             QuickOpenMode::Everything => String::new(),
             QuickOpenMode::Commands => format!("{COMMAND_PREFIX} "),
         };
+        let initial_len = initial.chars().count();
         let input = cx.new(|cx| {
             InputState::new(window, cx)
                 .placeholder(placeholder)
                 .default_value(initial)
         });
-        input.update(cx, |input, cx| input.focus(window, cx));
+        // The cursor goes after the prefix so typed text lands behind it.
+        let end = u32::try_from(initial_len).unwrap_or(0);
+        input.update(cx, |input, cx| {
+            input.set_cursor_position(Position::new(0, end), window, cx);
+        });
         let input_events = cx.subscribe(&input, |this: &mut Self, _, event: &InputEvent, cx| {
             if matches!(event, InputEvent::Change) {
                 this.refilter(cx);
@@ -277,5 +282,43 @@ impl Render for QuickOpen {
                     .embedded(),
             )
             .child(results)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::rc::Rc;
+    use std::sync::Arc;
+
+    use commands::{CommandRegistry, Keymap};
+    use gpui::TestAppContext;
+    use i18n::I18n;
+
+    use super::{QuickOpen, QuickOpenContext, QuickOpenMode};
+
+    /// Regression: the palette opened with the cursor before `> `, so typed
+    /// text went in front of the prefix.
+    #[gpui::test]
+    fn palette_cursor_starts_after_the_prefix(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            gpui_component::init(cx);
+            let theme =
+                theme::Theme::built_in(theme::DEFAULT_THEME, theme::Density::default()).unwrap();
+            theme::set_theme(theme, cx);
+        });
+        let context = QuickOpenContext {
+            i18n: Arc::new(I18n::new("en").unwrap()),
+            registry: Arc::new(CommandRegistry::new()),
+            keymap: Arc::new(Keymap::default()),
+            dispatch: Rc::new(|_, _, _| {}),
+        };
+        let window = cx
+            .add_window(|window, cx| QuickOpen::new(QuickOpenMode::Commands, &context, window, cx));
+        let position = window
+            .update(cx, |quick_open, _, cx| {
+                quick_open.input.read(cx).cursor_position()
+            })
+            .unwrap();
+        assert_eq!(position.character, 2);
     }
 }

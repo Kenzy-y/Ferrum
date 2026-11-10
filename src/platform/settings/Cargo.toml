@@ -15,6 +15,9 @@ schemars.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 toml.workspace = true
+toml_edit.workspace = true
+# Keeps schema properties in declaration order for the settings UI.
+serde_json = { workspace = true, features = ["preserve_order"] }
 tracing.workspace = true
 
 [lints]

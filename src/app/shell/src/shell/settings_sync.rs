@@ -35,12 +35,14 @@ impl Shell {
             self.workbench
                 .update(cx, |workbench, cx| workbench.set_keymap(keymap, cx));
             tracing::info!("applied keymap changes");
+            self.refresh_settings_page(cx);
         }
     }
 
     /// Re-applies everything that depends on settings.
     pub(super) fn settings_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         config::report_settings(&self.settings);
+        self.apply_zoom_setting(cx);
         self.language_servers.configure(&self.settings);
         self.keyboard
             .set_chord_timeout(config::chord_timeout(&self.settings));
@@ -69,6 +71,7 @@ impl Shell {
             tree.update(cx, |tree, cx| tree.set_hidden(&hidden, cx));
             self.hidden = hidden;
         }
+        self.refresh_settings_page(cx);
     }
 
     fn apply_language(&mut self, window: &mut Window, cx: &mut Context<Self>) {

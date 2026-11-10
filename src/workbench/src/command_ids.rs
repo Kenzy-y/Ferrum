@@ -86,11 +86,23 @@ pub const OPEN_FOLDER: &str = "workspace.openFolder";
 /// Opens a folder by typing its path. Owned by the application.
 pub const OPEN_FOLDER_BY_PATH: &str = "workspace.openFolderByPath";
 
-/// Opens the user `settings.toml` in an editor. Owned by the application
-/// (it knows where configuration lives); the activity bar shows it.
+/// Opens the settings page. Owned by the application (it knows the
+/// settings); the activity bar shows it.
 pub const OPEN_SETTINGS: &str = "preferences.openSettings";
+/// Opens the user `settings.toml` in an editor. Owned by the application.
+pub const OPEN_SETTINGS_FILE: &str = "preferences.openSettingsFile";
+/// Opens the keyboard shortcuts page. Owned by the application.
+pub const OPEN_KEYBINDINGS: &str = "preferences.openKeybindings";
 /// Opens the user `keymap.toml` in an editor. Owned by the application.
 pub const OPEN_KEYMAP: &str = "preferences.openKeymap";
+
+/// Makes the whole interface one step larger. Owned by the application
+/// (zoom is a setting).
+pub const ZOOM_IN: &str = "workbench.zoomIn";
+/// Makes the whole interface one step smaller.
+pub const ZOOM_OUT: &str = "workbench.zoomOut";
+/// Returns the interface to its normal size.
+pub const ZOOM_RESET: &str = "workbench.zoomReset";
 
 /// Every workbench command with the id of its localized title.
 pub(crate) const ALL: &[(&str, &str)] = &[

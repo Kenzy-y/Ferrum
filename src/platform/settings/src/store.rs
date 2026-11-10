@@ -161,6 +161,30 @@ impl SettingsStore {
         merged
     }
 
+    /// The value of `key` in `namespace` as written in one layer (with the
+    /// overrides of `language` when given), if the layer sets it.
+    pub fn layer_value(
+        &self,
+        kind: LayerKind,
+        namespace: &str,
+        language: Option<&str>,
+        key: &str,
+    ) -> Option<&toml::Value> {
+        let layer = self.layers.get(&kind)?;
+        let table = match language {
+            Some(language) => layer.language_namespace(language, namespace),
+            None => layer.namespace(namespace),
+        };
+        table?.get(key)
+    }
+
+    /// The merged value of `key` in `namespace` (defaults and every layer,
+    /// no language overrides).
+    pub fn effective_value(&self, namespace: &str, key: &str) -> Option<toml::Value> {
+        let defaults = self.registry.defaults(namespace)?;
+        self.merged(namespace, defaults, None).remove(key)
+    }
+
     /// Namespaces mentioned in the layers that nobody registered (usually a
     /// typo or a setting of a plugin that is not installed).
     pub fn unknown_namespaces(&self) -> Vec<SettingsDiagnostic> {

@@ -8,10 +8,13 @@ mod keyboard;
 mod language_status;
 mod problems;
 mod search;
+mod setting_writes;
+mod settings_page;
 mod settings_sync;
 mod terminals;
 mod window_sizes;
 mod workspace;
+mod zoom;
 
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -30,6 +33,7 @@ use workbench::{CommandHandlers, Dispatch, Workbench, command_ids};
 
 use self::config_files::ConfigFile;
 use self::keyboard::{KeyOutcome, KeyboardDispatcher};
+use self::settings_page::SettingsPageTab;
 use crate::app_commands;
 use crate::config::{self, LoadedConfig};
 #[cfg(debug_assertions)]
@@ -91,11 +95,22 @@ pub(crate) struct Shell {
     running_search: Option<search::RunningSearch>,
     /// The terminals of the window.
     terminal: Entity<workbench::TerminalPanel>,
+    /// Every command, for the Keyboard Shortcuts page.
+    commands: Arc<commands::CommandRegistry>,
+    /// Serializes writes of settings files from the UI.
+    setting_writes: Arc<futures::lock::Mutex<()>>,
+    /// The settings page, while open.
+    settings_page: Option<settings_page::OpenSettingsPage>,
     /// Saves panel sizes the user drags to.
     _sizes_watch: gpui::Subscription,
     #[cfg(debug_assertions)]
     gallery: Option<Entity<Gallery>>,
 }
+
+/// Pause before each `FERRUM_DEBUG_COMMANDS` command, so the previous
+/// one has rendered.
+#[cfg(debug_assertions)]
+const DEBUG_COMMAND_PAUSE_MS: u64 = 700;
 
 /// Closing the window asks about unsaved files first.
 fn ask_before_closing(workbench: &Entity<Workbench>, window: &mut Window, cx: &mut Context<Shell>) {
@@ -108,6 +123,9 @@ fn ask_before_closing(workbench: &Entity<Workbench>, window: &mut Window, cx: &m
 }
 
 impl Shell {
+    // Wiring of every part of the window in one place; split further only
+    // when a part grows its own setup.
+    #[allow(clippy::too_many_lines)]
     pub(crate) fn new(
         config: LoadedConfig,
         i18n: Arc<I18n>,
@@ -148,6 +166,7 @@ impl Shell {
         let file_icons = Arc::new(file_icons(&languages));
         let process: Arc<dyn process::ProcessRunner> = Arc::new(process::RealProcessRunner);
         let workbench_icons = file_icons.clone();
+        let page_commands = registry.clone();
         let workbench = cx.new(|cx| {
             let mut workbench = Workbench::new(
                 workbench_i18n,
@@ -209,11 +228,37 @@ impl Shell {
             running_search: None,
             terminal,
             _sizes_watch: sizes_watch,
+            commands: page_commands,
+            setting_writes: Arc::default(),
+            settings_page: None,
             #[cfg(debug_assertions)]
             gallery: None,
         };
         shell.start_language_status(cx);
         shell
+    }
+
+    /// Debug builds: runs the comma-separated command ids of the
+    /// `FERRUM_DEBUG_COMMANDS` environment variable after startup, for
+    /// looking at views without a keyboard (screenshots in development).
+    #[cfg(debug_assertions)]
+    pub(crate) fn run_debug_commands(window: &mut Window, cx: &mut Context<Self>) {
+        let Ok(list) = std::env::var("FERRUM_DEBUG_COMMANDS") else {
+            return;
+        };
+        cx.spawn_in(window, async move |shell, cx| {
+            for id in list.split(',').map(str::trim).filter(|id| !id.is_empty()) {
+                cx.background_executor()
+                    .timer(std::time::Duration::from_millis(DEBUG_COMMAND_PAUSE_MS))
+                    .await;
+                let Ok(id) = CommandId::new(id) else {
+                    tracing::warn!(id, "FERRUM_DEBUG_COMMANDS: not a command id");
+                    continue;
+                };
+                let _ = shell.update_in(cx, |shell, window, cx| shell.run_command(&id, window, cx));
+            }
+        })
+        .detach();
     }
 
     /// The active keyboard layout changed: shortcuts follow.
@@ -240,10 +285,25 @@ impl Shell {
             },
         )?;
         handlers.register_entity(command_ids::OPEN_SETTINGS, this, |this, window, cx| {
+            this.open_settings_page(SettingsPageTab::Settings, window, cx);
+        })?;
+        handlers.register_entity(command_ids::OPEN_KEYBINDINGS, this, |this, window, cx| {
+            this.open_settings_page(SettingsPageTab::Keybindings, window, cx);
+        })?;
+        handlers.register_entity(command_ids::OPEN_SETTINGS_FILE, this, |this, window, cx| {
             this.open_config_file(ConfigFile::Settings, window, cx);
         })?;
         handlers.register_entity(command_ids::OPEN_KEYMAP, this, |this, window, cx| {
             this.open_config_file(ConfigFile::Keymap, window, cx);
+        })?;
+        handlers.register_entity(command_ids::ZOOM_IN, this, |this, window, cx| {
+            this.change_zoom(theme::zoom::zoom_in, window, cx);
+        })?;
+        handlers.register_entity(command_ids::ZOOM_OUT, this, |this, window, cx| {
+            this.change_zoom(theme::zoom::zoom_out, window, cx);
+        })?;
+        handlers.register_entity(command_ids::ZOOM_RESET, this, |this, window, cx| {
+            this.change_zoom(|_| theme::zoom::DEFAULT, window, cx);
         })?;
         #[cfg(debug_assertions)]
         handlers.register_entity(

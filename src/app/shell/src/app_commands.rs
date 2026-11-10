@@ -37,6 +37,23 @@ const WORKSPACE_COMMANDS: &[(&str, &str)] = &[
         workbench::command_ids::OPEN_KEYMAP,
         "command-preferences-open-keymap",
     ),
+    (
+        workbench::command_ids::OPEN_SETTINGS_FILE,
+        "command-preferences-open-settings-file",
+    ),
+    (
+        workbench::command_ids::OPEN_KEYBINDINGS,
+        "command-preferences-open-keybindings",
+    ),
+    (workbench::command_ids::ZOOM_IN, "command-workbench-zoom-in"),
+    (
+        workbench::command_ids::ZOOM_OUT,
+        "command-workbench-zoom-out",
+    ),
+    (
+        workbench::command_ids::ZOOM_RESET,
+        "command-workbench-zoom-reset",
+    ),
 ];
 
 /// Commands of the shell with the ids of their localized titles.

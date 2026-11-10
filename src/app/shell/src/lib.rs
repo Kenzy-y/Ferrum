@@ -99,6 +99,14 @@ pub fn run() -> anyhow::Result<()> {
 fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
     let _span = tracing::info_span!("open_main_window").entered();
     let i18n = config::localization(&loaded.settings)?;
+    let zoom = loaded.settings.get::<theme::AppearanceSettings>(None).zoom;
+    match (*theme::shared_theme(cx)).clone().with_zoom(zoom) {
+        Ok(zoomed) => {
+            theme::set_theme(zoomed, cx);
+            ui::sync_component_theme(cx);
+        }
+        Err(error) => tracing::error!("{error}"),
+    }
     let (width, height) = INITIAL_WINDOW_SIZE;
     let mut options = Workbench::window_options();
     // The workbench draws its own title bar; the platform still shows the
@@ -116,6 +124,8 @@ fn open_main_window(loaded: LoadedConfig, cx: &mut App) -> anyhow::Result<()> {
     let i18n = Arc::new(i18n);
     cx.open_window(options, |window, cx| {
         let shell = cx.new(|cx| Shell::new(loaded, i18n, window, cx));
+        #[cfg(debug_assertions)]
+        shell.update(cx, |_, cx| Shell::run_debug_commands(window, cx));
         cx.new(|cx| gpui_component::Root::new(shell, window, cx))
     })
     .context("cannot open the main window")?;

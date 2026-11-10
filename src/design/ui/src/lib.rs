@@ -23,7 +23,7 @@ mod text;
 mod tooltip;
 
 pub use assets::Assets;
-pub use button::{Button, ButtonSize, ButtonVariant, IconButton, ToggleButton};
+pub use button::{Button, ButtonSize, ButtonVariant, IconButton, Switch, ToggleButton};
 pub use icon::{Icon, IconName};
 pub use input::{SearchField, TextArea, TextField};
 pub use interaction::InteractionState;
