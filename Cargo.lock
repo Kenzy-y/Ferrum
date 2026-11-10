@@ -1577,6 +1577,7 @@ dependencies = [
  "lang_rust",
  "language",
  "schemars",
+ "search",
  "serde",
  "settings",
  "syntax",

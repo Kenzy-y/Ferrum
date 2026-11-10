@@ -64,6 +64,8 @@ token_struct! {
         bg_selection = "bg.selection",
         /// Selected text in an editor without focus.
         bg_selection_inactive = "bg.selection.inactive",
+        /// Find matches in the editor.
+        bg_find_match = "bg.find.match",
         /// Text cursor in the editor.
         cursor = "cursor",
         /// Underline of an error.

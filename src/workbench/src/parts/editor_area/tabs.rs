@@ -188,6 +188,7 @@ impl Workbench {
             focus.focus(window, cx);
         }
         self.sync_outline(cx);
+        self.retarget_find(window, cx);
         cx.notify();
     }
 

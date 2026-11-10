@@ -11,6 +11,12 @@
 "mod--" = "workbench.zoomOut"
 "mod-0" = "workbench.zoomReset"
 
+# Find in the editor.
+"mod-f" = "find.open"
+"cmd-alt-f" = "find.replace"
+"f3" = "find.next"
+"shift-f3" = "find.previous"
+
 # Search and commands.
 "mod-k" = "workbench.quickOpen"
 "mod-shift-p" = "workbench.showCommandPalette"

@@ -14,6 +14,7 @@ mod actions;
 mod decorations;
 mod editor;
 mod file;
+mod find;
 mod highlighting;
 mod input;
 mod language;
@@ -26,4 +27,5 @@ pub use actions::{
 };
 pub use editor::{Editor, EditorEvent, EditorStatus};
 pub use file::DiskState;
+pub use find::{FindSummary, MAX_MATCHES};
 pub use settings::{EditorSettings, MultiCursorModifier};

@@ -31,7 +31,7 @@ pub use crate::contrib::explorer::file_tree_view::{
 };
 pub use crate::contrib::extensions::{ExtensionEntry, ExtensionItem, ExtensionOverview};
 pub use crate::contrib::problems::{OpenProblem, ProblemsTexts, ProblemsView};
-pub use crate::contrib::search::{OpenMatch, SearchRequest, SearchView};
+pub use crate::contrib::search::{OpenMatch, ReplaceRequest, SearchRequest, SearchView};
 pub use crate::contrib::settings_page::{
     KeybindingEntry, SettingItem, SettingsGroup, SettingsPage, SettingsPageData, SettingsPageEvent,
     SettingsPageTab, SettingsPageTexts, humanize_key,

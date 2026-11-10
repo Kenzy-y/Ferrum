@@ -104,6 +104,8 @@ pub struct Workbench {
     pub(crate) debug_sections: DebugSections,
     /// The Extensions view and the open extension page.
     pub(crate) extensions: ExtensionsState,
+    /// The find widget over the active editor.
+    pub(crate) find: Option<crate::contrib::find::OpenFind>,
 }
 
 impl Workbench {
@@ -155,6 +157,7 @@ impl Workbench {
             search: None,
             debug_sections: DebugSections::default(),
             extensions: ExtensionsState::default(),
+            find: None,
         }
     }
 
@@ -235,6 +238,18 @@ impl Workbench {
             this.toggle_outline(cx);
         })?;
         Self::register_terminal_handlers(handlers, this)?;
+        handlers.register_entity(command_ids::FIND, this, |this, window, cx| {
+            this.open_find(false, window, cx);
+        })?;
+        handlers.register_entity(command_ids::FIND_REPLACE, this, |this, window, cx| {
+            this.open_find(true, window, cx);
+        })?;
+        handlers.register_entity(command_ids::FIND_NEXT, this, |this, window, cx| {
+            this.find_next(true, window, cx);
+        })?;
+        handlers.register_entity(command_ids::FIND_PREVIOUS, this, |this, window, cx| {
+            this.find_next(false, window, cx);
+        })?;
         handlers.register_entity(command_ids::NEW_FILE, this, Self::new_file)?;
         handlers.register_entity(editor::SAVE, this, |this, window, cx| {
             if let Some(editor) = this.active_editor() {

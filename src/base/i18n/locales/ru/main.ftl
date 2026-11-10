@@ -423,3 +423,28 @@ settings-group-rust_analyzer = rust-analyzer
 settings-group-search = Поиск
 settings-group-syntax = Синтаксис
 settings-group-terminal = Терминал
+
+# Поиск в редакторе.
+command-find-open = Найти
+command-find-replace = Заменить
+command-find-next = Найти далее
+command-find-previous = Найти назад
+find-placeholder = Найти
+find-replace-placeholder = Заменить
+find-match-case = С учётом регистра
+find-whole-word = Слово целиком
+find-regex = Регулярное выражение
+find-previous = Предыдущее совпадение (Shift Enter)
+find-next = Следующее совпадение (Enter)
+find-close = Закрыть (Escape)
+find-replace = Заменить (Enter)
+find-replace-all = Заменить все (Ctrl Alt Enter)
+find-toggle-replace = Показать замену
+find-no-results = Нет результатов
+find-invalid = Неверный шаблон
+find-count = { $current } из { $total }
+find-count-limited = { $current } из { $total }+
+
+search-replace-placeholder = Заменить
+search-replace-all = Заменить все (Enter)
+search-replace-collapse = Скрыть замену

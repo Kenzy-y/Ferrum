@@ -47,6 +47,8 @@ pub enum EditorEvent {
     /// The language service published new diagnostics
     /// ([`Editor::problem_counts`]).
     DiagnosticsChanged,
+    /// The find matches or their count changed ([`Editor::find_summary`]).
+    FindChanged,
     /// Go to definition found it in another file; the owner opens it.
     OpenLocation(language::Location),
 }
@@ -113,6 +115,8 @@ pub struct Editor {
     pub(crate) language: Option<crate::language::LanguageState>,
     /// Brackets and quotes that close themselves, from the language.
     pub(crate) auto_pairs: Arc<[text::AutoPair]>,
+    /// Find in the text, while the find widget is open.
+    pub(crate) find: Option<crate::find::FindState>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -169,6 +173,7 @@ impl Editor {
             scrollbar_hovered: false,
             language: None,
             auto_pairs: text::DEFAULT_PAIRS.into(),
+            find: None,
             _subscriptions: subscriptions,
         };
         if let Some((fs, path)) = file {
@@ -372,6 +377,7 @@ impl Editor {
         if edited {
             self.marked = None;
             self.follow_text_changes(cx);
+            self.find_after_edit(cx);
             cx.emit(EditorEvent::Edited);
         }
         if edited || *self.document.selections() != selections {

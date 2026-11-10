@@ -136,6 +136,39 @@ impl Scene<'_> {
         quads
     }
 
+    /// Backgrounds of the find matches on the visible rows.
+    pub(crate) fn find_matches(&self) -> Vec<PaintQuad> {
+        if self.rows.is_empty() || self.editor.find.is_none() {
+            return Vec::new();
+        }
+        let buffer = self.buffer();
+        let snapshot = self.snapshot;
+        let first = buffer.line_range(self.rows.start).start;
+        let last = buffer.line_range(self.rows.end - 1).end;
+        let color = Hsla::from(self.theme.colors.bg_find_match);
+        let mut quads = Vec::new();
+        for found in self.editor.find_matches_in(first..last + 1) {
+            for row in self.rows.clone() {
+                let line = buffer.line_range(row);
+                if found.end <= line.start || found.start > line.end {
+                    continue;
+                }
+                let x0 = snapshot.x_of(buffer, found.start.max(line.start));
+                let x1 = snapshot.x_of(buffer, found.end.min(line.end));
+                if x1 > x0 {
+                    quads.push(fill(
+                        Bounds::new(
+                            point(px(snapshot.text_left + x0), px(self.row_top(row))),
+                            size(px(x1 - x0), px(snapshot.line_height)),
+                        ),
+                        color,
+                    ));
+                }
+            }
+        }
+        quads
+    }
+
     /// Indent guides: one line per indentation level, at the column where
     /// the level starts (as in the mockups).
     pub(crate) fn guides(&self) -> Vec<PaintQuad> {

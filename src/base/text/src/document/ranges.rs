@@ -33,6 +33,41 @@ impl Document {
         start..start + text.len()
     }
 
+    /// Replaces each range of `replacements` (sorted, not overlapping) with
+    /// its text as one undoable edit (Replace All) and puts a cursor after
+    /// the last replacement. Returns how many ranges were replaced.
+    pub fn replace_ranges(&mut self, replacements: &[(Range<usize>, String)]) -> usize {
+        let mut edits = Vec::with_capacity(replacements.len());
+        let mut previous_end = 0;
+        for (range, text) in replacements {
+            let start = self.buffer.clamp(range.start);
+            let end = self.buffer.clamp(range.end.max(start));
+            if start < previous_end {
+                continue;
+            }
+            previous_end = end;
+            edits.push((start..end, text.clone()));
+        }
+        let count = edits.len();
+        if count == 0 {
+            return 0;
+        }
+        self.apply(
+            edits,
+            EditKind::Other,
+            None,
+            &Placement::PerEdit(&|edit| Selection::cursor(edit.new_range.end)),
+        );
+        let end = self
+            .selections
+            .iter()
+            .map(Selection::end)
+            .max()
+            .unwrap_or(0);
+        self.set_selections(&crate::Selections::single(Selection::cursor(end)));
+        count
+    }
+
     /// Replaces the whole text with `buffer` (the file changed on disk):
     /// selections are kept where they fit, history starts over. `buffer`
     /// is built in the background; this is constant time.
@@ -156,5 +191,25 @@ impl Document {
             .map(|start| (start..start, text.clone()))
             .collect();
         self.apply(replacements, EditKind::Other, None, &Placement::Shift);
+    }
+}
+
+#[cfg(test)]
+mod replace_tests {
+    use crate::Document;
+
+    #[test]
+    fn replace_ranges_is_one_undoable_edit() {
+        let mut document = Document::from_text("foo bar foo baz foo");
+        let edits: Vec<_> = [0..3, 8..11, 16..19]
+            .into_iter()
+            .map(|range| (range, "qux".to_owned()))
+            .collect();
+        assert_eq!(document.replace_ranges(&edits), 3);
+        assert_eq!(document.buffer().to_text(), "qux bar qux baz qux");
+        assert_eq!(document.selections().primary().head, 19);
+        assert!(document.undo());
+        assert_eq!(document.buffer().to_text(), "foo bar foo baz foo");
+        assert_eq!(document.replace_ranges(&[]), 0);
     }
 }

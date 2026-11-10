@@ -104,9 +104,22 @@ pub const ZOOM_OUT: &str = "workbench.zoomOut";
 /// Returns the interface to its normal size.
 pub const ZOOM_RESET: &str = "workbench.zoomReset";
 
+/// Opens the find widget over the active editor.
+pub const FIND: &str = "find.open";
+/// Opens the find widget with the replace row.
+pub const FIND_REPLACE: &str = "find.replace";
+/// Goes to the next find match.
+pub const FIND_NEXT: &str = "find.next";
+/// Goes to the previous find match.
+pub const FIND_PREVIOUS: &str = "find.previous";
+
 /// Every workbench command with the id of its localized title.
 pub(crate) const ALL: &[(&str, &str)] = &[
     (QUICK_OPEN, "command-workbench-quick-open"),
+    (FIND, "command-find-open"),
+    (FIND_REPLACE, "command-find-replace"),
+    (FIND_NEXT, "command-find-next"),
+    (FIND_PREVIOUS, "command-find-previous"),
     (
         SHOW_COMMAND_PALETTE,
         "command-workbench-show-command-palette",

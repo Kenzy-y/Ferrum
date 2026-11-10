@@ -445,6 +445,7 @@ impl Frame {
             highlight_right: self.text_right,
         };
         let mut backgrounds = scene.current_lines();
+        backgrounds.extend(scene.find_matches());
         backgrounds.extend(scene.selections());
         backgrounds.extend(scene.guides());
         let cursors = scene.cursors();

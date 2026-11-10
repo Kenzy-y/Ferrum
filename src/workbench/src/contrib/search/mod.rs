@@ -5,4 +5,4 @@
 mod model;
 mod view;
 
-pub use self::view::{OpenMatch, SearchRequest, SearchView};
+pub use self::view::{OpenMatch, ReplaceRequest, SearchRequest, SearchView};

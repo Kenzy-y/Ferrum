@@ -90,7 +90,7 @@ pub(crate) struct Shell {
     /// The Search view of the sidebar.
     search: Entity<workbench::SearchView>,
     /// Run the view's searches and open its matches.
-    _search_watches: [gpui::Subscription; 2],
+    _search_watches: [gpui::Subscription; 3],
     /// The search in progress; dropping it cancels it.
     running_search: Option<search::RunningSearch>,
     /// The terminals of the window.
@@ -251,6 +251,20 @@ impl Shell {
                 cx.background_executor()
                     .timer(std::time::Duration::from_millis(DEBUG_COMMAND_PAUSE_MS))
                     .await;
+                // `folder:<path>` and `file:<path>` open them first.
+                if let Some(path) = id.strip_prefix("folder:") {
+                    let path = PathBuf::from(path);
+                    let _ = shell
+                        .update_in(cx, |shell, window, cx| shell.open_folder(path, window, cx));
+                    continue;
+                }
+                if let Some(path) = id.strip_prefix("file:") {
+                    let path = PathBuf::from(path);
+                    let _ = shell.update_in(cx, |shell, window, cx| {
+                        shell.open_file(path, None, window, cx);
+                    });
+                    continue;
+                }
                 let Ok(id) = CommandId::new(id) else {
                     tracing::warn!(id, "FERRUM_DEBUG_COMMANDS: not a command id");
                     continue;

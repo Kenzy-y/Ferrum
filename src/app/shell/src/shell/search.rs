@@ -13,7 +13,7 @@ use i18n::I18n;
 use search::{SearchOptions, SearchSettings};
 use settings::SettingsStore;
 use text::Point;
-use workbench::{FileIcons, OpenMatch, SearchRequest, SearchView, Workbench};
+use workbench::{FileIcons, OpenMatch, ReplaceRequest, SearchRequest, SearchView, Workbench};
 
 use super::Shell;
 
@@ -41,7 +41,7 @@ pub(super) fn create(
     workbench: &Entity<Workbench>,
     window: &mut Window,
     cx: &mut Context<Shell>,
-) -> (Entity<SearchView>, [Subscription; 2]) {
+) -> (Entity<SearchView>, [Subscription; 3]) {
     let debounce = debounce(settings);
     let i18n = i18n.clone();
     let view = cx.new(|cx| SearchView::new(i18n, icons, debounce, window, cx));
@@ -54,7 +54,10 @@ pub(super) fn create(
         let end = Point::new(event.line, event.range.end);
         shell.open_file(event.path.clone(), Some(start..end), window, cx);
     });
-    (view, [requests, open])
+    let replace = cx.subscribe(&view, |shell, _, request: &ReplaceRequest, cx| {
+        shell.replace_in_project(request, cx);
+    });
+    (view, [requests, open, replace])
 }
 
 /// `[search] debounce_ms`.
@@ -62,7 +65,73 @@ pub(super) fn debounce(settings: &SettingsStore) -> Duration {
     Duration::from_millis(settings.get::<SearchSettings>(None).debounce_ms)
 }
 
+/// Most replacements in one file.
+const MAX_FILE_REPLACEMENTS: usize = 1_000_000;
+
 impl Shell {
+    /// Replace All from the Search view: open editors get one undoable
+    /// edit each (left unsaved, as typed edits are); other files are read,
+    /// replaced and written in the background. Then the view searches
+    /// again.
+    fn replace_in_project(&mut self, request: &ReplaceRequest, cx: &mut Context<Self>) {
+        let editors: Vec<_> = request
+            .files
+            .iter()
+            .filter_map(|path| {
+                let editor = self.workbench.read(cx).editor_for(path, cx)?;
+                let snapshot = editor.read(cx);
+                let rope = snapshot.document().buffer().rope().clone();
+                let version = snapshot.document().version();
+                Some((path.clone(), editor, rope, version))
+            })
+            .collect();
+        let closed: Vec<PathBuf> = request
+            .files
+            .iter()
+            .filter(|path| !editors.iter().any(|(open, ..)| open == *path))
+            .cloned()
+            .collect();
+        let open_texts: Vec<_> = editors.iter().map(|(_, _, rope, _)| rope.clone()).collect();
+        let query = request.query.clone();
+        let replacement = request.replacement.clone();
+        let fs = self.fs.clone();
+        let work = cx.background_executor().spawn(async move {
+            let open_edits: Vec<_> = open_texts
+                .into_iter()
+                .map(|rope| {
+                    query
+                        .replacements(&rope.to_string(), &replacement, MAX_FILE_REPLACEMENTS)
+                        .unwrap_or_default()
+                })
+                .collect();
+            for path in closed {
+                if let Err(error) = replace_in_file(fs.as_ref(), &path, &query, &replacement).await
+                {
+                    tracing::error!(path = %path.display(), "cannot replace: {error:#}");
+                }
+            }
+            open_edits
+        });
+        let view = self.search.downgrade();
+        cx.spawn(async move |_, cx| {
+            let open_edits = work.await;
+            cx.update(|cx| {
+                for ((_, editor, _, version), edits) in editors.into_iter().zip(open_edits) {
+                    editor.update(cx, |editor, cx| {
+                        // Edited meanwhile: its matches moved; skip it.
+                        if editor.document().version() == version && !edits.is_empty() {
+                            editor.edit_document(cx, |document| {
+                                document.replace_ranges(&edits);
+                            });
+                        }
+                    });
+                }
+                let _ = view.update(cx, SearchView::replaced);
+            });
+        })
+        .detach();
+    }
+
     fn run_search(&mut self, request: &SearchRequest, cx: &mut Context<Self>) {
         // Dropping the previous search cancels it.
         self.running_search = None;
@@ -131,5 +200,55 @@ impl Shell {
             cancel,
             _task: task,
         });
+    }
+}
+
+/// Replaces every match in a file on disk.
+async fn replace_in_file(
+    fs: &dyn fs::Fs,
+    path: &std::path::Path,
+    query: &search::SearchQuery,
+    replacement: &str,
+) -> anyhow::Result<()> {
+    let text = fs.read_to_string(path).await?;
+    let edits = query.replacements(&text, replacement, MAX_FILE_REPLACEMENTS)?;
+    if edits.is_empty() {
+        return Ok(());
+    }
+    let mut result = String::with_capacity(text.len());
+    let mut at = 0;
+    for (range, new_text) in &edits {
+        result.push_str(&text[at..range.start]);
+        result.push_str(new_text);
+        at = range.end;
+    }
+    result.push_str(&text[at..]);
+    fs.write(path, result.as_bytes()).await?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use fs::{FakeFs, Fs as _};
+    use futures::executor::block_on;
+
+    use super::*;
+
+    #[test]
+    fn replaces_every_match_in_a_file() {
+        let fs = FakeFs::new();
+        let path = std::path::Path::new("/project/a.rs");
+        fs.insert_file("/project/a.rs", "let a = 1;\nlet b = a;\n");
+        let query = search::SearchQuery {
+            pattern: "a".to_owned(),
+            whole_word: true,
+            case_sensitive: true,
+            ..search::SearchQuery::default()
+        };
+        block_on(replace_in_file(&fs, path, &query, "alpha")).unwrap();
+        assert_eq!(
+            block_on(fs.read_to_string(path)).unwrap(),
+            "let alpha = 1;\nlet b = alpha;\n"
+        );
     }
 }

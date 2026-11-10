@@ -63,6 +63,7 @@ mono = "JetBrains Mono"
 "bg.minimap.viewport" = "#FFFFFF09"   # the visible part: white at 3.5%
 "bg.selection" = "#3C2F2A"            # not in the mockups: accent at 22% over bg.editor; approved 2026-11-04
 "bg.selection.inactive" = "#292221"   # not in the mockups: accent at 12% over bg.editor; approved 2026-11-04
+"bg.find.match" = "#3A3424"           # not in the mockups: find matches in the editor; awaits approval
 "cursor" = "#E0B69D"
 # Diagnostics: not in the mockups; approved 2026-11-05 (ADR 0007).
 "diagnostic.error" = "#D28B7F"        # from debug.svg

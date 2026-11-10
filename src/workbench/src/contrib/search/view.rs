@@ -17,7 +17,7 @@ use gpui_component::input::{InputEvent, InputState};
 use i18n::{FluentArgs, I18n};
 use search::{FileMatches, SearchError, SearchQuery, SearchSummary};
 use theme::ActiveTheme as _;
-use ui::{Icon, IconName, ListRow, TextField, ToggleButton};
+use ui::{Icon, IconButton, IconName, ListRow, TextField, ToggleButton};
 
 use crate::contrib::explorer::file_icons::{self, FileIcons};
 use crate::contrib::search::model::{ResultRow, Results};
@@ -44,6 +44,19 @@ pub struct OpenMatch {
     pub range: Range<usize>,
 }
 
+/// Asks the application to replace every match of `query` in `files` with
+/// `replacement` (Replace All in the Search view). Open editors get the
+/// edit as one undoable change; other files are written.
+#[derive(Debug, Clone)]
+pub struct ReplaceRequest {
+    /// What was searched.
+    pub query: SearchQuery,
+    /// What replaces each match (`$1` for a regular expression's group).
+    pub replacement: String,
+    /// The files with matches.
+    pub files: Vec<PathBuf>,
+}
+
 /// Where the current search is.
 #[derive(Debug, Clone)]
 enum Status {
@@ -55,11 +68,16 @@ enum Status {
 }
 
 /// The Search view.
+// The three search options and the replace row are independent toggles.
+#[allow(clippy::struct_excessive_bools)]
 pub struct SearchView {
     i18n: Arc<I18n>,
     icons: Arc<FileIcons>,
     query: Entity<InputState>,
     include: Entity<InputState>,
+    replace: Entity<InputState>,
+    /// The replace row is expanded.
+    replace_open: bool,
     case_sensitive: bool,
     whole_word: bool,
     regex: bool,
@@ -73,11 +91,12 @@ pub struct SearchView {
     scroll: UniformListScrollHandle,
     /// Name of the open folder; `None` without one.
     workspace: Option<SharedString>,
-    _inputs: [Subscription; 2],
+    _inputs: [Subscription; 3],
 }
 
 impl EventEmitter<SearchRequest> for SearchView {}
 impl EventEmitter<OpenMatch> for SearchView {}
+impl EventEmitter<ReplaceRequest> for SearchView {}
 
 impl SearchView {
     /// An empty view; typing waits `debounce` before searching.
@@ -92,15 +111,20 @@ impl SearchView {
         let include_placeholder = i18n.text("search-include-placeholder");
         let query = cx.new(|cx| InputState::new(window, cx).placeholder(query_placeholder));
         let include = cx.new(|cx| InputState::new(window, cx).placeholder(include_placeholder));
+        let replace_placeholder = i18n.text("search-replace-placeholder");
+        let replace = cx.new(|cx| InputState::new(window, cx).placeholder(replace_placeholder));
         let inputs = [
             cx.subscribe(&query, Self::on_input),
             cx.subscribe(&include, Self::on_input),
+            cx.subscribe(&replace, Self::on_replace_input),
         ];
         Self {
             i18n,
             icons,
             query,
             include,
+            replace,
+            replace_open: false,
             case_sensitive: false,
             whole_word: false,
             regex: false,
@@ -178,6 +202,47 @@ impl SearchView {
             InputEvent::PressEnter { .. } => self.request(cx),
             _ => {}
         }
+    }
+
+    fn on_replace_input(
+        &mut self,
+        _: Entity<InputState>,
+        event: &InputEvent,
+        cx: &mut Context<Self>,
+    ) {
+        match event {
+            // The previews show the new text.
+            InputEvent::Change => cx.notify(),
+            InputEvent::PressEnter { .. } => self.replace_all(cx),
+            _ => {}
+        }
+    }
+
+    /// Replaces every match shown (Replace All).
+    fn replace_all(&mut self, cx: &mut Context<Self>) {
+        if self.results.is_empty() || !matches!(self.status, Status::Done(_)) {
+            return;
+        }
+        let files = (0..self.results.file_count())
+            .map(|file| self.results.file(file).matches.path.clone())
+            .collect();
+        cx.emit(ReplaceRequest {
+            query: self.query(cx),
+            replacement: self.replace.read(cx).value().to_string(),
+            files,
+        });
+    }
+
+    /// The replacement shown in the previews, while the replace row is
+    /// open.
+    fn preview_replacement(&self, cx: &App) -> Option<String> {
+        self.replace_open
+            .then(|| self.replace.read(cx).value().to_string())
+    }
+
+    /// The replace was done: search again so the results show what is left.
+    pub fn replaced(&mut self, cx: &mut Context<Self>) {
+        self.request(cx);
     }
 
     /// Searches once typing pauses.
@@ -382,25 +447,61 @@ fn toggles(view: &SearchView, cx: &Context<SearchView>) -> [ToggleButton; 3] {
 }
 
 impl SearchView {
-    /// The collapsed replace row; replacing comes in a later part.
-    fn replace_row(&self, cx: &App) -> AnyElement {
+    /// The replace row: collapsed, a button that opens it; open, the
+    /// replacement field and Replace All.
+    fn replace_row(&self, cx: &Context<Self>) -> AnyElement {
         let theme = cx.theme();
         let colors = &theme.colors;
         let metrics = &theme.metrics;
+        let entity = cx.entity().downgrade();
+        let toggle = {
+            let entity = entity.clone();
+            move |_: &mut Window, cx: &mut App| {
+                let _ = entity.update(cx, |view, cx| {
+                    view.replace_open = !view.replace_open;
+                    cx.notify();
+                });
+            }
+        };
+        if !self.replace_open {
+            return div()
+                .id("search-replace")
+                .flex()
+                .items_center()
+                .h(px(metrics.size.input_inset_height))
+                .px(px(metrics.space.md))
+                .rounded(px(metrics.radius.md))
+                .bg(colors.bg_input_inset)
+                .cursor_pointer()
+                .text_size(px(metrics.font_size.base))
+                .text_color(colors.text_secondary)
+                .on_click(move |_, window, cx| toggle(window, cx))
+                .child(div().flex_1().child(self.text("search-replace")))
+                .child(Icon::new(IconName::ChevronRight).color(colors.icon))
+                .into_any_element();
+        }
+        let replace_all = {
+            let entity = entity.clone();
+            move |_: &mut Window, cx: &mut App| {
+                let _ = entity.update(cx, SearchView::replace_all);
+            }
+        };
         div()
-            .id("search-replace")
             .flex()
             .items_center()
-            .h(px(metrics.size.input_inset_height))
-            .px(px(metrics.space.md))
-            .rounded(px(metrics.radius.md))
-            .bg(colors.bg_input_inset)
-            .opacity(theme.opacity.disabled)
-            .text_size(px(metrics.font_size.base))
-            .text_color(colors.text_secondary)
-            .tooltip(ui::tooltip(self.text("welcome-later")))
-            .child(div().flex_1().child(self.text("search-replace")))
-            .child(Icon::new(IconName::ChevronRight).color(colors.icon))
+            .gap(px(metrics.space.xs))
+            .child(
+                IconButton::new("search-replace-collapse", IconName::ChevronDown)
+                    .tooltip(self.text("search-replace-collapse"))
+                    .on_activate(toggle),
+            )
+            .child(div().flex_1().child(TextField::new(&self.replace)))
+            .child(
+                IconButton::new("search-replace-all", IconName::Check)
+                    .tooltip(self.text("search-replace-all"))
+                    .disabled(!matches!(self.status, Status::Done(_)) || self.results.is_empty())
+                    .on_activate(replace_all),
+            )
             .into_any_element()
     }
 
@@ -493,11 +594,15 @@ impl SearchView {
                     .text_size(px(metrics.font_size.xs))
                     .text_color(colors.text_muted)
                     .child((found.line + 1).to_string());
-                ListRow::new(("search-line", index), found.preview.text.clone())
+                let (text, highlights) = match self.preview_replacement(cx) {
+                    Some(replacement) => replaced_preview(&found.preview, &replacement),
+                    None => (found.preview.text.clone(), found.preview.highlights.clone()),
+                };
+                ListRow::new(("search-line", index), text)
                     .flat()
                     .mono()
                     .height(height)
-                    .highlights(found.preview.highlights.clone())
+                    .highlights(highlights)
                     .leading(number)
                     .selected(selected)
                     .tab_stop(false)
@@ -639,5 +744,44 @@ impl Render for SearchView {
                     .text_color(colors.text_subtle)
                     .child(footer),
             )
+    }
+}
+
+/// The preview with every match replaced by `replacement`; the new text is
+/// highlighted.
+pub(crate) fn replaced_preview(
+    preview: &search::Preview,
+    replacement: &str,
+) -> (String, Vec<Range<usize>>) {
+    let mut text = String::with_capacity(preview.text.len());
+    let mut highlights = Vec::with_capacity(preview.highlights.len());
+    let mut at = 0;
+    for range in &preview.highlights {
+        if range.start < at || range.end > preview.text.len() {
+            continue;
+        }
+        text.push_str(&preview.text[at..range.start]);
+        let start = text.len();
+        text.push_str(replacement);
+        highlights.push(start..text.len());
+        at = range.end;
+    }
+    text.push_str(&preview.text[at..]);
+    (text, highlights)
+}
+
+#[cfg(test)]
+mod replace_tests {
+    use super::replaced_preview;
+
+    #[test]
+    fn previews_show_the_replacement() {
+        let preview = search::Preview {
+            text: "let foo = foo;".to_owned(),
+            highlights: vec![4..7, 10..13],
+        };
+        let (text, highlights) = replaced_preview(&preview, "bar_baz");
+        assert_eq!(text, "let bar_baz = bar_baz;");
+        assert_eq!(highlights, [4..11, 14..21]);
     }
 }

@@ -60,7 +60,35 @@ pub(crate) fn render(
         .child(strip)
         .children(breadcrumbs)
         .children(notice)
-        .child(div().flex_1().min_h_0().child(content))
+        .child(
+            div()
+                .relative()
+                .flex_1()
+                .min_h_0()
+                .child(content)
+                .children(find_overlay(workbench, tab, cx)),
+        )
+}
+
+/// The find widget at the top right of an editor.
+fn find_overlay(
+    workbench: &Workbench,
+    tab: &tabs::Tab,
+    cx: &Context<Workbench>,
+) -> Option<AnyElement> {
+    let open = workbench.find.as_ref()?;
+    if !matches!(tab.content, TabContent::Editor(_)) {
+        return None;
+    }
+    let space = &cx.theme().metrics.space;
+    Some(
+        div()
+            .absolute()
+            .top(px(space.xs))
+            .right(px(space.xl))
+            .child(open.view.clone())
+            .into_any_element(),
+    )
 }
 
 /// The bar above an editor whose file changed or was deleted on disk;

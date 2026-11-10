@@ -2,6 +2,7 @@
 
 pub(crate) mod explorer;
 pub(crate) mod extensions;
+pub(crate) mod find;
 pub(crate) mod language_status;
 pub(crate) mod menu_bar;
 pub(crate) mod outline;

@@ -419,3 +419,28 @@ settings-group-rust_analyzer = rust-analyzer
 settings-group-search = Search
 settings-group-syntax = Syntax
 settings-group-terminal = Terminal
+
+# Find in the editor.
+command-find-open = Find
+command-find-replace = Replace
+command-find-next = Find Next
+command-find-previous = Find Previous
+find-placeholder = Find
+find-replace-placeholder = Replace
+find-match-case = Match case
+find-whole-word = Match whole word
+find-regex = Use regular expression
+find-previous = Previous match (Shift Enter)
+find-next = Next match (Enter)
+find-close = Close (Escape)
+find-replace = Replace (Enter)
+find-replace-all = Replace all (Ctrl Alt Enter)
+find-toggle-replace = Toggle replace
+find-no-results = No results
+find-invalid = Invalid pattern
+find-count = { $current } of { $total }
+find-count-limited = { $current } of { $total }+
+
+search-replace-placeholder = Replace
+search-replace-all = Replace all (Enter)
+search-replace-collapse = Hide replace
