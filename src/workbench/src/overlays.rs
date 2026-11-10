@@ -189,7 +189,8 @@ impl Workbench {
             None => window.focused(cx),
         };
         let context = self.quick_open_context.clone();
-        let view = cx.new(|cx| MenuView::new(index, from_keyboard, &context, window, cx));
+        let view =
+            cx.new(|cx| MenuView::new(MENUS[index].items, from_keyboard, &context, window, cx));
         let subscription =
             cx.subscribe_in(
                 &view,

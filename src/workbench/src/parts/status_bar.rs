@@ -9,10 +9,11 @@ use gpui::{
 use i18n::FluentArgs;
 use text::{LineEnding, LineEndings};
 use theme::ActiveTheme as _;
-use ui::{Icon, IconName};
+use ui::{Icon, IconButton, IconName};
 
 use crate::Workbench;
 use crate::contrib::language_status;
+use crate::popovers::PopoverSlot;
 
 pub(crate) fn render(
     workbench: &Workbench,
@@ -29,13 +30,14 @@ pub(crate) fn render(
         .map(|counts| problem_items(workbench, counts, cx));
     let languages = language_status::left_items(workbench, cx);
     let language = language_status::right_items(workbench, cx);
+    let bell = bell(workbench, cx);
     let theme = cx.theme();
     let metrics = &theme.metrics;
     let mut right = div().flex().items_center().gap(px(metrics.space.xxl));
     for item in items.into_iter().flatten() {
         right = right.child(item);
     }
-    right = right.children(language);
+    right = right.children(language).child(bell);
     div()
         .flex()
         .flex_none()
@@ -60,6 +62,45 @@ pub(crate) fn render(
                 .children(languages),
         )
         .child(right)
+}
+
+/// The bell at the right end: opens the notification center; a dot shows
+/// unread notifications.
+fn bell(workbench: &Workbench, cx: &mut Context<Workbench>) -> AnyElement {
+    let entity = cx.entity().downgrade();
+    let popover = workbench.popover_at(PopoverSlot::Bell, gpui::Anchor::BottomRight, cx);
+    let theme = cx.theme();
+    let dot = theme.metrics.size.diagnostic_dot * 2.0;
+    let unread = workbench.notifications.unread.then(|| {
+        div()
+            .absolute()
+            .top_0()
+            .right_0()
+            .size(px(dot))
+            .rounded(px(dot / 2.0))
+            .bg(theme.colors.accent)
+    });
+    div()
+        .relative()
+        .flex()
+        .flex_col()
+        .items_end()
+        .child(div().h(px(0.0)).children(popover))
+        .child(
+            div()
+                .relative()
+                .child(
+                    IconButton::new("status-bell", IconName::Bell)
+                        .tooltip(workbench.text("notifications-bell"))
+                        .on_activate(move |window, cx| {
+                            let _ = entity.update(cx, |workbench, cx| {
+                                workbench.toggle_notifications(window, cx);
+                            });
+                        }),
+                )
+                .children(unread),
+        )
+        .into_any_element()
 }
 
 /// Errors and warnings of the project, as in `editor.svg`: a check before

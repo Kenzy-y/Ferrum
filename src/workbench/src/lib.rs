@@ -20,6 +20,7 @@ mod dialogs;
 mod layout;
 mod overlays;
 mod parts;
+mod popovers;
 mod workbench;
 
 use commands::{CommandDescriptor, CommandId, CommandRegistry, RegistryError};
@@ -39,6 +40,7 @@ pub use crate::contrib::settings_page::{
 pub use crate::contrib::terminal::{TerminalPanel, TerminalPanelEvent};
 pub use crate::layout::{PanelKind, SidebarView};
 pub use crate::parts::resize::PanelSizesChanged;
+pub use crate::popovers::{Notification, NotificationKind};
 pub use crate::workbench::{Dispatch, OpenPath, RecentEntry, Workbench, WorkspaceInfo};
 
 /// Registers the workbench commands.

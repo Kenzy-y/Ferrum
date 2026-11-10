@@ -25,6 +25,17 @@ pub(crate) struct Menu {
     pub(crate) items: &'static [MenuItem],
 }
 
+/// The menu behind "…" at the right of the tabs.
+pub(crate) const TAB_MENU: &[MenuItem] = &[
+    Command(command_ids::CLOSE_TAB),
+    Command(command_ids::CLOSE_OTHER_TABS),
+    Command(command_ids::CLOSE_SAVED_TABS),
+    Command(command_ids::CLOSE_ALL_TABS),
+    Separator,
+    Command(command_ids::SPLIT_EDITOR),
+    Command(command_ids::FOCUS_OTHER_GROUP),
+];
+
 /// The menus, left to right. Commands that are not registered (debug-only
 /// ones in a release build) are left out when shown.
 pub(crate) const MENUS: &[Menu] = &[
@@ -117,8 +128,8 @@ mod tests {
             command_ids::OPEN_KEYMAP,
             "app.quit",
         ];
-        for menu in MENUS {
-            for item in menu.items {
+        for items in MENUS.iter().map(|menu| menu.items).chain([TAB_MENU]) {
+            for item in items {
                 if let Command(id) = item
                     && !shell_owned.contains(id)
                 {

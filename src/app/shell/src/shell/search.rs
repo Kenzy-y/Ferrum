@@ -104,18 +104,51 @@ impl Shell {
                         .unwrap_or_default()
                 })
                 .collect();
+            let mut written = (0, 0);
+            let mut failed = 0;
             for path in closed {
-                if let Err(error) = replace_in_file(fs.as_ref(), &path, &query, &replacement).await
-                {
-                    tracing::error!(path = %path.display(), "cannot replace: {error:#}");
+                match replace_in_file(fs.as_ref(), &path, &query, &replacement).await {
+                    Ok(0) => {}
+                    Ok(count) => {
+                        written.0 += count;
+                        written.1 += 1;
+                    }
+                    Err(error) => {
+                        failed += 1;
+                        tracing::error!(path = %path.display(), "cannot replace: {error:#}");
+                    }
                 }
             }
-            open_edits
+            (open_edits, written, failed)
         });
         let view = self.search.downgrade();
+        let workbench = self.workbench.downgrade();
+        let i18n = self.i18n.clone();
         cx.spawn(async move |_, cx| {
-            let open_edits = work.await;
+            let (open_edits, (written, written_files), failed) = work.await;
             cx.update(|cx| {
+                let open_count: usize = open_edits.iter().map(Vec::len).sum();
+                let open_files = open_edits.iter().filter(|edits| !edits.is_empty()).count();
+                let mut args = i18n::FluentArgs::new();
+                args.set("count", written + open_count);
+                args.set("files", written_files + open_files);
+                let mut notices = vec![workbench::Notification {
+                    kind: workbench::NotificationKind::Info,
+                    message: i18n.text_with("notification-replaced", &args).into(),
+                }];
+                if failed > 0 {
+                    let mut args = i18n::FluentArgs::new();
+                    args.set("files", failed);
+                    notices.push(workbench::Notification {
+                        kind: workbench::NotificationKind::Error,
+                        message: i18n.text_with("notification-replace-failed", &args).into(),
+                    });
+                }
+                let _ = workbench.update(cx, |workbench, cx| {
+                    for notice in notices {
+                        workbench.notify(notice, cx);
+                    }
+                });
                 for ((_, editor, _, version), edits) in editors.into_iter().zip(open_edits) {
                     editor.update(cx, |editor, cx| {
                         // Edited meanwhile: its matches moved; skip it.
@@ -209,11 +242,11 @@ async fn replace_in_file(
     path: &std::path::Path,
     query: &search::SearchQuery,
     replacement: &str,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<usize> {
     let text = fs.read_to_string(path).await?;
     let edits = query.replacements(&text, replacement, MAX_FILE_REPLACEMENTS)?;
     if edits.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let mut result = String::with_capacity(text.len());
     let mut at = 0;
@@ -224,7 +257,7 @@ async fn replace_in_file(
     }
     result.push_str(&text[at..]);
     fs.write(path, result.as_bytes()).await?;
-    Ok(())
+    Ok(edits.len())
 }
 
 #[cfg(test)]
@@ -245,7 +278,10 @@ mod tests {
             case_sensitive: true,
             ..search::SearchQuery::default()
         };
-        block_on(replace_in_file(&fs, path, &query, "alpha")).unwrap();
+        assert_eq!(
+            block_on(replace_in_file(&fs, path, &query, "alpha")).unwrap(),
+            2
+        );
         assert_eq!(
             block_on(fs.read_to_string(path)).unwrap(),
             "let alpha = 1;\nlet b = alpha;\n"

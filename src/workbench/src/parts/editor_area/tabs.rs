@@ -11,6 +11,7 @@ use gpui::{
 use i18n::FluentArgs;
 
 use crate::Workbench;
+use crate::parts::editor_area::groups;
 use crate::parts::editor_area::message_view::MessageView;
 
 /// What a tab shows.
@@ -61,7 +62,7 @@ pub(crate) fn file_title(path: &Path) -> SharedString {
 impl Workbench {
     /// The editor of `path` if it is open.
     pub fn editor_for(&self, path: &Path, cx: &gpui::App) -> Option<Entity<Editor>> {
-        self.tabs.iter().find_map(|tab| match &tab.content {
+        self.all_tabs().find_map(|tab| match &tab.content {
             TabContent::Editor(editor) if editor.read(cx).path() == Some(path) => {
                 Some(editor.clone())
             }
@@ -77,9 +78,9 @@ impl Workbench {
         }
     }
 
-    /// Every open editor.
+    /// Every open editor, in both groups.
     pub fn editors(&self) -> impl Iterator<Item = &Entity<Editor>> {
-        self.tabs.iter().filter_map(|tab| match &tab.content {
+        self.all_tabs().filter_map(|tab| match &tab.content {
             TabContent::Editor(editor) => Some(editor),
             TabContent::View { .. } => None,
         })
@@ -94,6 +95,12 @@ impl Workbench {
         cx: &mut Context<Self>,
     ) {
         let path = editor.read(cx).path().map(Path::to_path_buf);
+        // Already shown in the other group: go there.
+        if let Some(index) = self.other_group_index(|tab| groups::shows_editor(tab, &editor)) {
+            self.focus_other_group(window, cx);
+            self.activate_tab(index, window, cx);
+            return;
+        }
         if let Some(path) = &path
             && let Some(index) = self.tab_index_for(path, cx)
         {
@@ -108,7 +115,24 @@ impl Workbench {
             .map_or_else(|| self.text("editor-untitled"), file_title);
         let subscription = cx.subscribe(&editor, |workbench, editor, event: &EditorEvent, cx| {
             match event {
-                EditorEvent::SaveFailed(message) => tracing::error!(%message, "saving failed"),
+                EditorEvent::SaveFailed(message) => {
+                    tracing::error!(%message, "saving failed");
+                    let mut args = FluentArgs::new();
+                    let name = editor
+                        .read(cx)
+                        .path()
+                        .map_or_else(String::new, |path| file_title(path).to_string());
+                    args.set("name", name);
+                    args.set("reason", message.clone());
+                    let text = workbench.i18n.text_with("notification-save-failed", &args);
+                    workbench.notify(
+                        crate::Notification {
+                            kind: crate::NotificationKind::Error,
+                            message: text.into(),
+                        },
+                        cx,
+                    );
+                }
                 EditorEvent::OutlineChanged
                     if workbench.active_editor().as_ref() == Some(&editor) =>
                 {
@@ -116,11 +140,16 @@ impl Workbench {
                 }
                 EditorEvent::Renamed => {
                     let path = editor.read(cx).path().map(Path::to_path_buf);
-                    if let Some(path) = path
-                        && let Some(tab) = workbench.tabs.iter_mut().find(|tab| {
-                            matches!(&tab.content, TabContent::Editor(open) if open == &editor)
-                        })
-                    {
+                    let other = workbench
+                        .split
+                        .as_mut()
+                        .map(|split| split.other.tabs.iter_mut());
+                    let tab = workbench
+                        .tabs
+                        .iter_mut()
+                        .chain(other.into_iter().flatten())
+                        .find(|tab| groups::shows_editor(tab, &editor));
+                    if let (Some(path), Some(tab)) = (path, tab) {
                         tab.title = file_title(&path);
                     }
                 }
@@ -280,6 +309,39 @@ impl Workbench {
         .detach();
     }
 
+    /// Closes the tabs of the active group that `close` picks: those
+    /// without unsaved changes at once; for the first one with unsaved
+    /// changes the usual question follows.
+    pub(crate) fn close_tabs_where(
+        &mut self,
+        close: impl Fn(usize, &Tab, &gpui::App) -> bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let picked: Vec<usize> = self
+            .tabs
+            .iter()
+            .enumerate()
+            .filter(|(index, tab)| close(*index, tab, cx))
+            .map(|(index, _)| index)
+            .collect();
+        let mut first_dirty = None;
+        for index in picked.into_iter().rev() {
+            if self.tabs[index].is_dirty(cx) {
+                first_dirty = Some(index);
+            } else {
+                self.remove_tab(index, window, cx);
+                if let Some(dirty) = &mut first_dirty {
+                    *dirty -= 1;
+                }
+            }
+        }
+        if let Some(index) = first_dirty {
+            self.close_tab(index, window, cx);
+        }
+        cx.notify();
+    }
+
     /// Closes the active tab.
     pub(crate) fn close_active_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(index) = self.active_tab {
@@ -289,6 +351,15 @@ impl Workbench {
 
     fn remove_tab(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
         self.tabs.remove(index);
+        if self.tabs.is_empty() && self.split.is_some() {
+            // The last tab of a group: the other group fills the area.
+            self.collapse_empty_group();
+            if let Some(active) = self.active_tab {
+                self.activate_tab(active, window, cx);
+            }
+            cx.notify();
+            return;
+        }
         self.active_tab = match self.active_tab {
             _ if self.tabs.is_empty() => None,
             Some(active) if active > index => Some(active - 1),

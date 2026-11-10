@@ -18,6 +18,7 @@ use theme::ActiveTheme as _;
 use ui::{Button, ButtonSize, Icon, IconButton, IconName, Kbd, Label, SectionHeader};
 
 use crate::dialogs::path_prompt::PathPromptTexts;
+use crate::popovers::PopoverSlot;
 use crate::{Workbench, WorkspaceInfo, command_ids};
 
 fn empty_state(workbench: &Workbench, cx: &App) -> AnyElement {
@@ -71,11 +72,23 @@ fn empty_state(workbench: &Workbench, cx: &App) -> AnyElement {
         .into_any_element()
 }
 
-fn project_card(workspace: &WorkspaceInfo, cx: &App) -> AnyElement {
+fn project_card(
+    workbench: &Workbench,
+    workspace: &WorkspaceInfo,
+    cx: &mut Context<Workbench>,
+) -> AnyElement {
+    let entity = cx.entity().downgrade();
+    let popover = workbench.popover_at(PopoverSlot::ProjectCard, gpui::Anchor::TopLeft, cx);
+    let picker = IconButton::new("project-picker", IconName::ChevronDown)
+        .tooltip(workbench.text("command-workbench-pick-project"))
+        .on_activate(move |window, cx| {
+            let _ = entity.update(cx, |workbench, cx| workbench.toggle_projects(window, cx));
+        });
     let theme = cx.theme();
     let colors = &theme.colors;
     let metrics = &theme.metrics;
     div()
+        .relative()
         .flex()
         .items_center()
         .gap(px(metrics.space.md))
@@ -108,6 +121,16 @@ fn project_card(workspace: &WorkspaceInfo, cx: &App) -> AnyElement {
                         .child(workspace.path.clone()),
                 ),
         )
+        .child(picker)
+        .child(
+            div()
+                .absolute()
+                .left_0()
+                .bottom_0()
+                .w_full()
+                .h(px(0.0))
+                .children(popover),
+        )
         .into_any_element()
 }
 
@@ -118,7 +141,7 @@ pub(crate) fn render(
     let Some(workspace) = &workbench.workspace else {
         return empty_state(workbench, cx);
     };
-    let card = project_card(workspace, cx);
+    let card = project_card(workbench, workspace, cx);
     let gap = cx.theme().metrics.space.lg;
     div()
         .flex()

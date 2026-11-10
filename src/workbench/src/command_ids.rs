@@ -104,6 +104,26 @@ pub const ZOOM_OUT: &str = "workbench.zoomOut";
 /// Returns the interface to its normal size.
 pub const ZOOM_RESET: &str = "workbench.zoomReset";
 
+/// Closes every tab of the group but the active one.
+pub const CLOSE_OTHER_TABS: &str = "workbench.closeOtherTabs";
+/// Closes the tabs without unsaved changes.
+pub const CLOSE_SAVED_TABS: &str = "workbench.closeSavedTabs";
+/// Closes every tab of the group.
+pub const CLOSE_ALL_TABS: &str = "workbench.closeAllTabs";
+/// Splits the editor area into two groups side by side; the active tab
+/// moves to the other group.
+pub const SPLIT_EDITOR: &str = "workbench.splitEditor";
+/// Moves the focus to the other editor group.
+pub const FOCUS_OTHER_GROUP: &str = "workbench.focusOtherGroup";
+/// Opens the menu of the tabs ("…").
+pub const SHOW_TAB_MENU: &str = "workbench.showTabMenu";
+/// Shows or hides the notification center.
+pub const TOGGLE_NOTIFICATIONS: &str = "workbench.toggleNotifications";
+/// Removes every notification.
+pub const CLEAR_NOTIFICATIONS: &str = "workbench.clearNotifications";
+/// Opens the list of recent projects from the Explorer card.
+pub const PICK_PROJECT: &str = "workbench.pickProject";
+
 /// Opens the find widget over the active editor.
 pub const FIND: &str = "find.open";
 /// Opens the find widget with the replace row.
@@ -117,6 +137,18 @@ pub const FIND_PREVIOUS: &str = "find.previous";
 pub(crate) const ALL: &[(&str, &str)] = &[
     (QUICK_OPEN, "command-workbench-quick-open"),
     (FIND, "command-find-open"),
+    (CLOSE_OTHER_TABS, "command-workbench-close-other-tabs"),
+    (CLOSE_SAVED_TABS, "command-workbench-close-saved-tabs"),
+    (CLOSE_ALL_TABS, "command-workbench-close-all-tabs"),
+    (SPLIT_EDITOR, "command-workbench-split-editor"),
+    (FOCUS_OTHER_GROUP, "command-workbench-focus-other-group"),
+    (SHOW_TAB_MENU, "command-workbench-show-tab-menu"),
+    (
+        TOGGLE_NOTIFICATIONS,
+        "command-workbench-toggle-notifications",
+    ),
+    (CLEAR_NOTIFICATIONS, "command-workbench-clear-notifications"),
+    (PICK_PROJECT, "command-workbench-pick-project"),
     (FIND_REPLACE, "command-find-replace"),
     (FIND_NEXT, "command-find-next"),
     (FIND_PREVIOUS, "command-find-previous"),

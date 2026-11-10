@@ -444,3 +444,38 @@ find-count-limited = { $current } of { $total }+
 search-replace-placeholder = Replace
 search-replace-all = Replace all (Enter)
 search-replace-collapse = Hide replace
+
+# Editor groups, tab menu, notifications, project picker.
+command-workbench-close-other-tabs = Close Other Tabs
+command-workbench-close-saved-tabs = Close Saved Tabs
+command-workbench-close-all-tabs = Close All Tabs
+command-workbench-split-editor = Split Editor Right
+command-workbench-focus-other-group = Focus Other Editor Group
+command-workbench-show-tab-menu = Show Tab Menu
+command-workbench-toggle-notifications = Show Notifications
+command-workbench-clear-notifications = Clear All Notifications
+command-workbench-pick-project = Switch Project
+editor-split = Split editor right
+editor-more = More actions
+editor-group-empty = Open a file from the Explorer to show it in this group
+notifications-title = Notifications
+notifications-empty = No new notifications
+notifications-clear = Clear all
+notifications-dismiss = Dismiss
+notifications-bell = Notifications
+project-picker-title = Recent projects
+project-picker-open-folder = Open another folder…
+project-picker-empty = No recent projects
+
+notification-save-failed = Cannot save { $name }: { $reason }
+notification-replaced = Replaced { $count } { $count ->
+    [one] match
+   *[other] matches
+} in { $files } { $files ->
+    [one] file
+   *[other] files
+}; open files are left unsaved
+notification-replace-failed = Could not replace in { $files } { $files ->
+    [one] file
+   *[other] files
+} (see the log)

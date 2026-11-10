@@ -11,7 +11,7 @@ use gpui::{
 use theme::ActiveTheme as _;
 use ui::{Kbd, ListRow};
 
-use super::{MENUS, MenuItem};
+use super::MenuItem;
 use crate::contrib::quick_open::QuickOpenContext;
 
 /// What an open menu asks of the workbench.
@@ -51,17 +51,18 @@ impl Focusable for MenuView {
 }
 
 impl MenuView {
-    /// Menu `index` of [`MENUS`], focused. With `select_first` (opened
-    /// from the keyboard) its first row is selected.
+    /// A menu of `items` (a title bar menu of [`MENUS`], the tab menu),
+    /// focused. With `select_first` (opened from the keyboard) its first
+    /// row is selected.
     pub(crate) fn new(
-        index: usize,
+        items: &'static [MenuItem],
         select_first: bool,
         context: &QuickOpenContext,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let mut rows: Vec<Row> = Vec::new();
-        for item in MENUS[index].items {
+        for item in items {
             match item {
                 MenuItem::Separator => {
                     // No separator first, last or twice.

@@ -37,6 +37,8 @@
 "mod-shift-x" = "workbench.showExtensions"
 
 # Tabs.
+"mod-\\" = "workbench.splitEditor"
+"mod-k mod-w" = "workbench.closeAllTabs"
 "mod-w" = "workbench.closeTab"
 "ctrl-tab" = "workbench.nextTab"
 "ctrl-shift-tab" = "workbench.previousTab"

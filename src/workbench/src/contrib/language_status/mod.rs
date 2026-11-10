@@ -282,10 +282,10 @@ pub(crate) fn right_items(workbench: &Workbench, cx: &App) -> Vec<AnyElement> {
 pub(crate) fn breadcrumb_detail(
     workbench: &Workbench,
     path: Option<&Path>,
+    language: Option<&str>,
     cx: &App,
 ) -> Option<AnyElement> {
-    let id = workbench.active_language_id(cx)?;
-    let name = workbench.language_status.names.get(&id)?;
+    let name = workbench.language_status.names.get(language?)?;
     let text: SharedString =
         match path.and_then(|path| workbench.language_status.file_details.get(path)) {
             Some(detail) => format!("{name}  /  {detail}").into(),

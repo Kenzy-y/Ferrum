@@ -448,3 +448,29 @@ find-count-limited = { $current } из { $total }+
 search-replace-placeholder = Заменить
 search-replace-all = Заменить все (Enter)
 search-replace-collapse = Скрыть замену
+
+# Группы редакторов, меню вкладок, уведомления, выбор проекта.
+command-workbench-close-other-tabs = Закрыть другие вкладки
+command-workbench-close-saved-tabs = Закрыть сохранённые вкладки
+command-workbench-close-all-tabs = Закрыть все вкладки
+command-workbench-split-editor = Разделить редактор вправо
+command-workbench-focus-other-group = Перейти в другую группу редакторов
+command-workbench-show-tab-menu = Меню вкладок
+command-workbench-toggle-notifications = Показать уведомления
+command-workbench-clear-notifications = Очистить все уведомления
+command-workbench-pick-project = Сменить проект
+editor-split = Разделить редактор вправо
+editor-more = Другие действия
+editor-group-empty = Откройте файл в проводнике, чтобы показать его в этой группе
+notifications-title = Уведомления
+notifications-empty = Новых уведомлений нет
+notifications-clear = Очистить всё
+notifications-dismiss = Скрыть
+notifications-bell = Уведомления
+project-picker-title = Недавние проекты
+project-picker-open-folder = Открыть другую папку…
+project-picker-empty = Недавних проектов нет
+
+notification-save-failed = Не удалось сохранить { $name }: { $reason }
+notification-replaced = Заменено совпадений: { $count }, файлов: { $files }; открытые файлы не сохранены
+notification-replace-failed = Не удалось заменить в файлах: { $files } (подробности в журнале)

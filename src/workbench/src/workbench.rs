@@ -106,6 +106,16 @@ pub struct Workbench {
     pub(crate) extensions: ExtensionsState,
     /// The find widget over the active editor.
     pub(crate) find: Option<crate::contrib::find::OpenFind>,
+    /// The second editor group, while the editor area is split.
+    pub(crate) split: Option<crate::parts::editor_area::groups::Split>,
+    /// Id of the active editor group.
+    pub(crate) active_group: u64,
+    /// The notification center's messages.
+    pub(crate) notifications: crate::popovers::Notifications,
+    /// The open popover (notifications, projects, tab menu).
+    pub(crate) popover: Option<crate::popovers::OpenPopover>,
+    /// Focus of the notification and project popovers, made on first use.
+    pub(crate) popover_focus: Option<gpui::FocusHandle>,
 }
 
 impl Workbench {
@@ -158,6 +168,11 @@ impl Workbench {
             debug_sections: DebugSections::default(),
             extensions: ExtensionsState::default(),
             find: None,
+            split: None,
+            active_group: 0,
+            notifications: crate::popovers::Notifications::default(),
+            popover: None,
+            popover_focus: None,
         }
     }
 
@@ -238,6 +253,7 @@ impl Workbench {
             this.toggle_outline(cx);
         })?;
         Self::register_terminal_handlers(handlers, this)?;
+        Self::register_group_handlers(handlers, this)?;
         handlers.register_entity(command_ids::FIND, this, |this, window, cx| {
             this.open_find(false, window, cx);
         })?;
@@ -263,6 +279,40 @@ impl Workbench {
                 }
             })?;
         }
+        Ok(())
+    }
+
+    /// Editor groups, the tab menu and the popovers.
+    fn register_group_handlers(
+        handlers: &mut CommandHandlers,
+        this: &WeakEntity<Self>,
+    ) -> Result<(), RegistryError> {
+        handlers.register_entity(command_ids::SPLIT_EDITOR, this, Self::split_editor)?;
+        handlers.register_entity(
+            command_ids::FOCUS_OTHER_GROUP,
+            this,
+            Self::focus_other_group,
+        )?;
+        handlers.register_entity(command_ids::SHOW_TAB_MENU, this, Self::show_tab_menu)?;
+        handlers.register_entity(
+            command_ids::TOGGLE_NOTIFICATIONS,
+            this,
+            Self::toggle_notifications,
+        )?;
+        handlers.register_entity(command_ids::CLEAR_NOTIFICATIONS, this, |this, _, cx| {
+            this.clear_notifications(cx);
+        })?;
+        handlers.register_entity(command_ids::PICK_PROJECT, this, Self::toggle_projects)?;
+        handlers.register_entity(command_ids::CLOSE_OTHER_TABS, this, |this, window, cx| {
+            let active = this.active_tab;
+            this.close_tabs_where(move |index, _, _| Some(index) != active, window, cx);
+        })?;
+        handlers.register_entity(command_ids::CLOSE_SAVED_TABS, this, |this, window, cx| {
+            this.close_tabs_where(|_, tab, cx| !tab.is_dirty(cx), window, cx);
+        })?;
+        handlers.register_entity(command_ids::CLOSE_ALL_TABS, this, |this, window, cx| {
+            this.close_tabs_where(|_, _, _| true, window, cx);
+        })?;
         Ok(())
     }
 
@@ -410,6 +460,7 @@ impl Render for Workbench {
         let panel_handle = (self.panel_visible && !maximized)
             .then(|| Self::resize_handle(ResizeEdge::BottomPanel, cx));
         let picker_backdrop = self.shell_picker_backdrop(cx);
+        let popover_backdrop = self.popover_backdrop(cx);
         let status_bar = status_bar::render(self, cx);
         let dialog = self.path_prompt_dialog(cx);
         // Catches clicks outside quick open; the box itself is drawn by the
@@ -488,6 +539,7 @@ impl Render for Workbench {
             .children(backdrop)
             .children(menu_backdrop)
             .children(picker_backdrop)
+            .children(popover_backdrop)
             .children(dialog)
     }
 }
