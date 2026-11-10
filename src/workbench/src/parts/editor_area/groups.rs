@@ -127,7 +127,7 @@ impl Workbench {
     fn after_group_change(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.collapse_empty_group();
         if let Some(active) = self.active_tab {
-            self.activate_tab(active, window, cx)
+            self.activate_tab(active, window, cx);
         } else {
             self.sync_outline(cx);
             self.retarget_find(window, cx);
